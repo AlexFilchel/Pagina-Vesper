@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vesper - Tienda Online</title>
+  <link rel="stylesheet" href="style.css"> <!-- Aquí enlazas tu CSS -->
+</head>
+<body>
+
+  <!-- Banner superior -->
+  <div class="top-banner">
+    <p>💳 6 cuotas sin interés a partir de $30.000 &nbsp; 🚚 Envío gratis en compras superiores a $50.000 &nbsp; 💰 20% OFF pagando por transferencia</p>
+  </div>
+
+  <div class="container">
+
+  <!-- Header -->
+  <header class="main-header">
+    <div class="logo">Vesper</div>
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="Buscar perfumes, marcas...">
+      <button id="search-btn">🔍</button>
+    </div>
+    <nav class="user-nav">
+      <a href="#" id="link-cuenta">Mi cuenta</a>
+      <a href="#" id="link-carrito">Carrito (<span id="cart-count">0</span>)</a>
+    </nav>
+  </header>
+
+  <!-- Menú principal -->
+  <nav class="main-nav">
+    <ul id="menu-categorias">
+      <!-- JS insertará categorías desde la API -->
+    </ul>
+  </nav>
+
+  <!-- Hero / Carrusel -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1 id="hero-title">TECNOLOGÍA PREMIUM</h1>
+      <p id="hero-subtitle">Los últimos gadgets y accesorios</p>
+      <button id="hero-btn">Explorar</button>
+    </div>
+  </section>
+
+  <!-- Beneficios fijos -->
+  <section class="benefits">
+    <div class="benefit">
+      <h3>6 Cuotas sin interés</h3>
+      <p>En compras superiores a $30.000</p>
+    </div>
+    <div class="benefit">
+      <h3>Envíos a todo el país</h3>
+      <p>Gratis en compras superiores a $50.000</p>
+    </div>
+    <div class="benefit">
+      <h3>100% originales</h3>
+      <p>Garantía de autenticidad en todos nuestros productos</p>
+    </div>
+    <div class="benefit">
+      <h3>Descuentos hasta 30%</h3>
+      <p>En efectivo y transferencia bancaria</p>
+    </div>
+  </section>
+
+  <!-- Categorías dinámicas -->
+  <section class="categories">
+    <h2>Categorías</h2>
+    <div id="category-list" class="category-container">
+      <!-- JS insertará categorías dinámicamente -->
+    </div>
+  </section>
+
+  <!-- Productos Destacados dinámicos -->
+  <section class="featured-products">
+    <h2>Productos Destacados</h2>
+    <div id="product-list" class="product-list">
+      <!-- JS insertará productos destacados dinámicamente -->
+    </div>
+    <button class="view-all">Ver Todos los Productos</button>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="newsletter">
+    <h2>Suscríbete a nuestro newsletter</h2>
+    <p>Recibe las últimas ofertas y novedades directamente en tu correo</p>
+    <form id="newsletter-form">
+      <input type="email" id="newsletter-email" placeholder="Tu correo electrónico" required>
+      <button type="submit">Suscribirme</button>
+    </form>
+  </section>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="footer-info">
+      <h3>Vesper</h3>
+      <p>Tu tienda de confianza para fragancias premium, vapes y tecnología.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Productos</h4>
+      <ul id="footer-categorias">
+        <!-- JS insertará categorías en footer -->
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h4>Atención al Cliente</h4>
+      <ul>
+        <li><a href="#">Preguntas Frecuentes</a></li>
+        <li><a href="#">Términos y Condiciones</a></li>
+        <li><a href="#">Política de Privacidad</a></li>
+        <li><a href="#">Devoluciones</a></li>
+        <li><a href="#">Garantía de Autenticidad</a></li>
+      </ul>
+    </div>
+    <div class="footer-contact">
+      <h4>Contacto</h4>
+      <p>📧 info@vesper.com</p>
+      <p>📞 +54 11 1234-5678</p>
+      <p>📍 Buenos Aires, Argentina</p>
+      <p>🕘 Lunes a Viernes 9:00 - 18:00</p>
+      <p>🕑 Sábados 9:00 - 14:00</p>
+    </div>
+  </footer>
+
+  </div>
+
+  <!-- Script para cargar dinámicamente datos desde API -->
+  <script>
+    // Ejemplo: cargar categorías
+    fetch("http://localhost:8080/api/categorias")
+      .then(res => res.json())
+      .then(categorias => {
+        const menu = document.getElementById("menu-categorias");
+        const footer = document.getElementById("footer-categorias");
+        const catList = document.getElementById("category-list");
+
+        categorias.forEach(cat => {
+          // Menú principal
+          const li = document.createElement("li");
+          li.innerHTML = `<a href="/categoria/${cat.id}">${cat.nombre}</a>`;
+          menu.appendChild(li);
+
+          // Footer
+          const liFooter = document.createElement("li");
+          liFooter.innerHTML = `<a href="/categoria/${cat.id}">${cat.nombre}</a>`;
+          footer.appendChild(liFooter);
+
+          // Bloque categorías
+          const div = document.createElement("div");
+          div.classList.add("category");
+          div.innerHTML = `<h3>${cat.nombre}</h3><p>${cat.descripcion || ""}</p>`;
+          catList.appendChild(div);
+        });
+      });
+
+    // Ejemplo: cargar productos destacados
+    fetch("http://localhost:8080/api/productos/destacados")
+      .then(res => res.json())
+      .then(productos => {
+        const contenedor = document.getElementById("product-list");
+
+        productos.forEach(prod => {
+          const card = document.createElement("article");
+          card.classList.add("product");
+
+          card.innerHTML = `
+            <img src="${prod.imagenUrl}" alt="${prod.nombre}">
+            <h3>${prod.nombre}</h3>
+            <p class="price">$${prod.precio.toLocaleString("es-AR")}</p>
+            ${prod.precioAnterior ? `<p class="discount">Antes $${prod.precioAnterior.toLocaleString("es-AR")}</p>` : ""}
+          `;
+
+          contenedor.appendChild(card);
+        });
+      });
+  </script>
+
+</body>
+</html>
