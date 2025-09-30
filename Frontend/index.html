@@ -26,10 +26,6 @@
         </button>
       </div>
       <div class="header-actions">
-        <a href="#" class="header-action" id="link-ubicacion">
-          <span class="icon" aria-hidden="true">📍</span>
-          <span class="label">Mi ubicación</span>
-        </a>
         <a href="#" class="header-action" id="link-cuenta">
           <span class="icon" aria-hidden="true">👤</span>
           <span class="label">Mi cuenta</span>
@@ -195,55 +191,6 @@
       { id: "faq", nombre: "Preguntas frecuentes", descripcion: "Resolvé tus dudas al instante." }
     ];
 
-    // Ejemplo: cargar categorías
-    fetch("http://localhost:8080/api/categorias")
-      .then(res => res.json())
-      .then(categorias => {
-        if (Array.isArray(categorias) && categorias.length) {
-          renderCategorias(categorias);
-        } else {
-          renderCategorias(categoriasFallback);
-        }
-      })
-      .catch(() => {
-        renderCategorias(categoriasFallback);
-      });
+    
 
-    // Ejemplo: cargar productos destacados
-    fetch("http://localhost:8080/api/productos/destacados")
-      .then(res => res.json())
-      .then(productos => {
-        const contenedor = document.getElementById("product-list");
 
-        productos.forEach(prod => {
-          const card = document.createElement("article");
-          card.classList.add("product");
-
-          card.innerHTML = `
-            <img src="${prod.imagenUrl}" alt="${prod.nombre}">
-            <h3>${prod.nombre}</h3>
-            <p class="price">$${prod.precio.toLocaleString("es-AR")}</p>
-            ${prod.precioAnterior ? `<p class="discount">Antes $${prod.precioAnterior.toLocaleString("es-AR")}</p>` : ""}
-          `;
-
-          contenedor.appendChild(card);
-        });
-      });
-
-    updateCategoriesHeight();
-
-    window.addEventListener('resize', updateCategoriesHeight);
-
-    window.addEventListener('scroll', () => {
-      if (!header || !headerCategories) return;
-
-      if (window.scrollY > 80) {
-        header.classList.add('header--scrolled');
-      } else {
-        header.classList.remove('header--scrolled');
-      }
-    });
-  </script>
-
-</body>
-</html>
