@@ -16,149 +16,99 @@
   <div class="container">
 
   <!-- Header -->
-  <header class="main-header">
-    <div class="header-top">
-      <div class="logo">Vesper</div>
-      <div class="search-bar">
-        <input type="text" id="search-input" placeholder="Descubrí perfumes, marcas...">
-        <button id="search-btn" aria-label="Buscar">
-          <span class="icon">🔍</span>
+  <header class="site-header" role="banner">
+    <div class="site-header__top">
+      <a href="/" class="site-header__logo" aria-label="Vesper home">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='48' viewBox='0 0 160 48'%3E%3Crect width='160' height='48' fill='white'/%3E%3Ctext x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Merriweather, serif' font-size='32' fill='%23004aad'%3EVesper%3C/text%3E%3C/svg%3E" alt="Vesper">
+      </a>
+      <form class="site-header__search" role="search">
+        <label class="visually-hidden" for="search-input">Buscar en Vesper</label>
+        <input type="search" id="search-input" name="search" placeholder="Buscar perfumes, marcas..." aria-label="Buscar perfumes y marcas">
+        <button type="submit" aria-label="Buscar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2"></circle>
+            <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+          </svg>
         </button>
-      </div>
-      <div class="header-actions">
-        <a href="#" class="header-action" id="link-cuenta">
-          <span class="icon" aria-hidden="true">👤</span>
-          <span class="label">Mi cuenta</span>
+      </form>
+      <div class="site-header__actions">
+        <a href="#" class="site-header__action" id="link-cuenta">
+          <span class="site-header__action-icon" aria-hidden="true">👤</span>
+          <span class="site-header__action-label">Mi cuenta</span>
         </a>
-        <a href="#" class="header-action" id="link-carrito">
-          <span class="icon" aria-hidden="true">🛒</span>
-          <span class="label">Carrito (<span id="cart-count">0</span>)</span>
+        <a href="#" class="site-header__action" id="link-carrito">
+          <span class="site-header__action-icon" aria-hidden="true">🛒</span>
+          <span class="site-header__action-label">Carrito (<span id="cart-count">0</span>)</span>
         </a>
       </div>
     </div>
 
-    <nav class="secondary-nav" aria-label="Navegación secundaria">
-      <div class="secondary-nav__inner">
-        <button class="secondary-nav__toggle" type="button" aria-expanded="false" aria-controls="secondary-nav-menu">
-          <span class="secondary-nav__toggle-icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect y="4" width="24" height="2.5" rx="1" fill="currentColor" />
-              <rect y="11" width="24" height="2.5" rx="1" fill="currentColor" />
-              <rect y="18" width="24" height="2.5" rx="1" fill="currentColor" />
-            </svg>
-          </span>
-          <span class="secondary-nav__toggle-label">Categorías</span>
-        </button>
-
-        <ul class="secondary-nav__menu" id="secondary-nav-menu">
-          <li class="nav-item nav-item--has-dropdown" data-menu="perfumes">
-            <button class="nav-link" type="button" aria-haspopup="true" aria-expanded="false">
-              Perfumes
-              <span class="nav-link__icon" aria-hidden="true">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </span>
-            </button>
-            <div class="dropdown-menu" role="menu">
-              <ul class="dropdown-list">
-                <li><a href="/productos?categoria=perfumes-masculinos" class="dropdown-link">Masculinas</a></li>
-                <li><a href="/productos?categoria=perfumes-femeninos" class="dropdown-link">Femeninas</a></li>
+    <nav class="site-header__bottom" aria-label="Categorías principales">
+      <ul class="main-nav">
+        <li class="main-nav__item main-nav__item--has-dropdown" data-dropdown="perfumes">
+          <button class="main-nav__link" type="button" aria-haspopup="true" aria-expanded="false">
+            Perfumes
+            <span class="main-nav__icon" aria-hidden="true">▾</span>
+          </button>
+          <div class="main-nav__dropdown" role="menu">
+            <ul class="main-nav__list">
+              <li><a href="/productos?categoria=perfumes-masculinas" class="main-nav__dropdown-link" role="menuitem">Masculinas</a></li>
+              <li><a href="/productos?categoria=perfumes-femeninas" class="main-nav__dropdown-link" role="menuitem">Femeninas</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="main-nav__item">
+          <a href="/productos?categoria=vapes" class="main-nav__link main-nav__link--direct">Vapes</a>
+        </li>
+        <li class="main-nav__item main-nav__item--has-dropdown" data-dropdown="decants">
+          <button class="main-nav__link" type="button" aria-haspopup="true" aria-expanded="false">
+            Decants
+            <span class="main-nav__icon" aria-hidden="true">▾</span>
+          </button>
+          <div class="main-nav__dropdown" role="menu">
+            <ul class="main-nav__list">
+              <li><a href="/productos?categoria=decants-masculinas" class="main-nav__dropdown-link" role="menuitem">Masculinas</a></li>
+              <li><a href="/productos?categoria=decants-femeninas" class="main-nav__dropdown-link" role="menuitem">Femeninas</a></li>
+              <li><a href="/productos?categoria=decants-combos" class="main-nav__dropdown-link" role="menuitem">Combos</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="main-nav__item main-nav__item--has-dropdown" data-dropdown="marcas">
+          <button class="main-nav__link" type="button" aria-haspopup="true" aria-expanded="false">
+            Marcas
+            <span class="main-nav__icon" aria-hidden="true">▾</span>
+          </button>
+          <div class="main-nav__dropdown main-nav__dropdown--columns" role="menu">
+            <div class="main-nav__column">
+              <h4 class="main-nav__column-title">Perfumes</h4>
+              <ul class="main-nav__list" data-brand-list="perfumes" aria-label="Marcas de perfumes">
+                <!-- JS insertará marcas -->
               </ul>
             </div>
-          </li>
-
-          <li class="nav-item">
-            <a href="#" class="nav-link nav-link--direct" data-href="/productos?categoria=vapes">
-              Vapes
-            </a>
-          </li>
-
-          <li class="nav-item nav-item--has-dropdown" data-menu="decants">
-            <button class="nav-link" type="button" aria-haspopup="true" aria-expanded="false">
-              Decants
-              <span class="nav-link__icon" aria-hidden="true">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </span>
-            </button>
-            <div class="dropdown-menu" role="menu">
-              <ul class="dropdown-list">
-                <li><a href="/productos?categoria=decants-masculinos" class="dropdown-link">Masculinas</a></li>
-                <li><a href="/productos?categoria=decants-femeninos" class="dropdown-link">Femeninas</a></li>
-                <li><a href="/productos?categoria=decants-combos" class="dropdown-link">Combos</a></li>
+            <div class="main-nav__column">
+              <h4 class="main-nav__column-title">Vapes</h4>
+              <ul class="main-nav__list" data-brand-list="vapes" aria-label="Marcas de vapes">
+                <!-- JS insertará marcas -->
               </ul>
             </div>
-          </li>
-
-          <li class="nav-item nav-item--has-dropdown" data-menu="marcas">
-            <button class="nav-link" type="button" aria-haspopup="true" aria-expanded="false">
-              Marcas
-              <span class="nav-link__icon" aria-hidden="true">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </span>
-            </button>
-            <div class="dropdown-menu dropdown-menu--grid" role="menu">
-              <div class="dropdown-section">
-                <h4 class="dropdown-section__title">Perfumes</h4>
-                <ul class="dropdown-list" data-brand-list="perfumes" aria-label="Marcas de perfumes">
-                  <!-- JS insertará marcas -->
-                </ul>
-              </div>
-              <div class="dropdown-section">
-                <h4 class="dropdown-section__title">Vapes</h4>
-                <ul class="dropdown-list" data-brand-list="vapes" aria-label="Marcas de vapes">
-                  <!-- JS insertará marcas -->
-                </ul>
-              </div>
-            </div>
-          </li>
-
-          <li class="nav-item">
-            <a href="#" class="nav-link nav-link--direct" data-href="/productos?categoria=sale">
-              SALE
-            </a>
-          </li>
-
-          <li class="nav-item nav-item--has-dropdown" data-menu="faq">
-            <button class="nav-link" type="button" aria-haspopup="true" aria-expanded="false">
-              Preguntas Frecuentes
-              <span class="nav-link__icon" aria-hidden="true">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </span>
-            </button>
-            <div class="dropdown-menu" role="menu">
-              <ul class="dropdown-list">
-                <li>
-                  <button class="dropdown-link dropdown-link--faq" type="button">
-                    ¿Cuánto tarda el envío?
-                  </button>
-                </li>
-                <li>
-                  <button class="dropdown-link dropdown-link--faq" type="button">
-                    ¿Qué es un decant?
-                  </button>
-                </li>
-                <li>
-                  <button class="dropdown-link dropdown-link--faq" type="button">
-                    ¿Puedo pagar contra entrega?
-                  </button>
-                </li>
-              </ul>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </nav>
-
-    <nav class="header-categories">
-      <ul id="menu-categorias">
-        <!-- JS insertará categorías desde la API -->
+          </div>
+        </li>
+        <li class="main-nav__item">
+          <a href="/productos?categoria=sale" class="main-nav__link main-nav__link--direct">SALE</a>
+        </li>
+        <li class="main-nav__item main-nav__item--has-dropdown" data-dropdown="faq">
+          <button class="main-nav__link" type="button" aria-haspopup="true" aria-expanded="false">
+            Preguntas Frecuentes
+            <span class="main-nav__icon" aria-hidden="true">▾</span>
+          </button>
+          <div class="main-nav__dropdown" role="menu">
+            <ul class="main-nav__list">
+              <li><a href="#faq-envio" class="main-nav__dropdown-link" role="menuitem">¿Cuánto tarda el envío?</a></li>
+              <li><a href="#faq-decant" class="main-nav__dropdown-link" role="menuitem">¿Qué es un decant?</a></li>
+              <li><a href="#faq-pago" class="main-nav__dropdown-link" role="menuitem">¿Puedo pagar contra entrega?</a></li>
+            </ul>
+          </div>
+        </li>
       </ul>
     </nav>
   </header>
@@ -257,50 +207,6 @@
 
   <!-- Script para cargar dinámicamente datos desde API -->
   <script>
-    const header = document.querySelector('.main-header');
-    const headerCategories = document.querySelector('.header-categories');
-
-    const updateCategoriesHeight = () => {
-      if (headerCategories) {
-        headerCategories.style.setProperty('--categories-height', `${headerCategories.scrollHeight}px`);
-      }
-    };
-
-    const renderCategorias = (categorias = []) => {
-      const menu = document.getElementById("menu-categorias");
-      const footer = document.getElementById("footer-categorias");
-      const catList = document.getElementById("category-list");
-
-      if (!menu || !footer || !catList) {
-        updateCategoriesHeight();
-        return;
-      }
-
-      menu.innerHTML = "";
-      footer.innerHTML = "";
-      catList.innerHTML = "";
-
-      categorias.forEach(cat => {
-        const { id, nombre, descripcion } = cat;
-        const link = id ? `/categoria/${id}` : "#";
-
-        const li = document.createElement("li");
-        li.innerHTML = `<a href="${link}">${nombre}</a>`;
-        menu.appendChild(li);
-
-        const liFooter = document.createElement("li");
-        liFooter.innerHTML = `<a href="${link}">${nombre}</a>`;
-        footer.appendChild(liFooter);
-
-        const div = document.createElement("div");
-        div.classList.add("category");
-        div.innerHTML = `<h3>${nombre}</h3><p>${descripcion || ""}</p>`;
-        catList.appendChild(div);
-      });
-
-      updateCategoriesHeight();
-    };
-
     const categoriasFallback = [
       { id: "fragancias", nombre: "Fragancias", descripcion: "Aromas para cada estilo." },
       { id: "descuentos", nombre: "Descuentos", descripcion: "Promociones imperdibles de la semana." },
@@ -310,8 +216,36 @@
       { id: "faq", nombre: "Preguntas frecuentes", descripcion: "Resolvé tus dudas al instante." }
     ];
 
-    
+    const renderCategorias = (categorias = []) => {
+      const footer = document.getElementById('footer-categorias');
+      const catList = document.getElementById('category-list');
 
+      if (footer) {
+        footer.innerHTML = '';
+      }
+
+      if (catList) {
+        catList.innerHTML = '';
+      }
+
+      categorias.forEach(cat => {
+        const { id, nombre, descripcion } = cat;
+        const link = id ? `/categoria/${id}` : '#';
+
+        if (footer) {
+          const liFooter = document.createElement('li');
+          liFooter.innerHTML = `<a href="${link}">${nombre}</a>`;
+          footer.appendChild(liFooter);
+        }
+
+        if (catList) {
+          const div = document.createElement('div');
+          div.classList.add('category');
+          div.innerHTML = `<h3>${nombre}</h3><p>${descripcion || ''}</p>`;
+          catList.appendChild(div);
+        }
+      });
+    };
 
     const marcasPlaceholder = {
       perfumes: ["Dior", "Chanel", "Yves Saint Laurent", "Tom Ford", "Carolina Herrera"],
@@ -344,61 +278,58 @@
       });
     };
 
-    const initSecondaryNavigation = () => {
-      const secondaryNav = document.querySelector('.secondary-nav');
-      if (!secondaryNav) {
+    const initDropdownNavigation = () => {
+      const dropdownItems = document.querySelectorAll('.main-nav__item--has-dropdown');
+      if (!dropdownItems.length) {
         return;
       }
 
-      const toggleButton = secondaryNav.querySelector('.secondary-nav__toggle');
-      const menu = secondaryNav.querySelector('.secondary-nav__menu');
-      const navItems = secondaryNav.querySelectorAll('.nav-item--has-dropdown');
-      const directLinks = secondaryNav.querySelectorAll('.nav-link--direct');
-
-      const toggleMenuVisibility = () => {
-        if (!toggleButton || !menu) {
-          return;
+      const closeItem = item => {
+        const trigger = item.querySelector('.main-nav__link');
+        if (trigger) {
+          trigger.setAttribute('aria-expanded', 'false');
         }
-
-        const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
-        toggleButton.setAttribute('aria-expanded', String(!isExpanded));
-        menu.classList.toggle('secondary-nav__menu--open', !isExpanded);
+        item.classList.remove('is-open');
       };
 
-      if (toggleButton) {
-        toggleButton.addEventListener('click', toggleMenuVisibility);
-      }
+      const openItem = item => {
+        const trigger = item.querySelector('.main-nav__link');
+        if (trigger) {
+          trigger.setAttribute('aria-expanded', 'true');
+        }
+        item.classList.add('is-open');
+      };
 
-      navItems.forEach(item => {
-        const trigger = item.querySelector('.nav-link');
-        if (!trigger) {
+      const closeAllExcept = current => {
+        dropdownItems.forEach(item => {
+          if (item !== current) {
+            closeItem(item);
+          }
+        });
+      };
+
+      dropdownItems.forEach(item => {
+        const trigger = item.querySelector('.main-nav__link');
+        const dropdown = item.querySelector('.main-nav__dropdown');
+        if (!trigger || !dropdown) {
           return;
         }
 
+        trigger.setAttribute('aria-expanded', 'false');
+
         const openDropdown = () => {
-          item.classList.add('is-open');
-          trigger.setAttribute('aria-expanded', 'true');
+          closeAllExcept(item);
+          openItem(item);
         };
 
         const closeDropdown = () => {
-          item.classList.remove('is-open');
-          trigger.setAttribute('aria-expanded', 'false');
+          closeItem(item);
         };
 
-        item.addEventListener('mouseenter', () => {
-          if (window.innerWidth > 900) {
-            openDropdown();
-          }
-        });
-
-        item.addEventListener('mouseleave', () => {
-          if (window.innerWidth > 900) {
-            closeDropdown();
-          }
-        });
+        item.addEventListener('mouseenter', openDropdown);
+        item.addEventListener('mouseleave', closeDropdown);
 
         trigger.addEventListener('focus', openDropdown);
-
         item.addEventListener('focusout', event => {
           if (!item.contains(event.relatedTarget)) {
             closeDropdown();
@@ -406,75 +337,45 @@
         });
 
         trigger.addEventListener('click', event => {
-          if (window.innerWidth <= 900) {
+          event.preventDefault();
+          const willOpen = !item.classList.contains('is-open');
+          if (willOpen) {
+            closeAllExcept(item);
+            openItem(item);
+          } else {
+            closeDropdown();
+          }
+        });
+
+        trigger.addEventListener('keydown', event => {
+          if (event.key === 'Escape') {
+            closeDropdown();
+            trigger.blur();
+          }
+
+          if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             const willOpen = !item.classList.contains('is-open');
-            navItems.forEach(navItem => {
-              if (navItem !== item) {
-                navItem.classList.remove('is-open');
-                const navTrigger = navItem.querySelector('.nav-link');
-                if (navTrigger) {
-                  navTrigger.setAttribute('aria-expanded', 'false');
-                }
-              }
-            });
-            item.classList.toggle('is-open', willOpen);
-            trigger.setAttribute('aria-expanded', String(willOpen));
-          }
-        });
-      });
-
-      directLinks.forEach(link => {
-        link.addEventListener('click', event => {
-          event.preventDefault();
-          const target = link.getAttribute('data-href');
-          if (target) {
-            window.location.href = target;
-          }
-        });
-      });
-
-      let lastScrollY = window.scrollY;
-
-      const handleScroll = () => {
-        const currentScroll = window.scrollY;
-
-        if (currentScroll > lastScrollY && currentScroll > 120) {
-          secondaryNav.classList.add('secondary-nav--hidden');
-        } else {
-          secondaryNav.classList.remove('secondary-nav--hidden');
-        }
-
-        if (header) {
-          header.classList.toggle('header--scrolled', currentScroll > 40);
-        }
-
-        lastScrollY = currentScroll;
-      };
-
-      window.addEventListener('scroll', handleScroll, { passive: true });
-
-      window.addEventListener('resize', () => {
-        if (window.innerWidth > 900 && menu) {
-          menu.classList.remove('secondary-nav__menu--open');
-          if (toggleButton) {
-            toggleButton.setAttribute('aria-expanded', 'false');
-          }
-        }
-
-        navItems.forEach(item => {
-          const trigger = item.querySelector('.nav-link');
-          if (window.innerWidth > 900) {
-            item.classList.remove('is-open');
-            if (trigger) {
-              trigger.setAttribute('aria-expanded', 'false');
+            if (willOpen) {
+              closeAllExcept(item);
+              openItem(item);
+            } else {
+              closeDropdown();
             }
           }
         });
+
+        dropdown.addEventListener('keydown', event => {
+          if (event.key === 'Escape') {
+            closeDropdown();
+            trigger.focus();
+          }
+        });
       });
 
-      window.dispatchEvent(new Event('scroll'));
-      updateCategoriesHeight();
+      window.addEventListener('resize', () => {
+        dropdownItems.forEach(closeItem);
+      });
     };
 
     const simulateBrandsFetch = () => {
@@ -485,9 +386,34 @@
       });
     };
 
+    const initHeaderScrollBehavior = () => {
+      const headerBottom = document.querySelector('.site-header__bottom');
+      if (!headerBottom) {
+        return;
+      }
+
+      let lastScrollY = window.scrollY;
+
+      const handleScroll = () => {
+        const currentScroll = window.scrollY;
+
+        if (currentScroll > lastScrollY && currentScroll > 120) {
+          headerBottom.classList.add('site-header__bottom--collapsed');
+        } else {
+          headerBottom.classList.remove('site-header__bottom--collapsed');
+        }
+
+        lastScrollY = currentScroll;
+      };
+
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      handleScroll();
+    };
+
     document.addEventListener('DOMContentLoaded', async () => {
       renderCategorias(categoriasFallback);
-      initSecondaryNavigation();
+      initDropdownNavigation();
+      initHeaderScrollBehavior();
       populateBrandDropdown(await simulateBrandsFetch());
     });
   </script>
