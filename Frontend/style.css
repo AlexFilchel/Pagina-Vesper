@@ -42,14 +42,11 @@ body {
   top: 0;
   z-index: 1000;
   background: #fff;
-  border-top: 2px solid #004aad;
-  border-bottom: 1px solid #cdcdcd;
   padding: 0 0 5px;
-  transition: box-shadow 0.3s ease;
 }
 
 .main-header.header--scrolled {
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  box-shadow: none;
 }
 
 .header-top {
@@ -130,7 +127,6 @@ body {
 }
 
 .header-categories {
-  border-top: 1px solid #e6e6e6;
   overflow: hidden;
   max-height: var(--categories-height, 60px);
   opacity: 1;
