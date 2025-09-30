@@ -37,6 +37,125 @@
       </div>
     </div>
 
+    <nav class="secondary-nav" aria-label="Navegación secundaria">
+      <div class="secondary-nav__inner">
+        <button class="secondary-nav__toggle" type="button" aria-expanded="false" aria-controls="secondary-nav-menu">
+          <span class="secondary-nav__toggle-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect y="4" width="24" height="2.5" rx="1" fill="currentColor" />
+              <rect y="11" width="24" height="2.5" rx="1" fill="currentColor" />
+              <rect y="18" width="24" height="2.5" rx="1" fill="currentColor" />
+            </svg>
+          </span>
+          <span class="secondary-nav__toggle-label">Categorías</span>
+        </button>
+
+        <ul class="secondary-nav__menu" id="secondary-nav-menu">
+          <li class="nav-item nav-item--has-dropdown" data-menu="perfumes">
+            <button class="nav-link" type="button" aria-haspopup="true" aria-expanded="false">
+              Perfumes
+              <span class="nav-link__icon" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+            </button>
+            <div class="dropdown-menu" role="menu">
+              <ul class="dropdown-list">
+                <li><a href="/productos?categoria=perfumes-masculinos" class="dropdown-link">Masculinas</a></li>
+                <li><a href="/productos?categoria=perfumes-femeninos" class="dropdown-link">Femeninas</a></li>
+              </ul>
+            </div>
+          </li>
+
+          <li class="nav-item">
+            <a href="#" class="nav-link nav-link--direct" data-href="/productos?categoria=vapes">
+              Vapes
+            </a>
+          </li>
+
+          <li class="nav-item nav-item--has-dropdown" data-menu="decants">
+            <button class="nav-link" type="button" aria-haspopup="true" aria-expanded="false">
+              Decants
+              <span class="nav-link__icon" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+            </button>
+            <div class="dropdown-menu" role="menu">
+              <ul class="dropdown-list">
+                <li><a href="/productos?categoria=decants-masculinos" class="dropdown-link">Masculinas</a></li>
+                <li><a href="/productos?categoria=decants-femeninos" class="dropdown-link">Femeninas</a></li>
+                <li><a href="/productos?categoria=decants-combos" class="dropdown-link">Combos</a></li>
+              </ul>
+            </div>
+          </li>
+
+          <li class="nav-item nav-item--has-dropdown" data-menu="marcas">
+            <button class="nav-link" type="button" aria-haspopup="true" aria-expanded="false">
+              Marcas
+              <span class="nav-link__icon" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+            </button>
+            <div class="dropdown-menu dropdown-menu--grid" role="menu">
+              <div class="dropdown-section">
+                <h4 class="dropdown-section__title">Perfumes</h4>
+                <ul class="dropdown-list" data-brand-list="perfumes" aria-label="Marcas de perfumes">
+                  <!-- JS insertará marcas -->
+                </ul>
+              </div>
+              <div class="dropdown-section">
+                <h4 class="dropdown-section__title">Vapes</h4>
+                <ul class="dropdown-list" data-brand-list="vapes" aria-label="Marcas de vapes">
+                  <!-- JS insertará marcas -->
+                </ul>
+              </div>
+            </div>
+          </li>
+
+          <li class="nav-item">
+            <a href="#" class="nav-link nav-link--direct" data-href="/productos?categoria=sale">
+              SALE
+            </a>
+          </li>
+
+          <li class="nav-item nav-item--has-dropdown" data-menu="faq">
+            <button class="nav-link" type="button" aria-haspopup="true" aria-expanded="false">
+              Preguntas Frecuentes
+              <span class="nav-link__icon" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+            </button>
+            <div class="dropdown-menu" role="menu">
+              <ul class="dropdown-list">
+                <li>
+                  <button class="dropdown-link dropdown-link--faq" type="button">
+                    ¿Cuánto tarda el envío?
+                  </button>
+                </li>
+                <li>
+                  <button class="dropdown-link dropdown-link--faq" type="button">
+                    ¿Qué es un decant?
+                  </button>
+                </li>
+                <li>
+                  <button class="dropdown-link dropdown-link--faq" type="button">
+                    ¿Puedo pagar contra entrega?
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
     <nav class="header-categories">
       <ul id="menu-categorias">
         <!-- JS insertará categorías desde la API -->
@@ -194,3 +313,183 @@
     
 
 
+    const marcasPlaceholder = {
+      perfumes: ["Dior", "Chanel", "Yves Saint Laurent", "Tom Ford", "Carolina Herrera"],
+      vapes: ["Smok", "Vaporesso", "GeekVape", "Voopoo", "UWELL"]
+    };
+
+    const populateBrandDropdown = (brands = {}) => {
+      const perfumeList = document.querySelector('[data-brand-list="perfumes"]');
+      const vapeList = document.querySelector('[data-brand-list="vapes"]');
+
+      if (!perfumeList || !vapeList) {
+        return;
+      }
+
+      const createBrandItem = (brand, type) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a class="dropdown-link" href="/productos?marca=${brand.toLowerCase().replace(/\s+/g, '-')}&segmento=${type}">${brand}</a>`;
+        return li;
+      };
+
+      perfumeList.innerHTML = "";
+      vapeList.innerHTML = "";
+
+      (brands.perfumes || []).forEach(brand => {
+        perfumeList.appendChild(createBrandItem(brand, 'perfumes'));
+      });
+
+      (brands.vapes || []).forEach(brand => {
+        vapeList.appendChild(createBrandItem(brand, 'vapes'));
+      });
+    };
+
+    const initSecondaryNavigation = () => {
+      const secondaryNav = document.querySelector('.secondary-nav');
+      if (!secondaryNav) {
+        return;
+      }
+
+      const toggleButton = secondaryNav.querySelector('.secondary-nav__toggle');
+      const menu = secondaryNav.querySelector('.secondary-nav__menu');
+      const navItems = secondaryNav.querySelectorAll('.nav-item--has-dropdown');
+      const directLinks = secondaryNav.querySelectorAll('.nav-link--direct');
+
+      const toggleMenuVisibility = () => {
+        if (!toggleButton || !menu) {
+          return;
+        }
+
+        const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
+        toggleButton.setAttribute('aria-expanded', String(!isExpanded));
+        menu.classList.toggle('secondary-nav__menu--open', !isExpanded);
+      };
+
+      if (toggleButton) {
+        toggleButton.addEventListener('click', toggleMenuVisibility);
+      }
+
+      navItems.forEach(item => {
+        const trigger = item.querySelector('.nav-link');
+        if (!trigger) {
+          return;
+        }
+
+        const openDropdown = () => {
+          item.classList.add('is-open');
+          trigger.setAttribute('aria-expanded', 'true');
+        };
+
+        const closeDropdown = () => {
+          item.classList.remove('is-open');
+          trigger.setAttribute('aria-expanded', 'false');
+        };
+
+        item.addEventListener('mouseenter', () => {
+          if (window.innerWidth > 900) {
+            openDropdown();
+          }
+        });
+
+        item.addEventListener('mouseleave', () => {
+          if (window.innerWidth > 900) {
+            closeDropdown();
+          }
+        });
+
+        trigger.addEventListener('focus', openDropdown);
+
+        item.addEventListener('focusout', event => {
+          if (!item.contains(event.relatedTarget)) {
+            closeDropdown();
+          }
+        });
+
+        trigger.addEventListener('click', event => {
+          if (window.innerWidth <= 900) {
+            event.preventDefault();
+            const willOpen = !item.classList.contains('is-open');
+            navItems.forEach(navItem => {
+              if (navItem !== item) {
+                navItem.classList.remove('is-open');
+                const navTrigger = navItem.querySelector('.nav-link');
+                if (navTrigger) {
+                  navTrigger.setAttribute('aria-expanded', 'false');
+                }
+              }
+            });
+            item.classList.toggle('is-open', willOpen);
+            trigger.setAttribute('aria-expanded', String(willOpen));
+          }
+        });
+      });
+
+      directLinks.forEach(link => {
+        link.addEventListener('click', event => {
+          event.preventDefault();
+          const target = link.getAttribute('data-href');
+          if (target) {
+            window.location.href = target;
+          }
+        });
+      });
+
+      let lastScrollY = window.scrollY;
+
+      const handleScroll = () => {
+        const currentScroll = window.scrollY;
+
+        if (currentScroll > lastScrollY && currentScroll > 120) {
+          secondaryNav.classList.add('secondary-nav--hidden');
+        } else {
+          secondaryNav.classList.remove('secondary-nav--hidden');
+        }
+
+        if (header) {
+          header.classList.toggle('header--scrolled', currentScroll > 40);
+        }
+
+        lastScrollY = currentScroll;
+      };
+
+      window.addEventListener('scroll', handleScroll, { passive: true });
+
+      window.addEventListener('resize', () => {
+        if (window.innerWidth > 900 && menu) {
+          menu.classList.remove('secondary-nav__menu--open');
+          if (toggleButton) {
+            toggleButton.setAttribute('aria-expanded', 'false');
+          }
+        }
+
+        navItems.forEach(item => {
+          const trigger = item.querySelector('.nav-link');
+          if (window.innerWidth > 900) {
+            item.classList.remove('is-open');
+            if (trigger) {
+              trigger.setAttribute('aria-expanded', 'false');
+            }
+          }
+        });
+      });
+
+      window.dispatchEvent(new Event('scroll'));
+      updateCategoriesHeight();
+    };
+
+    const simulateBrandsFetch = () => {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve(marcasPlaceholder);
+        }, 350);
+      });
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      renderCategorias(categoriasFallback);
+      initSecondaryNavigation();
+      populateBrandDropdown(await simulateBrandsFetch());
+    });
+  </script>
+</body>
+</html>
