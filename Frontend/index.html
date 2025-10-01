@@ -3,419 +3,327 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vesper - Tienda Online</title>
-  <link rel="stylesheet" href="style.css"> <!-- Aquí enlazas tu CSS -->
+  <title>Vesper - Tienda Online de Fragancias y Tecnología</title>
+  <meta name="description" content="Vesper: perfumes, vapes y tecnología premium. Envíos gratis + cuotas sin interés. Tu tienda online de confianza.">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Open Graph -->
+  <meta property="og:title" content="Vesper - Tienda Online">
+  <meta property="og:description" content="Perfumes, vapes y tecnología premium con envíos gratis en compras superiores a $50.000.">
+  <meta property="og:image" content="/img/og-image.jpg">
+  <meta property="og:type" content="website">
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="../Frontend/css/style.css">
 </head>
 <body>
 
   <!-- Banner superior -->
-  <div class="top-banner">
-    <p>💳 6 cuotas sin interés a partir de $30.000 &nbsp; 🚚 Envío gratis en compras superiores a $50.000 &nbsp; 💰 20% OFF pagando por transferencia</p>
+ <aside class="top-banner" aria-label="Promociones vigentes">
+  <div class="banner-content">
+    <p>
+      💳 6 cuotas sin interés a partir de $30.000 &nbsp;&nbsp;&nbsp; 
+      🚚 Envío gratis en compras superiores a $50.000 &nbsp;&nbsp;&nbsp; 
+      💰 20% OFF pagando por transferencia
+    </p>
   </div>
+</aside>
 
+
+<!-- Header -->
+<header class="site-header" role="banner">
+  <div class="container site-header__top">
+    <a href="index.html" class="site-header__logo" aria-label="Vesper - Página de inicio">
+      <img src="img/logo_vesper.jpg" alt="Logo Vesper" class="img-fluid logo">
+    </a>
+    
+    <form class="site-header__search" role="search" aria-label="Buscador de productos">
+      <label class="visually-hidden" for="search-input">Buscar en Vesper</label>
+      <button type="submit" aria-label="Buscar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+      <input type="search" id="search-input" name="search" placeholder="Buscar perfumes, marcas..." aria-label="Buscar perfumes y marcas">
+    </form>
+
+    
+    <div class="site-header__actions">
+
+  <!-- Menú desplegable Mi cuenta -->
+  <div class="site-header__action site-header__action--has-dropdown">
+  <button class="site-header__action-btn" type="button">
+    <span class="site-header__action-icon"><i class="fa-solid fa-user"></i></span>
+    <span class="site-header__action-label">Mi cuenta</span>
+  </button>
+  <div class="site-header__dropdown">
+    <ul class="site-header__dropdown-list">
+      <li><a href="#" id="btn-login">Iniciar sesión</a></li>
+      <li><a href="#" id="btn-register">Crear cuenta</a></li>
+    </ul>
+  </div>
+</div>
+
+<a href="#" class="site-header__action" id="link-carrito">
+  <span class="site-header__action-icon"><i class="fa-solid fa-cart-shopping"></i></span>
+  <span class="site-header__action-label">Carrito (<span id="cart-count">0</span>)</span>
+</a>
+
+</header>
+
+
+<!-- Navegación principal -->
+<nav class="site-header__bottom" aria-label="Categorías principales">
   <div class="container">
+    <ul class="main-nav">
 
-  <!-- Header -->
-  <header class="site-header" role="banner">
-    <div class="site-header__top">
-      <a href="/" class="site-header__logo" aria-label="Vesper home">
-        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='48' viewBox='0 0 160 48'%3E%3Crect width='160' height='48' fill='white'/%3E%3Ctext x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Merriweather, serif' font-size='32' fill='%23004aad'%3EVesper%3C/text%3E%3C/svg%3E" alt="Vesper">
-      </a>
-      <form class="site-header__search" role="search">
-        <label class="visually-hidden" for="search-input">Buscar en Vesper</label>
-        <input type="search" id="search-input" name="search" placeholder="Buscar perfumes, marcas..." aria-label="Buscar perfumes y marcas">
-        <button type="submit" aria-label="Buscar">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2"></circle>
-            <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-          </svg>
-        </button>
-      </form>
-      <div class="site-header__actions">
-        <a href="#" class="site-header__action" id="link-cuenta">
-          <span class="site-header__action-icon" aria-hidden="true">👤</span>
-          <span class="site-header__action-label">Mi cuenta</span>
+      <!-- Perfumes -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Perfumes <span class="main-nav__icon" aria-hidden="true">▾</span>
         </a>
-        <a href="#" class="site-header__action" id="link-carrito">
-          <span class="site-header__action-icon" aria-hidden="true">🛒</span>
-          <span class="site-header__action-label">Carrito (<span id="cart-count">0</span>)</span>
-        </a>
-      </div>
-    </div>
+        <div id="submenu-perfumes" class="main-nav__dropdown" role="menu">
+          <ul class="main-nav__list">
+            <li><a href="productos.html" role="menuitem">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem">Femeninos</a></li>
+          </ul>
+        </div>
+      </li>
 
-    <nav class="site-header__bottom" aria-label="Categorías principales">
-      <ul class="main-nav">
-        <li class="main-nav__item main-nav__item--has-dropdown" data-dropdown="perfumes">
-          <button class="main-nav__link" type="button" aria-haspopup="true" aria-expanded="false">
-            Perfumes
-            <span class="main-nav__icon" aria-hidden="true">▾</span>
-          </button>
-          <div class="main-nav__dropdown" role="menu">
-            <ul class="main-nav__list">
-              <li><a href="/productos?categoria=perfumes-masculinas" class="main-nav__dropdown-link" role="menuitem">Masculinas</a></li>
-              <li><a href="/productos?categoria=perfumes-femeninas" class="main-nav__dropdown-link" role="menuitem">Femeninas</a></li>
-            </ul>
+      <!-- Vapes -->
+      <li class="main-nav__item">
+        <a href="/productos?categoria=vapes" class="main-nav__link main-nav__link--direct">Vapes</a>
+      </li>
+
+      <!-- Decants -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Decants <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-decants" class="main-nav__dropdown" role="menu">
+          <ul class="main-nav__list">
+            <li><a href="productos.html" role="menuitem">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem">Femeninos</a></li>
+            <li><a href="productos.html" role="menuitem">Combos</a></li>
+          </ul>
+        </div>
+      </li>
+
+      <!-- Marcas -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Marcas <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-marcas" class="main-nav__dropdown main-nav__dropdown--columns" role="menu">
+          <div class="main-nav__column">
+            <h4 class="main-nav__column-title">Perfumes</h4>
+            <ul class="main-nav__list" data-brand-list="perfumes" aria-label="Marcas de perfumes"></ul>
           </div>
-        </li>
-        <li class="main-nav__item">
-          <a href="/productos?categoria=vapes" class="main-nav__link main-nav__link--direct">Vapes</a>
-        </li>
-        <li class="main-nav__item main-nav__item--has-dropdown" data-dropdown="decants">
-          <button class="main-nav__link" type="button" aria-haspopup="true" aria-expanded="false">
-            Decants
-            <span class="main-nav__icon" aria-hidden="true">▾</span>
-          </button>
-          <div class="main-nav__dropdown" role="menu">
-            <ul class="main-nav__list">
-              <li><a href="/productos?categoria=decants-masculinas" class="main-nav__dropdown-link" role="menuitem">Masculinas</a></li>
-              <li><a href="/productos?categoria=decants-femeninas" class="main-nav__dropdown-link" role="menuitem">Femeninas</a></li>
-              <li><a href="/productos?categoria=decants-combos" class="main-nav__dropdown-link" role="menuitem">Combos</a></li>
-            </ul>
+          <div class="main-nav__column">
+            <h4 class="main-nav__column-title">Vapes</h4>
+            <ul class="main-nav__list" data-brand-list="vapes" aria-label="Marcas de vapes"></ul>
           </div>
-        </li>
-        <li class="main-nav__item main-nav__item--has-dropdown" data-dropdown="marcas">
-          <button class="main-nav__link" type="button" aria-haspopup="true" aria-expanded="false">
-            Marcas
-            <span class="main-nav__icon" aria-hidden="true">▾</span>
-          </button>
-          <div class="main-nav__dropdown main-nav__dropdown--columns" role="menu">
-            <div class="main-nav__column">
-              <h4 class="main-nav__column-title">Perfumes</h4>
-              <ul class="main-nav__list" data-brand-list="perfumes" aria-label="Marcas de perfumes">
-                <!-- JS insertará marcas -->
-              </ul>
-            </div>
-            <div class="main-nav__column">
-              <h4 class="main-nav__column-title">Vapes</h4>
-              <ul class="main-nav__list" data-brand-list="vapes" aria-label="Marcas de vapes">
-                <!-- JS insertará marcas -->
-              </ul>
-            </div>
-          </div>
-        </li>
-        <li class="main-nav__item">
-          <a href="/productos?categoria=sale" class="main-nav__link main-nav__link--direct">SALE</a>
-        </li>
-        <li class="main-nav__item main-nav__item--has-dropdown" data-dropdown="faq">
-          <button class="main-nav__link" type="button" aria-haspopup="true" aria-expanded="false">
-            Preguntas Frecuentes
-            <span class="main-nav__icon" aria-hidden="true">▾</span>
-          </button>
-          <div class="main-nav__dropdown" role="menu">
-            <ul class="main-nav__list">
-              <li><a href="#faq-envio" class="main-nav__dropdown-link" role="menuitem">¿Cuánto tarda el envío?</a></li>
-              <li><a href="#faq-decant" class="main-nav__dropdown-link" role="menuitem">¿Qué es un decant?</a></li>
-              <li><a href="#faq-pago" class="main-nav__dropdown-link" role="menuitem">¿Puedo pagar contra entrega?</a></li>
-            </ul>
-          </div>
-        </li>
-      </ul>
-    </nav>
+        </div>
+      </li>
+
+      <!-- Sale -->
+      <li class="main-nav__item">
+        <a href="/productos?categoria=sale" class="main-nav__link main-nav__link--direct">SALE</a>
+      </li>
+
+      <!-- Preguntas Frecuentes -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Preguntas Frecuentes <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-faq" class="main-nav__dropdown" role="menu">
+          <ul class="main-nav__list">
+            <li><a href="#faq-envio" role="menuitem">¿Cuánto tarda el envío?</a></li>
+            <li><a href="#faq-decant" role="menuitem">¿Qué es un decant?</a></li>
+            <li><a href="#faq-pago" role="menuitem">¿Puedo pagar contra entrega?</a></li>
+          </ul>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+</nav>
+
+
   </header>
 
-  <!-- Hero / Carrusel -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1 id="hero-title">TECNOLOGÍA PREMIUM</h1>
-      <p id="hero-subtitle">Los últimos gadgets y accesorios</p>
-      <button id="hero-btn">Explorar</button>
-    </div>
-  </section>
+  <!-- Contenido principal -->
+  <main>
 
-  <!-- Beneficios fijos -->
-  <section class="benefits">
-    <div class="benefit">
-      <h3>6 Cuotas sin interés</h3>
-      <p>En compras superiores a $30.000</p>
+    <!-- Hero / Carrusel -->
+<section class="hero">
+  <div class="carousel-item active">
+    <img src="img/perfume_carrusel_1.avif" alt="Perfumes 1">
+    <div class="carousel-caption">
+      <h2>Fragancias Exclusivas</h2>
+      <p>Descubrí perfumes originales con hasta 30% OFF.</p>
     </div>
-    <div class="benefit">
-      <h3>Envíos a todo el país</h3>
-      <p>Gratis en compras superiores a $50.000</p>
-    </div>
-    <div class="benefit">
-      <h3>100% originales</h3>
-      <p>Garantía de autenticidad en todos nuestros productos</p>
-    </div>
-    <div class="benefit">
-      <h3>Descuentos hasta 30%</h3>
-      <p>En efectivo y transferencia bancaria</p>
-    </div>
-  </section>
-
-  <!-- Categorías dinámicas -->
-  <section class="categories">
-    <h2>Categorías</h2>
-    <div id="category-list" class="category-container">
-      <!-- JS insertará categorías dinámicamente -->
-    </div>
-  </section>
-
-  <!-- Productos Destacados dinámicos -->
-  <section class="featured-products">
-    <h2>Productos Destacados</h2>
-    <div id="product-list" class="product-list">
-      <!-- JS insertará productos destacados dinámicamente -->
-    </div>
-    <button class="view-all">Ver Todos los Productos</button>
-  </section>
-
-  <!-- Newsletter -->
-  <section class="newsletter">
-    <h2>Suscríbete a nuestro newsletter</h2>
-    <p>Recibe las últimas ofertas y novedades directamente en tu correo</p>
-    <form id="newsletter-form">
-      <input type="email" id="newsletter-email" placeholder="Tu correo electrónico" required>
-      <button type="submit">Suscribirme</button>
-    </form>
-  </section>
-
   </div>
 
+  <div class="carousel-item">
+    <img src="img/vape_carrusel_1.avif" alt="Vape">
+    <div class="carousel-caption">
+      <h2>Tecnología en Vapes</h2>
+      <p>La mejor calidad, envíos a todo el país.</p>
+    </div>
+  </div>
+
+  <div class="carousel-item">
+    <img src="img/perfumer_carrusel_2.avif" alt="Perfume2 2">
+    <div class="carousel-caption">
+      <h2>Gadgets Premium</h2>
+      <p>Innovación y estilo, con 6 cuotas sin interés.</p>
+    </div>
+  </div>
+
+  <!-- 🔹 Indicadores -->
+  <div class="carousel-indicators">
+    <span class="active" data-slide="0"></span>
+    <span data-slide="1"></span>
+    <span data-slide="2"></span>
+  </div>
+</section>
+
+    <!-- Beneficios -->
+    <section class="benefits">
+      <div class="container">
+        <article class="benefit">
+          <h3>6 Cuotas sin interés</h3>
+          <p>En compras superiores a $30.000</p>
+        </article>
+        <article class="benefit">
+          <h3>Envíos a todo el país</h3>
+          <p>Gratis en compras superiores a $50.000</p>
+        </article>
+        <article class="benefit">
+          <h3>100% originales</h3>
+          <p>Garantía de autenticidad en todos nuestros productos</p>
+        </article>
+        <article class="benefit">
+          <h3>Descuentos hasta 30%</h3>
+          <p>En efectivo y transferencia bancaria</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Categorías -->
+<section class="categories">
+  <div class="container">
+    <div class="category-grid">
+      
+      <a href="productos.html" class="category-card">
+        <div class="category-content">
+          <h3>Fragancias Premium</h3>
+          <p>Descubre nuestra colección exclusiva de perfumes de lujo</p>
+        </div>
+      </a>
+
+      <a href="productos.html" class="category-card">
+        <div class="category-content">
+          <h3>Vapes</h3>
+          <p>Disfrutá de una experiencia con sabores intensos y auténticos.</p>
+        </div>
+      </a>
+
+      <a href="productos.html" class="category-card">
+        <div class="category-content">
+          <h2>Decants</h2>
+          <p>Prueba tus fragancias favoritas en tamaños accesibles y exclusivos.</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+    <!-- Productos Destacados -->
+    <section class="featured-products">
+      <div class="container">
+        <h2 class="section-title">Productos Destacados</h2>
+        <div id="product-list" class="product-list"></div>
+        <button class="btn btn--primary">Ver Todos los Productos</button>
+      </div>
+    </section>
+
+  </main>
+
   <!-- Footer -->
-  <footer class="main-footer">
-    <div class="footer-inner">
+  <footer class="main-footer" role="contentinfo">
+    <div class="container footer-inner">
       <div class="footer-info">
         <h3>Vesper</h3>
         <p>Tu tienda de confianza para fragancias premium, vapes y tecnología.</p>
       </div>
       <div class="footer-links">
         <h4>Productos</h4>
-        <ul id="footer-categorias">
-          <!-- JS insertará categorías en footer -->
-        </ul>
+        <ul id="footer-categorias"></ul>
       </div>
       <div class="footer-links">
-        <h4>Atención al Cliente</h4>
+        <h4>Enlaces útiles</h4>
         <ul>
           <li><a href="#">Preguntas Frecuentes</a></li>
-          <li><a href="#">Términos y Condiciones</a></li>
-          <li><a href="#">Política de Privacidad</a></li>
-          <li><a href="#">Devoluciones</a></li>
-          <li><a href="#">Garantía de Autenticidad</a></li>
         </ul>
       </div>
       <div class="footer-contact">
         <h4>Contacto</h4>
-        <p>📧 info@vesper.com</p>
-        <p>📞 +54 11 1234-5678</p>
-        <p>📍 Buenos Aires, Argentina</p>
-        <p>🕘 Lunes a Viernes 9:00 - 18:00</p>
-        <p>🕑 Sábados 9:00 - 14:00</p>
+        <address>
+          📧 <a href="mailto:info@vesper.com">info@vesper.com</a><br>
+          📞 <a href="tel:+541112345678">+54 11 1234-5678</a><br>
+          📍 Mendoza, Argentina
+        </address>
       </div>
     </div>
   </footer>
+  
+<!-- Modal Iniciar Sesión -->
+<div class="modal" id="modal-login" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content">
+    <button class="modal-close" data-close="modal-login">&times;</button>
+    <h2>Iniciar Sesión</h2>
+    <form class="form-login">
+      <div class="form-group">
+        <input type="email" placeholder="Correo electrónico" required>
+      </div>
+      <div class="form-group">
+        <input type="password" placeholder="Contraseña" required>
+      </div>
+      <button type="submit" class="btn btn--primary">Ingresar</button>
+      <p>¿No tienes cuenta? <a href="#" id="switch-to-register">Crear cuenta</a></p>
+    </form>
+  </div>
+</div>
 
-  <!-- Script para cargar dinámicamente datos desde API -->
-  <script>
-    const categoriasFallback = [
-      { id: "fragancias", nombre: "Fragancias", descripcion: "Aromas para cada estilo." },
-      { id: "descuentos", nombre: "Descuentos", descripcion: "Promociones imperdibles de la semana." },
-      { id: "mujeres", nombre: "Mujeres", descripcion: "Fragancias y accesorios destacados." },
-      { id: "hombres", nombre: "Hombres", descripcion: "Tecnología y fragancias para ellos." },
-      { id: "accesorios", nombre: "Accesorios", descripcion: "Complementos ideales para tu día." },
-      { id: "faq", nombre: "Preguntas frecuentes", descripcion: "Resolvé tus dudas al instante." }
-    ];
+<!-- Modal Crear Cuenta -->
+<div class="modal" id="modal-register" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content">
+    <button class="modal-close" data-close="modal-register">&times;</button>
+    <h2>Crear Cuenta</h2>
+    <form class="form-register">
+      <div class="form-group">
+        <input type="text" placeholder="Tu nombre" required>
+        <input type="text" placeholder="Tu apellido" required>
+      </div>
+      <div class="form-group">
+        <input type="email" placeholder="ejemplo@correo.com" required>
+      </div>
+      <div class="form-group">
+        <input type="password" placeholder="Contraseña" required>
+      </div>
+      <div class="form-group">
+        <input type="password" placeholder="Confirmar contraseña" required>
+      </div>
+      <button type="submit" class="btn btn--primary">Crear Cuenta</button>
+      <p>¿Ya tienes cuenta? <a href="#" id="switch-to-login">Iniciar sesión</a></p>
+    </form>
+  </div>
+</div>
 
-    const renderCategorias = (categorias = []) => {
-      const footer = document.getElementById('footer-categorias');
-      const catList = document.getElementById('category-list');
-
-      if (footer) {
-        footer.innerHTML = '';
-      }
-
-      if (catList) {
-        catList.innerHTML = '';
-      }
-
-      categorias.forEach(cat => {
-        const { id, nombre, descripcion } = cat;
-        const link = id ? `/categoria/${id}` : '#';
-
-        if (footer) {
-          const liFooter = document.createElement('li');
-          liFooter.innerHTML = `<a href="${link}">${nombre}</a>`;
-          footer.appendChild(liFooter);
-        }
-
-        if (catList) {
-          const div = document.createElement('div');
-          div.classList.add('category');
-          div.innerHTML = `<h3>${nombre}</h3><p>${descripcion || ''}</p>`;
-          catList.appendChild(div);
-        }
-      });
-    };
-
-    const marcasPlaceholder = {
-      perfumes: ["Dior", "Chanel", "Yves Saint Laurent", "Tom Ford", "Carolina Herrera"],
-      vapes: ["Smok", "Vaporesso", "GeekVape", "Voopoo", "UWELL"]
-    };
-
-    const populateBrandDropdown = (brands = {}) => {
-      const perfumeList = document.querySelector('[data-brand-list="perfumes"]');
-      const vapeList = document.querySelector('[data-brand-list="vapes"]');
-
-      if (!perfumeList || !vapeList) {
-        return;
-      }
-
-      const createBrandItem = (brand, type) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<a class="dropdown-link" href="/productos?marca=${brand.toLowerCase().replace(/\s+/g, '-')}&segmento=${type}">${brand}</a>`;
-        return li;
-      };
-
-      perfumeList.innerHTML = "";
-      vapeList.innerHTML = "";
-
-      (brands.perfumes || []).forEach(brand => {
-        perfumeList.appendChild(createBrandItem(brand, 'perfumes'));
-      });
-
-      (brands.vapes || []).forEach(brand => {
-        vapeList.appendChild(createBrandItem(brand, 'vapes'));
-      });
-    };
-
-    const initDropdownNavigation = () => {
-      const dropdownItems = document.querySelectorAll('.main-nav__item--has-dropdown');
-      if (!dropdownItems.length) {
-        return;
-      }
-
-      const closeItem = item => {
-        const trigger = item.querySelector('.main-nav__link');
-        if (trigger) {
-          trigger.setAttribute('aria-expanded', 'false');
-        }
-        item.classList.remove('is-open');
-      };
-
-      const openItem = item => {
-        const trigger = item.querySelector('.main-nav__link');
-        if (trigger) {
-          trigger.setAttribute('aria-expanded', 'true');
-        }
-        item.classList.add('is-open');
-      };
-
-      const closeAllExcept = current => {
-        dropdownItems.forEach(item => {
-          if (item !== current) {
-            closeItem(item);
-          }
-        });
-      };
-
-      dropdownItems.forEach(item => {
-        const trigger = item.querySelector('.main-nav__link');
-        const dropdown = item.querySelector('.main-nav__dropdown');
-        if (!trigger || !dropdown) {
-          return;
-        }
-
-        trigger.setAttribute('aria-expanded', 'false');
-
-        const openDropdown = () => {
-          closeAllExcept(item);
-          openItem(item);
-        };
-
-        const closeDropdown = () => {
-          closeItem(item);
-        };
-
-        item.addEventListener('mouseenter', openDropdown);
-        item.addEventListener('mouseleave', closeDropdown);
-
-        trigger.addEventListener('focus', openDropdown);
-        item.addEventListener('focusout', event => {
-          if (!item.contains(event.relatedTarget)) {
-            closeDropdown();
-          }
-        });
-
-        trigger.addEventListener('click', event => {
-          event.preventDefault();
-          const willOpen = !item.classList.contains('is-open');
-          if (willOpen) {
-            closeAllExcept(item);
-            openItem(item);
-          } else {
-            closeDropdown();
-          }
-        });
-
-        trigger.addEventListener('keydown', event => {
-          if (event.key === 'Escape') {
-            closeDropdown();
-            trigger.blur();
-          }
-
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            const willOpen = !item.classList.contains('is-open');
-            if (willOpen) {
-              closeAllExcept(item);
-              openItem(item);
-            } else {
-              closeDropdown();
-            }
-          }
-        });
-
-        dropdown.addEventListener('keydown', event => {
-          if (event.key === 'Escape') {
-            closeDropdown();
-            trigger.focus();
-          }
-        });
-      });
-
-      window.addEventListener('resize', () => {
-        dropdownItems.forEach(closeItem);
-      });
-    };
-
-    const simulateBrandsFetch = () => {
-      return new Promise(resolve => {
-        setTimeout(() => {
-          resolve(marcasPlaceholder);
-        }, 350);
-      });
-    };
-
-    const initHeaderScrollBehavior = () => {
-      const headerBottom = document.querySelector('.site-header__bottom');
-      if (!headerBottom) {
-        return;
-      }
-
-      let lastScrollY = window.scrollY;
-
-      const handleScroll = () => {
-        const currentScroll = window.scrollY;
-
-        if (currentScroll > lastScrollY && currentScroll > 120) {
-          headerBottom.classList.add('site-header__bottom--collapsed');
-        } else {
-          headerBottom.classList.remove('site-header__bottom--collapsed');
-        }
-
-        lastScrollY = currentScroll;
-      };
-
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      handleScroll();
-    };
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      renderCategorias(categoriasFallback);
-      initDropdownNavigation();
-      initHeaderScrollBehavior();
-      populateBrandDropdown(await simulateBrandsFetch());
-    });
-  </script>
+  <script src="javaScript/main.js"></script>
 </body>
 </html>

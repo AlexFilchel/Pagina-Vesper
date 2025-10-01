@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productos - Vesper</title>
+  <link rel="stylesheet" href="../Frontend/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../Frontend/css/productos.css">
+</head>
+<body>
+  <!-- Banner superior -->
+ <aside class="top-banner" aria-label="Promociones vigentes">
+  <div class="banner-content">
+    <p>
+      💳 6 cuotas sin interés a partir de $30.000 &nbsp;&nbsp;&nbsp; 
+      🚚 Envío gratis en compras superiores a $50.000 &nbsp;&nbsp;&nbsp; 
+      💰 20% OFF pagando por transferencia
+    </p>
+  </div>
+</aside>
+
+
+<!-- Header -->
+<header class="site-header" role="banner">
+  <div class="container site-header__top">
+    <a href="index.html" class="site-header__logo" aria-label="Vesper - Página de inicio">
+      <img src="img/logo_vesper.jpg" alt="Logo Vesper" class="img-fluid logo">
+    </a>
+    
+    <form class="site-header__search" role="search" aria-label="Buscador de productos">
+      <label class="visually-hidden" for="search-input">Buscar en Vesper</label>
+      <button type="submit" aria-label="Buscar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+      <input type="search" id="search-input" name="search" placeholder="Buscar perfumes, marcas..." aria-label="Buscar perfumes y marcas">
+    </form>
+
+    
+    <div class="site-header__actions">
+
+  <!-- Menú desplegable Mi cuenta -->
+  <div class="site-header__action site-header__action--has-dropdown">
+  <button class="site-header__action-btn" type="button">
+    <span class="site-header__action-icon"><i class="fa-solid fa-user"></i></span>
+    <span class="site-header__action-label">Mi cuenta</span>
+  </button>
+  <div class="site-header__dropdown">
+    <ul class="site-header__dropdown-list">
+      <li><a href="/login">Iniciar sesión</a></li>
+      <li><a href="/register">Crear cuenta</a></li>
+    </ul>
+  </div>
+</div>
+
+<a href="#" class="site-header__action" id="link-carrito">
+  <span class="site-header__action-icon"><i class="fa-solid fa-cart-shopping"></i></span>
+  <span class="site-header__action-label">Carrito (<span id="cart-count">0</span>)</span>
+</a>
+
+</header>
+
+
+<!-- Navegación principal -->
+<nav class="site-header__bottom" aria-label="Categorías principales">
+  <div class="container">
+    <ul class="main-nav">
+
+      <!-- Perfumes -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Perfumes <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-perfumes" class="main-nav__dropdown" role="menu">
+          <ul class="main-nav__list">
+            <li><a href="/productos?categoria=perfumes-masculinas" role="menuitem">Masculinos</a></li>
+            <li><a href="/productos?categoria=perfumes-femeninas" role="menuitem">Femeninos</a></li>
+          </ul>
+        </div>
+      </li>
+
+      <!-- Vapes -->
+      <li class="main-nav__item">
+        <a href="/productos?categoria=vapes" class="main-nav__link main-nav__link--direct">Vapes</a>
+      </li>
+
+      <!-- Decants -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Decants <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-decants" class="main-nav__dropdown" role="menu">
+          <ul class="main-nav__list">
+            <li><a href="/productos?categoria=decants-masculinas" role="menuitem">Masculinos</a></li>
+            <li><a href="/productos?categoria=decants-femeninas" role="menuitem">Femeninos</a></li>
+            <li><a href="/productos?categoria=decants-combos" role="menuitem">Combos</a></li>
+          </ul>
+        </div>
+      </li>
+
+      <!-- Marcas -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Marcas <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-marcas" class="main-nav__dropdown main-nav__dropdown--columns" role="menu">
+          <div class="main-nav__column">
+            <h4 class="main-nav__column-title">Perfumes</h4>
+            <ul class="main-nav__list" data-brand-list="perfumes" aria-label="Marcas de perfumes"></ul>
+          </div>
+          <div class="main-nav__column">
+            <h4 class="main-nav__column-title">Vapes</h4>
+            <ul class="main-nav__list" data-brand-list="vapes" aria-label="Marcas de vapes"></ul>
+          </div>
+        </div>
+      </li>
+
+      <!-- Sale -->
+      <li class="main-nav__item">
+        <a href="/productos?categoria=sale" class="main-nav__link main-nav__link--direct">SALE</a>
+      </li>
+
+      <!-- Preguntas Frecuentes -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Preguntas Frecuentes <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-faq" class="main-nav__dropdown" role="menu">
+          <ul class="main-nav__list">
+            <li><a href="#faq-envio" role="menuitem">¿Cuánto tarda el envío?</a></li>
+            <li><a href="#faq-decant" role="menuitem">¿Qué es un decant?</a></li>
+            <li><a href="#faq-pago" role="menuitem">¿Puedo pagar contra entrega?</a></li>
+          </ul>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+</nav>
+  </header>
+
+  <!-- Contenido principal -->
+  <main class="container productos-page">
+    <aside class="filtros">
+    <div class="filtros-header">
+        <h3>Filtros</h3>
+        <button class="filtros-limpiar">Limpiar todo</button>
+    </div>
+
+              <!-- HACER QUE SI SE SELECCIONA PERFUME O DECANT SE MUESTREN SOLO LAS MARCAS DE PERFUMES, SI ES VAPE SE MUESTRAN LAS MARCAS DE VAPES Y SI NO LAS DOS -->
+               <!-- TAMBIEN SI SE SELECCIONA DECANT QUE SALGA UNA OPCION EXTRA QUE SEA COMBO -->
+                <!-- VER SI ES POSIBLE -->
+    <div class="filtro">
+        <h4>Tipo de Producto</h4>
+        <ul>
+          <li><label><input type="checkbox" value="Perfume">Perfume</label></li>
+          <li><label><input type="checkbox" value="Eau de Toilette">Decant</label></li>
+          <li><label><input type="checkbox" value="Vapes"> Vape</label></li>
+        </ul>
+    </div>
+
+    <div class="filtro">
+        <h4>Género</h4>
+        <ul>
+          <li><label><input type="checkbox" value="Masculino">Masculino</label></li>
+          <li><label><input type="checkbox" value="Femenino">Femenino</label></li>
+        </ul>
+    </div>
+
+    <div class="filtro">
+        <h4>Marca</h4>
+        <ul id="filtro-marcas"></ul>
+    </div>
+
+      <div class="filtro">
+        <h4>Rango de Precio</h4>
+        <input type="range" min="0" max="500000" step="1000" value="250000">
+        <div class="precio-rango">
+          <span>$0</span> - <span>$500.000</span>
+        </div>
+      </div>
+    </aside>
+
+    <section class="productos">
+
+      <div class="productos-grid" id="productos-lista">
+        <!-- Aquí van los productos cargados desde la API con JS -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="main-footer" role="contentinfo">
+    <div class="container footer-inner">
+      <div class="footer-info">
+        <h3>Vesper</h3>
+        <p>Tu tienda de confianza para fragancias premium, vapes y tecnología.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Productos</h4>
+        <ul id="footer-categorias"></ul>
+      </div>
+      <div class="footer-links">
+        <h4>Enlaces útiles</h4>
+        <ul>
+          <li><a href="#">Preguntas Frecuentes</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h4>Contacto</h4>
+        <address>
+          📧 <a href="mailto:info@vesper.com">info@vesper.com</a><br>
+          📞 <a href="tel:+541112345678">+54 11 1234-5678</a><br>
+          📍 Mendoza, Argentina
+        </address>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="../Frontend/javaScript/main.js"></script>
+</body>
+</html>

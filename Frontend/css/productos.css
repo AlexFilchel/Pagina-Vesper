@@ -1,0 +1,182 @@
+/* =======================
+   Layout Página Productos
+======================= */
+.productos-page {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 30px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+/* =======================
+   Filtros
+======================= */
+.filtros {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  padding: 20px;
+  position: sticky;
+  top: 100px; /* se mantiene visible al hacer scroll */
+  height: fit-content;
+}
+
+.filtros-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.filtros-limpiar {
+  background: none;
+  border: none;
+  color: #6B7280; /* gris base */
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500; /* medium */
+  height: 32px; /* h-8 */
+  line-height: 1; 
+  padding: 0 12px; /* px-3 */
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  border-radius: 6px; /* rounded-md */
+}
+
+.filtros-limpiar:hover {
+  background-color: #c8d9fc8e; /* gris claro (simil hover:bg-accent) */
+  color: #374151; /* gris oscuro */
+}
+
+
+/* Cada filtro */
+.filtro {
+  margin-bottom: 25px;
+}
+
+.filtro h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.filtro ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.filtro li {
+  margin-bottom: 8px;
+}
+
+.filtro label {
+  font-size: 0.95rem;
+  color: #333;
+  cursor: pointer;
+}
+
+.filtro input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+/* Rango de precios */
+.filtro input[type="range"] {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.precio-rango {
+  font-size: 0.9rem;
+  color: #555;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* =======================
+   Sección de productos
+======================= */
+.productos {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.productos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 25px;
+}
+
+/* Tarjeta producto (reutiliza estilos de index) */
+.product {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+  background: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.product img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.product h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #222;
+}
+
+.product .price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #004aad;
+  margin-bottom: 4px;
+}
+
+.product .discount {
+  font-size: 0.9rem;
+  color: #888;
+  text-decoration: line-through;
+}
+
+/* =======================
+   Responsive
+======================= */
+@media (max-width: 1024px) {
+  .productos-page {
+    grid-template-columns: 220px 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .productos-page {
+    grid-template-columns: 1fr;
+  }
+
+  .filtros {
+    position: relative;
+    top: unset;
+  }
+}
+
+/* Header de la sección Filtros */
+.filtros-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
