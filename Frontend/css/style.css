@@ -74,8 +74,10 @@ body {
 
 .site-header__logo img {
   display: block;
-  max-height: 48px;
-}
+  max-height: 45px; /* nuevo tamaño */
+  height: auto;
+  width: auto;
+  }
 
 .site-header__search {
   position: absolute;
@@ -454,7 +456,7 @@ body {
   }
 
   .site-header__logo img {
-    max-height: 40px;
+    max-height: 30px;
   }
 
   .site-header__actions {
