@@ -40,15 +40,18 @@
     
     <form class="site-header__search" role="search" aria-label="Buscador de productos">
       <label class="visually-hidden" for="search-input">Buscar en Vesper</label>
+      <input type="search" id="search-input" name="search" placeholder="Buscar perfumes, marcas..." aria-label="Buscar perfumes y marcas">
       <button type="submit" aria-label="Buscar">
         <i class="fa-solid fa-magnifying-glass"></i>
       </button>
-      <input type="search" id="search-input" name="search" placeholder="Buscar perfumes, marcas..." aria-label="Buscar perfumes y marcas">
     </form>
 
     
-    <div class="site-header__actions">
-
+  <div class="site-header__actions">
+  <!-- Botón de búsqueda en mobile -->
+  <button class="search-toggle" aria-label="Abrir buscador">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
   <!-- Menú desplegable Mi cuenta -->
   <div class="site-header__action site-header__action--has-dropdown">
   <button class="site-header__action-btn" type="button">
@@ -125,11 +128,6 @@
         </div>
       </li>
 
-      <!-- Sale -->
-      <li class="main-nav__item">
-        <a href="/productos?categoria=sale" class="main-nav__link main-nav__link--direct">SALE</a>
-      </li>
-
       <!-- Preguntas Frecuentes -->
       <li class="main-nav__item main-nav__item--has-dropdown">
         <a href="javascript:void(0)" class="main-nav__link">
@@ -149,7 +147,29 @@
 </nav>
 
 
-  </header>
+</header>
+
+<!-- Botón hamburguesa (solo visible en mobile) -->
+<button class="menu-toggle" aria-label="Abrir menú">
+  <i class="fa-solid fa-bars"></i>
+</button>
+
+<!-- Menú lateral oculto -->
+<aside class="mobile-menu" id="mobileMenu">
+  <button class="menu-close" aria-label="Cerrar menú">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+  <nav class="mobile-nav">
+    <ul>
+      <li><a href="#">Perfumes</a></li>
+      <li><a href="#">Vapes</a></li>
+      <li><a href="#">Decants</a></li>
+      <li><a href="#">Marcas</a></li>
+      <li><a href="#">Preguntas frecuentes</a></li>
+    </ul>
+  </nav>
+</aside>
+
 
   <!-- Contenido principal -->
   <main>
@@ -287,16 +307,30 @@
     <h2>Iniciar Sesión</h2>
     <form class="form-login">
       <div class="form-group">
-        <input type="email" placeholder="Correo electrónico" required>
+        <label for="login-email">Correo electrónico</label>
+        <input id="login-email" type="email" placeholder="ejemplo@correo.com" required>
       </div>
-      <div class="form-group">
-        <input type="password" placeholder="Contraseña" required>
+
+      <!-- 🔹 Contraseña-->
+      <div class="form-group password-field">
+        <label for="login-password">Contraseña</label>
+        <input id="login-password" type="password" placeholder="••••••••" required>
+        <span class="toggle-password" data-target="login-password">
+          <i class="fa-solid fa-eye"></i>
+        </span>
       </div>
+
+      <!-- 🔹 Enlace de recuperar contraseña -->
+      <div class="form-footer">
+        <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+      </div>
+
       <button type="submit" class="btn btn--primary">Ingresar</button>
       <p>¿No tienes cuenta? <a href="#" id="switch-to-register">Crear cuenta</a></p>
     </form>
   </div>
 </div>
+
 
 <!-- Modal Crear Cuenta -->
 <div class="modal" id="modal-register" aria-hidden="true">
@@ -305,24 +339,46 @@
     <button class="modal-close" data-close="modal-register">&times;</button>
     <h2>Crear Cuenta</h2>
     <form class="form-register">
-      <div class="form-group">
-        <input type="text" placeholder="Tu nombre" required>
-        <input type="text" placeholder="Tu apellido" required>
+      <div class="form-group two-columns">
+        <div>
+          <label for="register-nombre">Nombre</label>
+          <input id="register-nombre" type="text" placeholder="Tu nombre" required>
+        </div>
+        <div>
+          <label for="register-apellido">Apellido</label>
+          <input id="register-apellido" type="text" placeholder="Tu apellido" required>
+        </div>
       </div>
       <div class="form-group">
-        <input type="email" placeholder="ejemplo@correo.com" required>
+        <label for="register-email">Correo electrónico</label>
+        <input id="register-email" type="email" placeholder="ejemplo@correo.com" required>
       </div>
-      <div class="form-group">
-        <input type="password" placeholder="Contraseña" required>
+
+      <!-- 🔹 Contraseña-->
+      <div class="form-group password-field">
+        <label for="register-password">Contraseña</label>
+        <input id="register-password" type="password" placeholder="••••••••" required>
+        <span class="toggle-password" data-target="register-password">
+          <i class="fa-solid fa-eye"></i>
+        </span>
       </div>
-      <div class="form-group">
-        <input type="password" placeholder="Confirmar contraseña" required>
+
+      <!-- 🔹 Confirmación-->
+      <div class="form-group password-field">
+        <label for="register-password-confirm">Confirmar contraseña</label>
+        <input id="register-password-confirm" type="password" placeholder="••••••••" required>
+        <span class="toggle-password" data-target="register-password-confirm">
+          <i class="fa-solid fa-eye"></i>
+        </span>
       </div>
+
       <button type="submit" class="btn btn--primary">Crear Cuenta</button>
       <p>¿Ya tienes cuenta? <a href="#" id="switch-to-login">Iniciar sesión</a></p>
     </form>
   </div>
 </div>
+
+
 
   <script src="javaScript/main.js"></script>
 </body>
