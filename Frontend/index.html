@@ -13,6 +13,8 @@
   <meta property="og:description" content="Perfumes, vapes y tecnología premium con envíos gratis en compras superiores a $50.000.">
   <meta property="og:image" content="/img/og-image.jpg">
   <meta property="og:type" content="website">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
 
   <!-- Estilos -->
   <link rel="stylesheet" href="../Frontend/css/style.css">
@@ -34,28 +36,34 @@
 <!-- Header -->
 <header class="site-header" role="banner">
   <div class="container site-header__top">
+    <button class="menu-toggle" aria-label="Abrir menú">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
     <a href="index.html" class="site-header__logo" aria-label="Vesper - Página de inicio">
-      <img src="img/logo_vesper.jpg" alt="Logo Vesper" class="img-fluid logo">
+      <img src="img/vesper_logo_sin_fondo.png"Logo Vesper" class="img-fluid logo">
     </a>
-    
+
     <form class="site-header__search" role="search" aria-label="Buscador de productos">
       <label class="visually-hidden" for="search-input">Buscar en Vesper</label>
-      <input type="search" id="search-input" name="search" placeholder="Buscar perfumes, marcas..." aria-label="Buscar perfumes y marcas">
+      <input type="search" id="search-input" name="search" placeholder="Buscá por productos, marcas y categorías" aria-label="Buscar perfumes y marcas">
       <button type="submit" aria-label="Buscar">
-        <i class="fa-solid fa-magnifying-glass"></i>
+        <span class="material-symbols-outlined">search</span>
       </button>
     </form>
 
-    
-  <div class="site-header__actions">
-  <!-- Botón de búsqueda en mobile -->
-  <button class="search-toggle" aria-label="Abrir buscador">
-    <i class="fa-solid fa-magnifying-glass"></i>
-  </button>
-  <!-- Menú desplegable Mi cuenta -->
-  <div class="site-header__action site-header__action--has-dropdown">
+    <div class="site-header__actions">
+      <!-- Botón de búsqueda en mobile -->
+      <button class="search-toggle" aria-label="Abrir buscador">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+
+      <!-- Menú desplegable Mi cuenta -->
+      <div class="site-header__action site-header__action--has-dropdown">
   <button class="site-header__action-btn" type="button">
-    <span class="site-header__action-icon"><i class="fa-solid fa-user"></i></span>
+    <span class="site-header__action-icon">
+      <span class="material-symbols-outlined">person_outline</span>
+    </span>
     <span class="site-header__action-label">Mi cuenta</span>
   </button>
   <div class="site-header__dropdown">
@@ -66,11 +74,15 @@
   </div>
 </div>
 
-<a href="#" class="site-header__action" id="link-carrito">
-  <span class="site-header__action-icon"><i class="fa-solid fa-cart-shopping"></i></span>
-  <span class="site-header__action-label">Carrito (<span id="cart-count">0</span>)</span>
-</a>
 
+      <a href="#" class="site-header__action" id="link-carrito">
+  <span class="site-header__action-icon">
+    <span class="material-symbols-outlined">shopping_cart</span>
+  </span>
+  <span class="site-header__action-label"></span>
+</a>
+    </div>
+  </div>
 </header>
 
 
@@ -147,12 +159,16 @@
 </nav>
 
 
-</header>
-
-<!-- Botón hamburguesa (solo visible en mobile) -->
-<button class="menu-toggle" aria-label="Abrir menú">
-  <i class="fa-solid fa-bars"></i>
-</button>
+<!-- Buscador flotante para mobile -->
+<div class="mobile-search-overlay" aria-hidden="true">
+  <form class="mobile-search-form" role="search" aria-label="Buscador de productos">
+    <label class="visually-hidden" for="mobile-search-input">Buscar en Vesper</label>
+    <input type="search" id="mobile-search-input" name="mobile-search" placeholder="Buscá por productos, marcas y categorías" autocomplete="off">
+    <button type="submit" aria-label="Buscar">
+      <span class="material-symbols-outlined" aria-hidden="true">search</span>
+    </button>
+  </form>
+</div>
 
 <!-- Menú lateral oculto -->
 <aside class="mobile-menu" id="mobileMenu">
@@ -308,13 +324,13 @@
     <form class="form-login">
       <div class="form-group">
         <label for="login-email">Correo electrónico</label>
-        <input id="login-email" type="email" placeholder="ejemplo@correo.com" required>
+        <input id="login-email" type="email" required>
       </div>
 
       <!-- 🔹 Contraseña-->
       <div class="form-group password-field">
         <label for="login-password">Contraseña</label>
-        <input id="login-password" type="password" placeholder="••••••••" required>
+        <input id="login-password" type="password" required>
         <span class="toggle-password" data-target="login-password">
           <i class="fa-solid fa-eye"></i>
         </span>
@@ -342,22 +358,22 @@
       <div class="form-group two-columns">
         <div>
           <label for="register-nombre">Nombre</label>
-          <input id="register-nombre" type="text" placeholder="Tu nombre" required>
+          <input id="register-nombre" type="text" required>
         </div>
         <div>
           <label for="register-apellido">Apellido</label>
-          <input id="register-apellido" type="text" placeholder="Tu apellido" required>
+          <input id="register-apellido" type="text"  required>
         </div>
       </div>
       <div class="form-group">
         <label for="register-email">Correo electrónico</label>
-        <input id="register-email" type="email" placeholder="ejemplo@correo.com" required>
+        <input id="register-email" type="email" required>
       </div>
 
       <!-- 🔹 Contraseña-->
       <div class="form-group password-field">
         <label for="register-password">Contraseña</label>
-        <input id="register-password" type="password" placeholder="••••••••" required>
+        <input id="register-password" type="password" required>
         <span class="toggle-password" data-target="register-password">
           <i class="fa-solid fa-eye"></i>
         </span>
@@ -366,7 +382,7 @@
       <!-- 🔹 Confirmación-->
       <div class="form-group password-field">
         <label for="register-password-confirm">Confirmar contraseña</label>
-        <input id="register-password-confirm" type="password" placeholder="••••••••" required>
+        <input id="register-password-confirm" type="password" required>
         <span class="toggle-password" data-target="register-password-confirm">
           <i class="fa-solid fa-eye"></i>
         </span>
