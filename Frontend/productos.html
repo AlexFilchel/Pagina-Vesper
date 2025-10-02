@@ -139,7 +139,17 @@
     </ul>
   </div>
 </nav>
-  </header>
+
+  <!-- Buscador flotante para mobile -->
+  <div class="mobile-search-overlay" aria-hidden="true">
+    <form class="mobile-search-form" role="search" aria-label="Buscador de productos">
+      <label class="visually-hidden" for="mobile-search-input">Buscar en Vesper</label>
+      <input type="search" id="mobile-search-input" name="mobile-search" placeholder="Buscá por productos, marcas y categorías" autocomplete="off">
+      <button type="submit" aria-label="Buscar">
+        <span class="material-symbols-outlined" aria-hidden="true">search</span>
+      </button>
+    </form>
+  </div>
 
   <!-- Contenido principal -->
   <main class="container productos-page">
