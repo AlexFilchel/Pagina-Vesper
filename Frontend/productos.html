@@ -24,40 +24,47 @@
 <!-- Header -->
 <header class="site-header" role="banner">
   <div class="container site-header__top">
+    <button class="menu-toggle" aria-label="Abrir menú">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
     <a href="index.html" class="site-header__logo" aria-label="Vesper - Página de inicio">
       <img src="img/logo_vesper.jpg" alt="Logo Vesper" class="img-fluid logo">
     </a>
-    
+
     <form class="site-header__search" role="search" aria-label="Buscador de productos">
       <label class="visually-hidden" for="search-input">Buscar en Vesper</label>
+      <input type="search" id="search-input" name="search" placeholder="Buscá por productos, marcas y categorías" aria-label="Buscar perfumes y marcas">
       <button type="submit" aria-label="Buscar">
         <i class="fa-solid fa-magnifying-glass"></i>
       </button>
-      <input type="search" id="search-input" name="search" placeholder="Buscar perfumes, marcas..." aria-label="Buscar perfumes y marcas">
     </form>
 
-    
     <div class="site-header__actions">
+      <!-- Botón de búsqueda en mobile -->
+      <button class="search-toggle" aria-label="Abrir buscador">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+      <!-- Menú desplegable Mi cuenta -->
+      <div class="site-header__action site-header__action--has-dropdown">
+        <button class="site-header__action-btn" type="button">
+          <span class="site-header__action-icon"><i class="fa-solid fa-user"></i></span>
+          <span class="site-header__action-label">Mi cuenta</span>
+        </button>
+        <div class="site-header__dropdown">
+          <ul class="site-header__dropdown-list">
+            <li><a href="#" id="btn-login">Iniciar sesión</a></li>
+            <li><a href="#" id="btn-register">Crear cuenta</a></li>
+          </ul>
+        </div>
+      </div>
 
-  <!-- Menú desplegable Mi cuenta -->
-  <div class="site-header__action site-header__action--has-dropdown">
-  <button class="site-header__action-btn" type="button">
-    <span class="site-header__action-icon"><i class="fa-solid fa-user"></i></span>
-    <span class="site-header__action-label">Mi cuenta</span>
-  </button>
-  <div class="site-header__dropdown">
-    <ul class="site-header__dropdown-list">
-      <li><a href="/login">Iniciar sesión</a></li>
-      <li><a href="/register">Crear cuenta</a></li>
-    </ul>
+      <a href="#" class="site-header__action" id="link-carrito">
+        <span class="site-header__action-icon"><i class="fa-solid fa-cart-shopping"></i></span>
+        <span class="site-header__action-label">Carrito (<span id="cart-count">0</span>)</span>
+      </a>
+    </div>
   </div>
-</div>
-
-<a href="#" class="site-header__action" id="link-carrito">
-  <span class="site-header__action-icon"><i class="fa-solid fa-cart-shopping"></i></span>
-  <span class="site-header__action-label">Carrito (<span id="cart-count">0</span>)</span>
-</a>
-
 </header>
 
 

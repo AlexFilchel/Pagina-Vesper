@@ -61,7 +61,9 @@ body {
   z-index: 1000;
   background: #ffffff;
   padding: 10px;
+  z-index: 2000;
 }
+
 
 .site-header__top {
   display: flex;
@@ -91,6 +93,7 @@ body {
   width: 100%;
   margin-top: 10px;
   margin-bottom: 10px;
+  border-radius: 15px;
 }
 
 .site-header__search:focus-within {
@@ -102,7 +105,9 @@ body {
   border: none;
   padding: 6px 5px;
   font-size: 0.95rem;
-  border-radius: 999px;
+  display: flex;              /* asegura alineación */
+  align-items: center;        /* centra verticalmente */
+  justify-content: center;        /* centra verticalmente */
 }
 
 .site-header__search input:focus {
@@ -116,6 +121,7 @@ body {
   font-size: 1rem;
   cursor: pointer;
   margin-left: 8px;
+
 }
 
 .site-header__search button:hover,
@@ -127,7 +133,7 @@ body {
 .site-header__actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 35px;
 }
 
 .site-header__action {
@@ -152,7 +158,9 @@ body {
 .site-header__bottom {
   transition: max-height 0.3s ease, opacity 0.3s ease;
   overflow: visible;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); 
+  box-shadow: none;
+  position: relative; /* 👈 crea un stacking context */
+  z-index: 1999;      /* 👈 más alto que el hero */
 }
 
 /* Dropdown en Mi cuenta */
@@ -396,8 +404,24 @@ body {
 }
 
 @media (max-width: 768px) {
+
+  .top-banner {
+  position: fixed;   /* 👈 se queda fijo arriba */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6000;     /* 👈 mayor que el header */
+}
   .site-header {
-    padding: 8px 0 12px;
+    position: fixed;   /* 👈 en vez de sticky */
+    top: 24px;
+    left: 0;
+    right: 0;
+    z-index: 5000;     /* 👈 para que siempre quede por encima del menú y contenido */
+  }
+
+  body {
+    padding-top: 70px; /* 👈 mismo alto que tu header (ajustalo si tu header es más alto) */
   }
 
   .site-header__top {
@@ -468,31 +492,53 @@ body {
     order: 4;
     flex-basis: 100%;
     position: relative;
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     width: 100%;
     max-width: none;
-    margin: 10px 0 0;
+    margin: 0;
     padding: 0;
     background: transparent;
     border: none;
+    border-radius: 999px;
     transform: none;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: max-height 0.35s ease, opacity 0.25s ease, margin 0.25s ease, padding 0.25s ease, border 0.25s ease;
+  }
+
+  .site-header.is-search-open .site-header__search {
+    margin-top: 12px;
+    padding: 4px 12px;
+    border: 1px solid #cdcdcd;
+    background: #ffffff;
+    max-height: 72px;
+    opacity: 1;
+    visibility: visible;
   }
 
   .site-header__search input {
-    width: 100%;
-    height: 44px;
-    padding: 0 44px 0 16px;
-    border: 1px solid #cdcdcd;
+    flex: 1 1 clamp(140px, 70vw, 520px);
+    min-width: 0;
+    width: auto;
+    height: 40px;
+    padding: 0 12px;
+    border: none;
     border-radius: 999px;
-    background: #ffffff;
+    background: transparent;
     font-size: 0.95rem;
   }
 
+  .site-header.is-search-open .site-header__search input {
+    background: #ffffff;
+  }
+
   .site-header__search button {
-    position: absolute;
-    top: 50%;
-    right: 16px;
-    transform: translateY(-50%);
+    position: static;
+    transform: none;
     margin-left: 0;
     background: none;
     border: none;
@@ -501,9 +547,7 @@ body {
 
   .site-header__search button:hover,
   .site-header__search button:focus-visible {
-    background: none;
     color: #004aad;
-    transform: translateY(-50%);
   }
 
   .main-nav {
@@ -512,6 +556,7 @@ body {
     gap: 12px;
     flex-wrap: wrap;
     row-gap: 12px;
+    margin-top: 10px;
   }
 
   .main-nav__dropdown {
@@ -519,7 +564,27 @@ body {
     transform: translate(0, 0);
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
     opacity: 0;
-    margin-top: 8px;
+    margin-top: 0;
+    max-height: 0; 
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .main-nav__item.is-open .main-nav__dropdown {
+    max-height: 500px;        /* 👈 espacio suficiente al abrir */
+    opacity: 1;
+    margin-top: 8px;  
+    overflow: visible;         /* 👈 agrega separación solo cuando abre */
+  }
+  
+  .main-nav__dropdown a {
+    padding-left: 16px;
+    padding-right: 6px;
+    font-size: 16px;   /* 👈 un poco más hacia adentro que el padre */
+  }
+
+  .main-nav__link {
+    font-size: 18px;   /* 👈 separa del borde izquierdo */
   }
 }
 
@@ -1057,57 +1122,34 @@ body {
     display: inline-flex; /* aparece en mobile */
   }
 
-  /* Ocultamos categorías de la barra principal */
   .site-header__bottom {
-    display: none;
+    position: fixed; 
+    display: block;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: max-height 0.35s ease, opacity 0.25s ease, transform 0.25s ease;
+    z-index: 3000;
+    overflow-y: auto;
+    background-color: #ffffff;
   }
+
+  .site-header__bottom.is-open {
+    max-height: 600px;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    left: 0;
+  }
+
+  
 }
 
-/* ==== Menú lateral ==== */
+/* ==== Menú lateral (overlay) ==== */
 .mobile-menu {
-  position: fixed;
-  top: 0;
-  left: -100%; /* oculto por defecto */
-  width: 80%;
-  height: 100%;
-  background: #111;
-  color: #fff;
-  padding: 20px;
-  transition: left 0.3s ease;
-  z-index: 2000;
-}
-
-.mobile-menu.active {
-  left: 0;
-}
-
-.menu-close {
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  color: #fff;
-  cursor: pointer;
-  margin-bottom: 20px;
-}
-
-.mobile-nav ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.mobile-nav a {
-  text-decoration: none;
-  color: #fff;
-  font-size: 1.1rem;
-  font-weight: 500;
-}
-
-.mobile-nav a:hover {
-  color: #004aad;
+  display: none;
 }
 
 /* Botón de búsqueda (oculto en desktop) */
@@ -1161,8 +1203,17 @@ body {
     background: none;
     border: none;
     cursor: pointer;
+    order: 4;
   }
 
+  #link-carrito{
+    order: 2;
+  }
+
+  .site-header__action--has-dropdown {
+    order: 3; /* tercero la cuenta */
+  }
+  
   .site-header__action--has-dropdown .site-header__action-label {
     display: none;
   }
@@ -1171,4 +1222,71 @@ body {
   #link-carrito .site-header__action-label {
     display: none;
   }
+}
+
+
+@media (max-width: 768px) {
+  .main-nav__item--has-dropdown .main-nav__dropdown {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+  }
+
+  .main-nav__item--has-dropdown.is-open .main-nav__dropdown {
+    max-height: 500px; /* ajustá según la altura que necesite */
+    opacity: 1;
+  }
+
+  
+}
+
+/* 🔹 Estado normal: sin sombra */
+.site-header,
+.site-header__bottom {
+  box-shadow: none;
+}
+
+/* 🔹 Sombra leve cuando categorías visibles */
+.site-header__bottom.has-shadow {
+  box-shadow: 0 2px 6px rgb(0, 0, 0, 0.37);
+}
+
+/* 🔹 Sombra leve cuando categorías NO están visibles */
+.site-header.has-shadow {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.37);
+}
+
+
+/* 🔹 Mobile → sombra siempre visible en el header */
+@media (max-width: 768px) {
+  .site-header {
+    box-shadow: 0 2px 6px rgb(0, 0, 0, 0.37);
+  }
+}
+
+/* 🔹 Normalización de Material Symbols en el header */
+.site-header__action-icon .material-symbols-outlined {
+  font-size: 24px;        /* mismo tamaño para todos */
+  width: 24px;
+  height: 24px;
+  line-height: 1;         /* centra verticalmente */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease; /* animación suave al hover */
+  vertical-align: middle;
+}
+
+/* 🔹 Color por defecto */
+.site-header__action-icon .material-symbols-outlined {
+  color: #1b1b1b; /* gris oscuro */
+}
+
+/* 🔹 Hover / focus */
+.site-header__action:hover .material-symbols-outlined,
+.site-header__action-btn:hover .material-symbols-outlined,
+.site-header__action:focus-visible .material-symbols-outlined,
+.site-header__action-btn:focus-visible .material-symbols-outlined {
+  color: #004aad; /* tu azul principal */
 }

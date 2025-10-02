@@ -122,29 +122,153 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
-});
 
-
-document.addEventListener("DOMContentLoaded", () => {
+  /* ===========================
+     🔹 Interacciones Mobile (menú & buscador)
+  =========================== */
+  const siteHeader = document.querySelector(".site-header");
   const menuToggle = document.querySelector(".menu-toggle");
-  const mobileMenu = document.getElementById("mobileMenu");
-  const menuClose = document.querySelector(".menu-close");
-
-  menuToggle.addEventListener("click", () => {
-    mobileMenu.classList.add("active");
-  });
-
-  menuClose.addEventListener("click", () => {
-    mobileMenu.classList.remove("active");
-  });
-});
-
-document.addEventListener("DOMContentLoaded", () => {
+  const mainNav = document.querySelector(".site-header__bottom");
   const searchToggle = document.querySelector(".search-toggle");
   const searchForm = document.querySelector(".site-header__search");
+  const searchIcon = searchToggle ? searchToggle.querySelector("i") : null;
 
-  searchToggle.addEventListener("click", () => {
-    searchForm.style.display = "flex"; // muestra el buscador
-    searchForm.querySelector("input").focus();
+  if (searchToggle) {
+    searchToggle.setAttribute("aria-expanded", "false");
+    searchToggle.setAttribute("aria-label", "Abrir buscador");
+  }
+
+  const setSearchIcon = (isOpen) => {
+    if (!searchIcon) return;
+    if (isOpen) {
+      searchIcon.classList.remove("fa-magnifying-glass");
+      searchIcon.classList.add("fa-xmark");
+    } else {
+      searchIcon.classList.remove("fa-xmark");
+      searchIcon.classList.add("fa-magnifying-glass");
+    }
+  };
+
+  const closeSearch = () => {
+    if (!siteHeader) return;
+    if (siteHeader.classList.contains("is-search-open")) {
+      siteHeader.classList.remove("is-search-open");
+      setSearchIcon(false);
+      if (searchToggle) {
+        searchToggle.setAttribute("aria-expanded", "false");
+        searchToggle.setAttribute("aria-label", "Abrir buscador");
+      }
+    }
+  };
+
+    const closeMenu = () => {
+  if (!mainNav) return;
+  mainNav.classList.remove("is-open");
+  siteHeader?.classList.remove("is-menu-open");
+  if (menuToggle) {
+    menuToggle.setAttribute("aria-expanded", "false");
+  }
+
+  // 🔹 Cerrar también todos los submenús abiertos
+  document.querySelectorAll(".main-nav__item--has-dropdown").forEach(item => {
+    item.classList.remove("is-open");
   });
+  };
+
+
+  const handleResize = () => {
+    if (window.innerWidth >= 768) {
+      closeSearch();
+      closeMenu();
+      if (searchToggle) {
+        searchToggle.setAttribute("aria-expanded", "false");
+        searchToggle.setAttribute("aria-label", "Abrir buscador");
+      }
+    }
+  };
+
+  if (menuToggle && mainNav) {
+    menuToggle.addEventListener("click", () => {
+      const willOpen = !mainNav.classList.contains("is-open");
+      if (willOpen) {
+        closeSearch();
+      }
+      mainNav.classList.toggle("is-open", willOpen);
+      siteHeader?.classList.toggle("is-menu-open", willOpen);
+      menuToggle.setAttribute("aria-expanded", String(willOpen));
+    });
+  }
+
+  /* ===========================
+   🔹 Submenús en mobile (acordeón)
+=========================== */
+const navItems = document.querySelectorAll(".main-nav__item--has-dropdown");
+
+navItems.forEach(item => {
+  const link = item.querySelector(".main-nav__link");
+
+  link.addEventListener("click", (e) => {
+    if (window.innerWidth < 768) {
+      e.preventDefault(); // evita navegación directa
+      item.classList.toggle("is-open");
+    }
+  });
+});
+
+  if (searchToggle && searchForm && siteHeader) {
+    searchToggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (window.innerWidth >= 768) return;
+
+      const willOpen = !siteHeader.classList.contains("is-search-open");
+      if (willOpen) {
+        closeMenu();
+      }
+      siteHeader.classList.toggle("is-search-open", willOpen);
+      setSearchIcon(willOpen);
+      searchToggle.setAttribute("aria-expanded", String(willOpen));
+      searchToggle.setAttribute("aria-label", willOpen ? "Cerrar buscador" : "Abrir buscador");
+
+      if (willOpen) {
+        window.requestAnimationFrame(() => {
+          const input = searchForm.querySelector("input");
+          input?.focus();
+        });
+      }
+    });
+  }
+
+  window.addEventListener("resize", handleResize);
+  handleResize();
+
+/* ===========================
+   🔹 Sombra dinámica del header
+=========================== */
+const header = document.querySelector(".site-header");
+const navBottom = document.querySelector(".site-header__bottom");
+
+if (header && navBottom) {
+  // Solo en desktop
+  if (window.innerWidth >= 768) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            // 🔹 Categorías visibles → sombra en .site-header__bottom
+            navBottom.classList.add("has-shadow");
+            header.classList.remove("has-shadow");
+          } else {
+            // 🔹 Categorías NO visibles → sombra en .site-header
+            navBottom.classList.remove("has-shadow");
+            header.classList.add("has-shadow");
+          }
+        });
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(navBottom);
+  }
+}
+
 });
