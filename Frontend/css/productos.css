@@ -139,6 +139,12 @@
   color: #222;
 }
 
+.product .product-subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: -4px 0 10px;
+}
+
 .product .price {
   font-size: 1.1rem;
   font-weight: 700;
