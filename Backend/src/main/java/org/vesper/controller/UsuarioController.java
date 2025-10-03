@@ -1,5 +1,6 @@
 package org.vesper.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,7 +35,7 @@ public class UsuarioController {
      * @return JWT, username y roles
      */
     @PostMapping("/login")
-    public ResponseEntity<JwtResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
@@ -59,7 +60,7 @@ public class UsuarioController {
      * @return Mensaje de éxito
      */
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest request){
+    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request){
         usuarioService.registrarUsuario(request);
         return ResponseEntity.ok("Usuario registrado correctamente");
     }
@@ -73,7 +74,7 @@ public class UsuarioController {
      * @return Mensaje con el link de recuperación (para pruebas)
      */
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         String resetToken = usuarioService.generarTokenRecuperacion(request.getEmail(), jwtService);
         String resetLink = "http://127.0.0.1:5500/reset-password.html?token=" + resetToken;
         //usuarioService.enviarEmailRecuperacion(request.getEmail(), resetLink, emailService);
@@ -88,7 +89,7 @@ public class UsuarioController {
      * @return Mensaje de éxito
      */
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         if (!jwtService.isPasswordResetToken(request.getToken())) {
             return ResponseEntity.badRequest().body("Token inválido para resetear contraseña");
         }

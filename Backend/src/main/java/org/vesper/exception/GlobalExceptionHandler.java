@@ -4,9 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +22,46 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    /**
+     * Maneja errores de validación en @RequestBody (DTOs).
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> fieldErrors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors()
+                .forEach(error -> fieldErrors.put(error.getField(), error.getDefaultMessage()));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("error", "Error de validación");
+        response.put("details", fieldErrors);
+
+        logger.warn("Error de validación: {}", fieldErrors);
+
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    /**
+     * Maneja errores de validación en @RequestParam / @PathVariable.
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleConstraintViolationException(ConstraintViolationException ex) {
+        Map<String, String> violations = new HashMap<>();
+        ex.getConstraintViolations()
+                .forEach(cv -> violations.put(cv.getPropertyPath().toString(), cv.getMessage()));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("error", "Error de validación");
+        response.put("details", violations);
+
+        logger.warn("Error de validación: {}", violations);
+
+        return ResponseEntity.badRequest().body(response);
+    }
 
     /**
      * Maneja todas las excepciones de negocio que heredan de VesperException.

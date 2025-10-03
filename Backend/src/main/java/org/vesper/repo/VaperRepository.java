@@ -8,6 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface VaperRepository extends JpaRepository<Vaper, Long>{
-    boolean existsByEmail(String email);
     Optional<Vaper> findByNombre(String nombre);
 }

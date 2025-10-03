@@ -3,6 +3,7 @@ package org.vesper.entity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @SuppressWarnings("All")
 @Entity
@@ -10,7 +11,7 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class Perfume extends Producto {
     private String volumen;
     private String genero;
