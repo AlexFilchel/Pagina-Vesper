@@ -144,9 +144,10 @@
 
 
 
-      <a href="#" class="site-header__action" id="link-carrito">
+      <a href="#" class="site-header__action" id="link-carrito" aria-label="Abrir carrito">
   <span class="site-header__action-icon">
     <span class="material-symbols-outlined">shopping_cart</span>
+    <span class="cart-badge" aria-hidden="true">0</span>
   </span>
   <span class="site-header__action-label"></span>
 </a>
@@ -315,6 +316,60 @@
       </div>
     </div>
   </footer>
+
+  <!-- Carrito de compras -->
+  <div class="cart-modal" id="cart-modal" aria-hidden="true">
+    <div class="cart-modal__overlay" data-cart-close></div>
+    <aside class="cart-modal__panel" role="dialog" aria-labelledby="cart-modal-title" aria-modal="true" tabindex="-1">
+      <header class="cart-modal__header">
+        <h2 id="cart-modal-title">Tu carrito</h2>
+        <button class="cart-modal__close" type="button" aria-label="Cerrar carrito" data-cart-close>&times;</button>
+      </header>
+
+      <div class="cart-modal__body">
+        <div class="cart-empty" data-cart-empty>
+          <div class="cart-empty__icon" aria-hidden="true">🛒</div>
+          <h3>Tu carrito está vacío</h3>
+          <p>Agrega algunos productos para comenzar tu compra</p>
+          <button class="btn btn--primary cart-empty__cta" type="button" data-cart-close>Seguir Comprando</button>
+        </div>
+
+        <div class="cart-content" data-cart-content hidden>
+          <div class="cart-items" data-cart-items role="list"></div>
+
+          <section class="shipping-section" data-shipping-section>
+            <h3>Medios de envío</h3>
+            <form class="shipping-form" data-shipping-form>
+              <label for="shipping-postal-code" class="visually-hidden">Código postal</label>
+              <div class="shipping-form__group">
+                <input type="text" id="shipping-postal-code" name="postalCode" placeholder="Tu código postal" autocomplete="postal-code" inputmode="numeric">
+                <button type="submit">CALCULAR</button>
+              </div>
+              <p class="shipping-result" data-shipping-result>Calculá tu envío para conocer el costo.</p>
+            </form>
+          </section>
+
+          <section class="summary-section" data-summary-section>
+            <div class="summary-row">
+              <span data-summary-count>0 productos</span>
+              <span data-summary-subtotal>$0</span>
+            </div>
+            <div class="summary-row summary-row--total">
+              <span>Total con envío</span>
+              <span data-summary-total>$0</span>
+            </div>
+            <p class="summary-note" data-summary-note>Calculá el envío para ver el total final.</p>
+            <div class="summary-actions">
+              <button type="button" class="summary-btn summary-btn--primary">Iniciar compra</button>
+              <button type="button" class="summary-btn summary-btn--secondary" data-cart-close>Ver más productos</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="cart-toast-container" aria-live="polite" aria-atomic="true"></div>
 
   <!-- Scripts -->
   <script src="../Frontend/javaScript/main.js"></script>

@@ -365,4 +365,459 @@ if (header && navBottom) {
   }
 }
 
+  /* ===========================
+     🔹 Datos de productos demo
+  =========================== */
+  const currencyFormatter = new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0
+  });
+
+  const formatCurrency = (value) => currencyFormatter.format(value);
+
+  const demoProducts = [
+    {
+      id: "vesper-aurora",
+      name: "Aurora Nocturna",
+      subtitle: "Fragancia femenina",
+      price: 38500,
+      originalPrice: 42900,
+      image: "img/categoria_perfumes_1.avif"
+    },
+    {
+      id: "vesper-orion",
+      name: "Orion Intense",
+      subtitle: "Perfume masculino",
+      price: 41200,
+      originalPrice: 45200,
+      image: "img/categoria_perfumes_2.avif"
+    },
+    {
+      id: "vesper-summit",
+      name: "Summit Vapor",
+      subtitle: "Vape sabor frutos rojos",
+      price: 21500,
+      originalPrice: 0,
+      image: "img/categoria_vapes_1.avif"
+    },
+    {
+      id: "vesper-lumen",
+      name: "Lumen Deluxe",
+      subtitle: "Decant 15ml",
+      price: 13200,
+      originalPrice: 14900,
+      image: "img/categoria_perfumes_1.avif"
+    },
+    {
+      id: "vesper-zenith",
+      name: "Zenith Oud",
+      subtitle: "Fragancia unisex",
+      price: 47800,
+      originalPrice: 51200,
+      image: "img/categoria_perfumes_2.avif"
+    },
+    {
+      id: "vesper-wave",
+      name: "Wave Citrus",
+      subtitle: "Vape edición limitada",
+      price: 22800,
+      originalPrice: 0,
+      image: "img/categoria_vapes_1.avif"
+    }
+  ];
+
+  const productListContainer = document.getElementById("product-list");
+  const productsGrid = document.getElementById("productos-lista");
+
+  const createProductCard = (product) => {
+    const card = document.createElement("article");
+    card.className = "product";
+
+    const originalPrice = product.originalPrice && product.originalPrice > product.price
+      ? `<p class="discount">${formatCurrency(product.originalPrice)}</p>`
+      : "";
+
+    card.innerHTML = `
+      <img src="${product.image}" alt="${product.name}">
+      <h3>${product.name}</h3>
+      <p class="product-subtitle">${product.subtitle}</p>
+      ${originalPrice}
+      <p class="price">${formatCurrency(product.price)}</p>
+      <button type="button" class="btn btn--primary product__add" data-add-to-cart
+        data-product-id="${product.id}"
+        data-product-name="${product.name}"
+        data-product-subtitle="${product.subtitle}"
+        data-product-price="${product.price}"
+        data-product-original-price="${product.originalPrice ?? 0}"
+        data-product-image="${product.image}">
+        Agregar al carrito
+      </button>
+    `;
+
+    return card;
+  };
+
+  if (productListContainer && productListContainer.children.length === 0) {
+    demoProducts.slice(0, 4).forEach((product) => {
+      productListContainer.appendChild(createProductCard(product));
+    });
+  }
+
+  if (productsGrid && productsGrid.children.length === 0) {
+    demoProducts.forEach((product) => {
+      productsGrid.appendChild(createProductCard(product));
+    });
+  }
+
+  /* ===========================
+     🔹 Carrito de compras
+  =========================== */
+  const cartModal = document.getElementById("cart-modal");
+  const cartTrigger = document.getElementById("link-carrito");
+  const cartBadge = cartTrigger?.querySelector(".cart-badge");
+  const cartItemsContainer = cartModal?.querySelector("[data-cart-items]");
+  const cartContent = cartModal?.querySelector("[data-cart-content]");
+  const emptyState = cartModal?.querySelector("[data-cart-empty]");
+  const shippingSection = cartModal?.querySelector("[data-shipping-section]");
+  const summarySection = cartModal?.querySelector("[data-summary-section]");
+  const shippingForm = cartModal?.querySelector("[data-shipping-form]");
+  const shippingResult = cartModal?.querySelector("[data-shipping-result]");
+  const summaryCount = cartModal?.querySelector("[data-summary-count]");
+  const summarySubtotal = cartModal?.querySelector("[data-summary-subtotal]");
+  const summaryTotal = cartModal?.querySelector("[data-summary-total]");
+  const summaryNote = cartModal?.querySelector("[data-summary-note]");
+  const toastContainer = document.querySelector(".cart-toast-container");
+
+  const cartState = {
+    items: [],
+    shippingCost: null,
+    shippingPostalCode: null
+  };
+
+  let lastFocusedElement = null;
+
+  const getCartQuantity = () => cartState.items.reduce((acc, item) => acc + item.quantity, 0);
+
+  const updateCartBadge = () => {
+    const totalQuantity = getCartQuantity();
+    if (cartBadge) {
+      cartBadge.textContent = String(totalQuantity);
+    }
+    if (cartTrigger) {
+      if (totalQuantity > 0) {
+        cartTrigger.setAttribute(
+          "aria-label",
+          `Abrir carrito (${totalQuantity} producto${totalQuantity === 1 ? "" : "s"})`
+        );
+      } else {
+        cartTrigger.setAttribute("aria-label", "Abrir carrito");
+      }
+    }
+  };
+
+  const renderCartItems = () => {
+    if (!cartItemsContainer) return;
+    cartItemsContainer.innerHTML = "";
+
+    cartState.items.forEach((item) => {
+      const element = document.createElement("article");
+      element.className = "cart-item";
+      element.dataset.id = item.id;
+
+      const originalPrice = item.originalPrice && item.originalPrice > item.price
+        ? `<span class="cart-item__original">${formatCurrency(item.originalPrice)}</span>`
+        : "";
+
+      element.innerHTML = `
+        <button class="cart-item__remove" type="button" data-action="remove" aria-label="Eliminar ${item.name}">🗑️</button>
+        <div class="cart-item__media">
+          <img src="${item.image}" alt="${item.name}">
+        </div>
+        <div class="cart-item__details">
+          <h4 class="cart-item__title">${item.name}</h4>
+          <p class="cart-item__subtitle">${item.subtitle ?? ""}</p>
+          <div class="cart-item__prices">
+            ${originalPrice}
+            <span class="cart-item__price">${formatCurrency(item.price)}</span>
+          </div>
+          <div class="cart-item__controls">
+            <div class="cart-item__quantity">
+              <button type="button" data-action="decrease" aria-label="Restar uno">−</button>
+              <span>${item.quantity}</span>
+              <button type="button" data-action="increase" aria-label="Sumar uno">+</button>
+            </div>
+            <span class="cart-item__total">${formatCurrency(item.quantity * item.price)}</span>
+          </div>
+        </div>
+      `;
+
+      cartItemsContainer.appendChild(element);
+    });
+  };
+
+  const resetShippingState = () => {
+    cartState.shippingCost = null;
+    cartState.shippingPostalCode = null;
+    if (shippingForm) {
+      shippingForm.reset();
+    }
+    if (shippingResult) {
+      shippingResult.textContent = "Calculá tu envío para conocer el costo.";
+      shippingResult.classList.remove("shipping-result--error");
+    }
+  };
+
+  const updateSummary = () => {
+    if (!summaryCount || !summarySubtotal || !summaryTotal) return;
+    const totalQuantity = getCartQuantity();
+    const subtotal = cartState.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+    summaryCount.textContent = `${totalQuantity} producto${totalQuantity === 1 ? "" : "s"}`;
+    summarySubtotal.textContent = formatCurrency(subtotal);
+
+    let total = subtotal;
+
+    if (cartState.shippingCost != null) {
+      total += cartState.shippingCost;
+      if (summaryNote) {
+        if (cartState.shippingCost === 0) {
+          summaryNote.textContent = cartState.shippingPostalCode
+            ? `Envío gratis para ${cartState.shippingPostalCode.toUpperCase()}.`
+            : "Envío gratis.";
+        } else {
+          summaryNote.textContent = cartState.shippingPostalCode
+            ? `Incluye envío estimado a ${cartState.shippingPostalCode.toUpperCase()}.`
+            : "Incluye envío estimado.";
+        }
+      }
+    } else if (summaryNote) {
+      summaryNote.textContent = "Calculá el envío para ver el total final.";
+    }
+
+    summaryTotal.textContent = formatCurrency(total);
+  };
+
+  const updateCartUI = () => {
+    const hasItems = cartState.items.length > 0;
+
+    if (emptyState) {
+      emptyState.hidden = hasItems;
+    }
+    if (cartContent) {
+      cartContent.hidden = !hasItems;
+    }
+    if (shippingSection) {
+      shippingSection.hidden = !hasItems;
+    }
+    if (summarySection) {
+      summarySection.hidden = !hasItems;
+    }
+
+    if (hasItems) {
+      renderCartItems();
+      updateSummary();
+    } else {
+      if (cartItemsContainer) {
+        cartItemsContainer.innerHTML = "";
+      }
+      resetShippingState();
+    }
+  };
+
+  const openCart = () => {
+    if (!cartModal) return;
+    updateCartUI();
+    cartModal.classList.add("is-open");
+    cartModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("cart-open");
+    lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const panel = cartModal.querySelector(".cart-modal__panel");
+    if (panel instanceof HTMLElement) {
+      panel.focus();
+    }
+    if (cartTrigger) {
+      cartTrigger.setAttribute("aria-expanded", "true");
+    }
+  };
+
+  const closeCart = () => {
+    if (!cartModal) return;
+    cartModal.classList.remove("is-open");
+    cartModal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("cart-open");
+    if (cartTrigger) {
+      cartTrigger.setAttribute("aria-expanded", "false");
+    }
+    if (lastFocusedElement) {
+      lastFocusedElement.focus();
+    }
+  };
+
+  const showCartToast = (item) => {
+    if (!toastContainer) return;
+    const toast = document.createElement("div");
+    toast.className = "cart-toast";
+
+    const title = document.createElement("p");
+    title.className = "cart-toast__title";
+    title.textContent = `Agregaste ${item.name}`;
+
+    const price = document.createElement("span");
+    price.className = "cart-toast__price";
+    price.textContent = formatCurrency(item.price);
+
+    toast.appendChild(title);
+    toast.appendChild(price);
+
+    if (toastContainer.childElementCount >= 3) {
+      toastContainer.removeChild(toastContainer.firstElementChild);
+    }
+
+    toastContainer.appendChild(toast);
+
+    requestAnimationFrame(() => {
+      toast.classList.add("is-visible");
+    });
+
+    setTimeout(() => {
+      toast.classList.remove("is-visible");
+      setTimeout(() => {
+        toast.remove();
+      }, 250);
+    }, 3200);
+  };
+
+  const estimateShipping = (postalCode) => {
+    const cleaned = postalCode.replace(/\s+/g, "");
+    if (cleaned.length < 4) {
+      return null;
+    }
+
+    let cost = 2400;
+    const prefix = cleaned[0];
+
+    if (prefix === "1") {
+      cost = 0;
+    } else if (prefix === "2" || prefix === "3") {
+      cost = 1800;
+    } else if (prefix === "4" || prefix === "5") {
+      cost = 2100;
+    }
+
+    const message = cost === 0
+      ? `Envío gratis para ${cleaned.toUpperCase()}.`
+      : `Envío estimado a ${cleaned.toUpperCase()}: ${formatCurrency(cost)}.`;
+
+    return { cost, message };
+  };
+
+  const addProductToCart = (product) => {
+    const existing = cartState.items.find((item) => item.id === product.id);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      cartState.items.push({
+        ...product,
+        quantity: 1
+      });
+    }
+    updateCartBadge();
+    updateCartUI();
+    showCartToast(product);
+  };
+
+  cartTrigger?.addEventListener("click", (event) => {
+    event.preventDefault();
+    openCart();
+  });
+
+  cartModal?.addEventListener("click", (event) => {
+    const closeTarget = event.target instanceof HTMLElement ? event.target.closest("[data-cart-close]") : null;
+    if (closeTarget) {
+      event.preventDefault();
+      closeCart();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && cartModal?.classList.contains("is-open")) {
+      closeCart();
+    }
+  });
+
+  cartItemsContainer?.addEventListener("click", (event) => {
+    const button = event.target instanceof HTMLElement ? event.target.closest("button[data-action]") : null;
+    if (!button) return;
+    const action = button.dataset.action;
+    const itemElement = button.closest(".cart-item");
+    if (!itemElement) return;
+    const { id } = itemElement.dataset;
+    if (!id) return;
+
+    const item = cartState.items.find((entry) => entry.id === id);
+    if (!item) return;
+
+    if (action === "increase") {
+      item.quantity += 1;
+    } else if (action === "decrease") {
+      if (item.quantity > 1) {
+        item.quantity -= 1;
+      } else {
+        cartState.items = cartState.items.filter((entry) => entry.id !== id);
+      }
+    } else if (action === "remove") {
+      cartState.items = cartState.items.filter((entry) => entry.id !== id);
+    }
+
+    updateCartBadge();
+    updateCartUI();
+  });
+
+  shippingForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!shippingResult) return;
+
+    const input = shippingForm.querySelector("input[name='postalCode']");
+    const postalCode = input?.value.trim() ?? "";
+
+    const estimation = estimateShipping(postalCode);
+    if (!estimation) {
+      shippingResult.textContent = "Ingresá un código postal válido.";
+      shippingResult.classList.add("shipping-result--error");
+      cartState.shippingCost = null;
+      cartState.shippingPostalCode = null;
+      updateSummary();
+      return;
+    }
+
+    shippingResult.textContent = estimation.message;
+    shippingResult.classList.remove("shipping-result--error");
+    cartState.shippingCost = estimation.cost;
+    cartState.shippingPostalCode = postalCode;
+    updateSummary();
+  });
+
+  document.addEventListener("click", (event) => {
+    const trigger = event.target instanceof HTMLElement ? event.target.closest("[data-add-to-cart]") : null;
+    if (!trigger) return;
+    event.preventDefault();
+
+    const { productId, productName, productSubtitle, productPrice, productOriginalPrice, productImage } = trigger.dataset;
+    if (!productId || !productName || !productPrice) return;
+
+    const product = {
+      id: productId,
+      name: productName,
+      subtitle: productSubtitle ?? "",
+      price: Number(productPrice),
+      originalPrice: Number(productOriginalPrice ?? 0),
+      image: productImage ?? "img/categoria_perfumes_1.avif"
+    };
+
+    addProductToCart(product);
+  });
+
+  updateCartBadge();
+
 });
