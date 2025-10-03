@@ -21,7 +21,7 @@ public class Perfume extends Producto {
     private String corazon;
     private String fondo;
     private String inspiracion;
-
+    private boolean decant;
     private String fragancia;
     private Integer ml;
 }

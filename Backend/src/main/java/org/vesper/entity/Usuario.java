@@ -31,14 +31,9 @@ public class Usuario {
     @Column(nullable = false)
     private String password;
 
-    // Relación ManyToMany con Rol
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "usuarios_roles",
-            joinColumns = @JoinColumn(name = "usuario_id"),
-            inverseJoinColumns = @JoinColumn(name = "rol_id")
-    )
-    private List<Rol> roles = new ArrayList<>();
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Rol rol;
 
     private boolean activo = true;
 

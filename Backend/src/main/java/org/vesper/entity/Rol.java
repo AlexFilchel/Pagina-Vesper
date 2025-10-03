@@ -1,23 +1,17 @@
 package org.vesper.entity;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public enum Rol {
+    USER(1),
+    ADMIN(2),
+    SUPERADMIN(3);
 
-@Entity
-@Table(name = "roles")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class Rol {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "idRol")
-    private Long id;
+    private final int nivel;
 
-    @Column(name = "nombre_rol",nullable = false, unique = true)
-    private String nombre;
+    Rol(int nivel) {
+        this.nivel = nivel;
+    }
+
+    public int getNivel() {
+        return nivel;
+    }
 }
