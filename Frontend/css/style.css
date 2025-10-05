@@ -81,22 +81,29 @@ body {
 
 .site-header__search {
   position: absolute;
-  flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
-  max-width: 600px;
   background: #ffffff;
   padding: 2px 12px;
-  border-radius: 20px;
+  border-radius: 15px;
   border: 1px solid #cdcdcd;
+
+  /* 🔹 Nuevo comportamiento responsivo */
   left: 50%;
   transform: translateX(-50%);
-  width: 100%;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  border-radius: 15px;
+  width: clamp(200px, 50%, 600px);
+  min-width: 180px;
+  flex-shrink: 1;
+  transition: width 0.2s ease;
 }
+
+@media (max-width: 930px) and (min-width: 769px) {
+  .site-header__search {
+    width: clamp(180px, 40%, 500px);
+  }
+}
+
 
 .site-header__search:focus-within {
   box-shadow: 0 0 0 2px rgba(0, 74, 173, 0.12);
