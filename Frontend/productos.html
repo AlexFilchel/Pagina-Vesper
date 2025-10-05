@@ -144,9 +144,10 @@
 
 
 
-      <a href="#" class="site-header__action" id="link-carrito">
+      <a href="#" class="site-header__action" id="link-carrito" aria-haspopup="dialog">
   <span class="site-header__action-icon">
     <span class="material-symbols-outlined">shopping_cart</span>
+    <span class="cart-count-badge" id="cart-count" aria-live="polite">0</span>
   </span>
   <span class="site-header__action-label"></span>
 </a>
@@ -315,6 +316,59 @@
       </div>
     </div>
   </footer>
+
+  <!-- Carrito de compras -->
+  <div class="cart-modal" id="cart-modal" aria-hidden="true">
+    <div class="cart-modal__overlay" role="presentation"></div>
+    <aside class="cart-modal__panel" role="dialog" aria-labelledby="cartModalTitle">
+      <header class="cart-modal__header">
+        <div>
+          <h2 id="cartModalTitle">Tu carrito</h2>
+          <p class="cart-modal__subtitle">Revisa tus productos antes de continuar</p>
+        </div>
+        <button class="cart-modal__close" type="button" aria-label="Cerrar carrito">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </header>
+      <div class="cart-modal__body">
+        <div class="cart-empty-state" id="cart-empty-state">
+          <span class="material-symbols-outlined cart-empty-state__icon" aria-hidden="true">shopping_bag</span>
+          <h3>Tu carrito está vacío</h3>
+          <p>Agrega algunos productos para comenzar tu compra</p>
+          <button type="button" class="btn btn--primary cart-empty-state__cta">Seguir Comprando</button>
+        </div>
+        <div class="cart-items" id="cart-items" aria-live="polite"></div>
+        <section class="shipping-section" id="shipping-section" aria-labelledby="shippingTitle">
+          <h3 id="shippingTitle">Medios de envío</h3>
+          <form class="shipping-form" id="shipping-form">
+            <label class="visually-hidden" for="shipping-zip">Código postal</label>
+            <input type="text" id="shipping-zip" name="shippingZip" placeholder="Tu código postal" inputmode="numeric" autocomplete="postal-code">
+            <button type="submit">CALCULAR</button>
+          </form>
+          <p class="shipping-result" id="shipping-result" aria-live="polite"></p>
+        </section>
+      </div>
+      <footer class="summary-section" id="summary-section">
+        <div class="summary-line">
+          <span id="summary-count">0 productos</span>
+          <span id="summary-subtotal">$0</span>
+        </div>
+        <div class="summary-line summary-line--total">
+          <div class="summary-total__label">
+            <span>Total</span>
+            <small id="summary-shipping-note">Envío a calcular</small>
+          </div>
+          <span id="summary-total">$0</span>
+        </div>
+        <div class="summary-actions">
+          <button type="button" class="btn btn--primary summary-actions__primary">Iniciar compra</button>
+          <button type="button" class="btn summary-actions__secondary">Ver más productos</button>
+        </div>
+      </footer>
+    </aside>
+  </div>
+
+  <div class="cart-toast-layer" aria-live="polite" aria-atomic="true"></div>
 
   <!-- Scripts -->
   <script src="../Frontend/javaScript/main.js"></script>
