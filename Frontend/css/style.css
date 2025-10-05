@@ -1523,6 +1523,7 @@ body.is-cart-open {
   right: var(--toast-right, 20px);
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 12px;
   z-index: 8500;
   pointer-events: none;
@@ -1541,6 +1542,15 @@ body.is-cart-open {
   max-width: 260px;
 }
 
+.cart-toast__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  color: rgba(226, 232, 240, 0.9);
+}
+
 .cart-toast strong {
   display: block;
   font-size: 0.95rem;
@@ -1557,18 +1567,22 @@ body.is-cart-open {
   transform: translateY(0);
 }
 
-@media (max-width: 600px) {
-  .cart-toast-layer {
-    left: 0;
-    right: 0;
-    top: auto;
-    bottom: 20px;
-    align-items: center;
-  }
+.cart-toast-layer--mobile {
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 24px;
+  padding: 0 16px;
+  align-items: center;
+}
 
-  .cart-toast {
-    width: min(90vw, 320px);
-  }
+.cart-toast-layer--mobile .cart-toast {
+  width: min(90vw, 360px);
+  transform: translateY(12px);
+}
+
+.cart-toast-layer--mobile .cart-toast.is-visible {
+  transform: translateY(0);
 }
 
 .form-group {

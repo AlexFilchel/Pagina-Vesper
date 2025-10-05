@@ -335,62 +335,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("resize", handleResize);
   handleResize();
 
-  /* ===========================
-     🔹 Catálogo base
-  =========================== */
-  const productCatalog = [
-    {
-      id: "aurora-intense",
-      name: "Aurora Intense",
-      subtitle: "Eau de Parfum 100 ml",
-      price: 48900,
-      originalPrice: 54900,
-      image: "img/perfume_carrusel_1.avif"
-    },
-    {
-      id: "midnight-vape",
-      name: "Midnight Clouds",
-      subtitle: "Vape recargable 8K puffs",
-      price: 32900,
-      originalPrice: 0,
-      image: "img/vape_carrusel_1.avif"
-    },
-    {
-      id: "vesper-aurum",
-      name: "Vesper Aurum",
-      subtitle: "Decant exclusivo 10 ml",
-      price: 12900,
-      originalPrice: 14900,
-      image: "img/perfumer_carrusel_2.avif"
-    },
-    {
-      id: "blue-ember",
-      name: "Blue Ember",
-      subtitle: "Perfume masculino 90 ml",
-      price: 45900,
-      originalPrice: 0,
-      image: "img/perfume_carrusel_1.avif"
-    },
-    {
-      id: "rose-nebula",
-      name: "Rose Nebula",
-      subtitle: "Eau de parfum 60 ml",
-      price: 37900,
-      originalPrice: 41900,
-      image: "img/categoria_perfumes_2.avif"
-    },
-    {
-      id: "citrus-glow",
-      name: "Citrus Glow",
-      subtitle: "Decant cítrico 10 ml",
-      price: 9900,
-      originalPrice: 0,
-      image: "img/categoria_perfumes_1.avif"
-    }
-  ];
-
-  const productsById = new Map(productCatalog.map(product => [product.id, product]));
-
   const currencyFormatter = new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",
@@ -400,41 +344,80 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const formatPrice = (value) => currencyFormatter.format(value);
 
-  const productList = document.getElementById("product-list");
-  const productsGrid = document.getElementById("productos-lista");
+  function parsePriceValue(value) {
+    if (typeof value === "number") return value;
+    if (typeof value !== "string") return 0;
 
-  function buildProductCard(product) {
-    const hasDiscount = product.originalPrice && product.originalPrice > product.price;
-    const originalMarkup = hasDiscount ? `<span class="discount">${formatPrice(product.originalPrice)}</span>` : "";
+    const cleaned = value
+      .trim()
+      .replace(/[^\d.,-]/g, "")
+      .replace(/\./g, "")
+      .replace(/,/g, ".");
 
-    return `
-      <article class="product" data-product-id="${product.id}">
-        <img src="${product.image}" alt="${product.name}">
-        <h3>${product.name}</h3>
-        <p class="product-subtitle">${product.subtitle}</p>
-        <div class="product-pricing">
-          ${originalMarkup}
-          <span class="price">${formatPrice(product.price)}</span>
-        </div>
-        <button type="button" class="btn btn--primary product__add" data-action="add-to-cart" data-product-id="${product.id}">
-          Agregar al carrito
-        </button>
-      </article>
-    `;
+    const numeric = Number.parseFloat(cleaned);
+    return Number.isFinite(numeric) ? numeric : 0;
   }
 
-  function renderProductCollections() {
-    if (productList) {
-      const featuredMarkup = productCatalog.slice(0, 4).map(buildProductCard).join("");
-      productList.innerHTML = featuredMarkup;
-    }
-
-    if (productsGrid) {
-      productsGrid.innerHTML = productCatalog.map(buildProductCard).join("");
-    }
+  function mergeDatasetData(...datasets) {
+    return datasets.reduce((acc, data) => {
+      if (!data) return acc;
+      Object.entries(data).forEach(([key, value]) => {
+        if (value == null || value === "" || acc[key]) return;
+        acc[key] = value;
+      });
+      return acc;
+    }, {});
   }
 
-  renderProductCollections();
+  function slugify(value) {
+    return value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  function extractProductData(trigger) {
+    if (!trigger) return null;
+
+    const context = trigger.closest?.("[data-product-id], [data-product-name], [data-product]");
+    const datasets = [trigger.dataset, context?.dataset];
+    const data = mergeDatasetData(...datasets);
+
+    const rawName = data.productName || data.name || trigger.getAttribute("aria-label") || null;
+    const name = typeof rawName === "string" ? rawName.trim() : rawName;
+    if (!name) {
+      console.warn("No se pudo determinar el nombre del producto para el carrito.");
+      return null;
+    }
+
+    const idBase = data.productId || data.id || slugify(name);
+    let price = parsePriceValue(data.productPrice || data.price || trigger.getAttribute("data-price") || "");
+    if (!price && context && typeof context.querySelector === "function") {
+      const priceElement =
+        context.querySelector("[data-product-price]") ||
+        context.querySelector(".price, .product-price, .product__price");
+      const priceText = priceElement?.textContent ?? "";
+      price = parsePriceValue(priceText);
+    }
+
+    const originalPrice = parsePriceValue(data.productOriginalPrice || data.originalPrice || "");
+    const subtitle = (data.productSubtitle || data.subtitle || context?.querySelector?.(".product-subtitle")?.textContent || "").trim();
+    const image = data.productImage || data.image || context?.querySelector?.("img")?.getAttribute?.("src") || "";
+    const rawType = data.productType || data.type || data.category || context?.dataset?.productType || "";
+    const type = typeof rawType === "string" && rawType.trim() ? rawType.trim() : "Producto";
+
+    return {
+      id: idBase,
+      name,
+      subtitle,
+      price,
+      originalPrice,
+      image,
+      type
+    };
+  }
 
   /* ===========================
      🔹 Carrito modal
@@ -620,7 +603,8 @@ document.addEventListener("DOMContentLoaded", () => {
         subtitle: product.subtitle,
         price: product.price,
         originalPrice: product.originalPrice,
-        image: product.image,
+        image: product.image || "",
+        type: product.type || "Producto",
         quantity: 1
       });
     }
@@ -698,18 +682,30 @@ document.addEventListener("DOMContentLoaded", () => {
       toastLayer.removeChild(toastLayer.firstElementChild);
     }
 
-    const toast = document.createElement("div");
-    toast.className = "cart-toast";
-    toast.innerHTML = `<strong>${product.name}</strong><span>${formatPrice(product.price)}</span>`;
+    const isMobileToast = window.matchMedia("(max-width: 720px)").matches;
+    toastLayer.classList.toggle("cart-toast-layer--mobile", isMobileToast);
 
-    if (cartTrigger) {
+    if (!isMobileToast && cartTrigger) {
       const rect = cartTrigger.getBoundingClientRect();
       const scrollTop = window.scrollY || window.pageYOffset;
       const top = Math.max(rect.top + scrollTop - 10, 20);
       const right = Math.max(window.innerWidth - rect.right + 12, 12);
       toastLayer.style.setProperty("--toast-top", `${top}px`);
       toastLayer.style.setProperty("--toast-right", `${right}px`);
+    } else {
+      toastLayer.style.removeProperty("--toast-top");
+      toastLayer.style.removeProperty("--toast-right");
     }
+
+    const toast = document.createElement("div");
+    toast.className = "cart-toast";
+
+    const typeLabel = product.type ? product.type.charAt(0).toUpperCase() + product.type.slice(1) : "Producto";
+    toast.innerHTML = `
+      <p class="cart-toast__label">Agregaste ${typeLabel}</p>
+      <strong>${product.name}</strong>
+      <span>${formatPrice(product.price)}</span>
+    `;
 
     toastLayer.appendChild(toast);
 
@@ -769,8 +765,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const trigger = event.target.closest?.("[data-action='add-to-cart']");
     if (!trigger) return;
 
-    const productId = trigger.dataset.productId;
-    const product = productId ? productsById.get(productId) : null;
+    const product = extractProductData(trigger);
     if (product) {
       addToCart(product);
     }
