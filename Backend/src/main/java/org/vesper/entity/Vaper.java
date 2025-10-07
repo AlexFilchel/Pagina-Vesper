@@ -12,6 +12,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 public class Vaper extends Producto {
     private Integer pitadas;
@@ -22,5 +23,6 @@ public class Vaper extends Producto {
             joinColumns = @JoinColumn(name = "vaper_id"),
             inverseJoinColumns = @JoinColumn(name = "sabor_id")
     )
+    @Builder.Default
     private Set<Sabor> sabores = new HashSet<>();
 }

@@ -37,5 +37,6 @@ public class Usuario {
 
     private boolean activo = true;
 
+    @Builder.Default
     private LocalDateTime fechaCreacion = LocalDateTime.now();
 }

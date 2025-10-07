@@ -6,9 +6,9 @@ import org.springframework.stereotype.Service;
 import org.vesper.dto.RegisterRequest;
 import org.vesper.entity.Rol;
 import org.vesper.entity.Usuario;
-import org.vesper.repo.RolRepository;
 import org.vesper.repo.UsuarioRepository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -16,7 +16,6 @@ import java.util.Optional;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
-    private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -36,13 +35,10 @@ public class UsuarioService {
                 .apellido(request.getApellido())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .rol(Rol.USER) // rol por defecto
+                .activo(true)
+                .fechaCreacion(LocalDateTime.now())
                 .build();
-
-        Rol rol = rolRepository.findByNombre("USER")
-                .orElseThrow(() -> new RuntimeException("Rol USER no encontrado"));
-
-        usuario.getRoles().add(rol);
-
         return usuarioRepository.save(usuario);
     }
 

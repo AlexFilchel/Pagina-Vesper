@@ -1,5 +1,6 @@
 package org.vesper.entity;
 
+import com.fasterxml.jackson.databind.deser.BuilderBasedDeserializer;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -30,7 +31,10 @@ public class Producto {
 
     private Integer stock;
 
-    private String imagenUrl;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "imagen_id")
+    private Imagen imagen;
 
+    @Builder.Default
     private boolean activo = true;
 }

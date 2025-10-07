@@ -14,7 +14,6 @@ import java.util.List;
 public class DataInitializer implements CommandLineRunner {
 
     private final UsuarioRepository usuarioRepository;
-    private final RolRepository rolRepository;
     private final SaborRepository saborRepository;
     private final PasswordEncoder passwordEncoder;
 

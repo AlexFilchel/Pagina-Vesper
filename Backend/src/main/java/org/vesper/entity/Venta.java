@@ -24,6 +24,7 @@ public class Venta {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
+    @Builder.Default
     private LocalDateTime fecha = LocalDateTime.now();
 
     private Double total; // total de la venta (histórico, congelado)
