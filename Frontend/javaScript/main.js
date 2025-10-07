@@ -33,6 +33,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalLogin = document.getElementById("modal-login");
   const modalRegister = document.getElementById("modal-register");
 
+  document.body.classList.remove("is-cart-open");
+
+  [modalLogin, modalRegister].forEach((modal) => {
+    if (modal) {
+      modal.classList.remove("active");
+      modal.setAttribute("aria-hidden", "true");
+    }
+  });
+
   const btnLogin = document.getElementById("btn-login");
   const btnRegister = document.getElementById("btn-register");
 
@@ -444,6 +453,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const cartTrigger = document.getElementById("link-carrito");
   const cartCountBadge = document.getElementById("cart-count");
   const toastLayer = document.querySelector(".cart-toast-layer");
+
+  if (cartModal) {
+    cartModal.classList.remove("is-open");
+    cartModal.setAttribute("aria-hidden", "true");
+  }
 
   const cartState = {
     items: [],
@@ -1042,6 +1056,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (benefitsTrack && benefitsIndicator) {
     const mobileBenefitsQuery = window.matchMedia("(max-width: 768px)");
 
+    const ensureStartPosition = () => {
+      if (mobileBenefitsQuery.matches) {
+        benefitsTrack.scrollLeft = 0;
+      }
+    };
+
     const toggleIndicator = () => {
       if (!mobileBenefitsQuery.matches) {
         benefitsIndicator.classList.add("is-hidden");
@@ -1072,13 +1092,26 @@ document.addEventListener("DOMContentLoaded", () => {
     benefitsTrack.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", handleResize);
 
+    const handleMediaChange = (event) => {
+      const matches = typeof event.matches === "boolean" ? event.matches : mobileBenefitsQuery.matches;
+      if (matches) {
+        ensureStartPosition();
+      }
+      toggleIndicator();
+    };
+
     if (typeof mobileBenefitsQuery.addEventListener === "function") {
-      mobileBenefitsQuery.addEventListener("change", toggleIndicator);
+      mobileBenefitsQuery.addEventListener("change", handleMediaChange);
     } else if (typeof mobileBenefitsQuery.addListener === "function") {
-      mobileBenefitsQuery.addListener(toggleIndicator);
+      mobileBenefitsQuery.addListener(handleMediaChange);
     }
 
-    window.addEventListener("load", toggleIndicator);
+    window.addEventListener("load", () => {
+      ensureStartPosition();
+      toggleIndicator();
+    });
+
+    ensureStartPosition();
     toggleIndicator();
   }
 

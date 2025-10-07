@@ -1660,6 +1660,8 @@ body.is-cart-open {
 
   .benefits .container {
     flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: stretch;
     overflow-x: auto;
     gap: 16px;
     padding: 0 16px;
