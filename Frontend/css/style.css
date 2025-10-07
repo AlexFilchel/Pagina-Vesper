@@ -127,7 +127,7 @@ body {
   background: transparent;
   border: none;
   color: #868686;
-  font-size: 1rem;
+  font-size: rem;
   cursor: pointer;
   margin-left: 8px;
 
@@ -273,6 +273,25 @@ body {
   padding: 0px 4px;
   cursor: pointer;
   transition: color 0.3s ease;
+}
+/* ===========================
+   Fuente para las categorías del header
+=========================== */
+
+.main-nav__link,
+.main-nav__dropdown a,
+.main-nav__column-title {
+  font-family: 'Poppins', sans-serif !important;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #1b1b1b;
+}
+
+/* Hover o estado activo */
+.main-nav__link:hover,
+.main-nav__dropdown a:hover {
+  color: #004aad; /* tu azul principal */
+  text-decoration: none;
 }
 
 .main-nav__link--direct {
@@ -695,6 +714,7 @@ body {
   background: #e1e1e1;
   padding: 40px;
   margin-top: 20px;
+  font-family: 'Poppins', sans-serif;
 }
 
 /* El contenido sigue limitado */
@@ -719,11 +739,13 @@ body {
   font-weight: 600;
   color: #1b1b1b;
   margin-bottom: 8px;
+  font-family: 'Poppins', sans-serif;
 }
 
 .benefit p {
   font-size: 0.9rem;
   margin: 0;
+  font-family: 'Poppins', sans-serif;
 }
 
 .benefit:not(:last-child)::after {
@@ -761,7 +783,8 @@ body {
   align-items: flex-end;
   justify-content: center;
   text-align: center;
-  height: clamp(250px, 50vh, 500px);
+  height: 500px; /* 🔹 Fijo: no cambia con la pantalla */
+  width: 100%;
   border-radius: 12px;
   overflow: hidden;
   background-size: cover;
@@ -770,6 +793,7 @@ body {
   color: #fff;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
 
 /* Fondos de ejemplo (puedes cambiarlos por tus imágenes reales) */
 .category-card:nth-child(1) {
@@ -790,7 +814,7 @@ body {
   background: inherit;   /* Usa la misma imagen */
   background-size: cover;
   background-position: center;
-  filter: blur(4px) brightness(0.7);    /* Nivel de desenfoque */
+  filter: blur(2px) brightness(0.7);    /* Nivel de desenfoque */
   transform: scale(1.1); /* Evita que queden bordes transparentes */
   z-index: 0;
 }
@@ -929,7 +953,7 @@ body {
 
 .main-footer h3,
 .main-footer h4 {
-  font-family: 'Merriweather', serif;
+  font-family: 'Poppins', sans-serif;
   margin-bottom: 10px;
   color: #fff;
 }
@@ -948,6 +972,20 @@ body {
 }
 
 .footer-links a:hover {
+  text-decoration: underline;
+}
+
+.footer-links,
+.footer-links ul li a {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 400;
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-links ul li a:hover {
+  color: #d1e0ff;
   text-decoration: underline;
 }
 
