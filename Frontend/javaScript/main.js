@@ -777,6 +777,261 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  /* ===========================
+     🔹 Ordenamiento de productos
+  =========================== */
+  const productsContainer = document.getElementById("productos-lista");
+  const sortDropdown = document.querySelector(".sort-dropdown");
+  const sortButton = sortDropdown?.querySelector(".sort-button");
+  const sortLabel = sortButton?.querySelector(".sort-button__label");
+  const sortOptions = sortDropdown ? Array.from(sortDropdown.querySelectorAll(".sort-options button")) : [];
+  const nameCollator = new Intl.Collator("es", { sensitivity: "base", numeric: true });
+
+  function ensureOriginalOrder(items) {
+    items.forEach((item, index) => {
+      if (!item.dataset.originalIndex) {
+        item.dataset.originalIndex = String(index);
+      }
+    });
+  }
+
+  function getProductPrice(element) {
+    if (!element) return 0;
+
+    const datasetKeys = ["price", "productPrice", "precio"];
+    for (const key of datasetKeys) {
+      const datasetValue = element.dataset?.[key];
+      if (datasetValue != null && datasetValue !== "") {
+        const parsed = Number.parseFloat(datasetValue);
+        if (Number.isFinite(parsed)) {
+          return parsed;
+        }
+      }
+    }
+
+    const priceElement = element.querySelector?.("[data-price], .price, .product-price, .product__price");
+    if (priceElement) {
+      const priceValue = priceElement.getAttribute?.("data-price") ?? priceElement.textContent ?? "";
+      const parsed = parsePriceValue(priceValue);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+
+    return 0;
+  }
+
+  function getProductName(element) {
+    if (!element) return "";
+
+    const datasetKeys = ["name", "productName", "titulo", "productTitle"];
+    for (const key of datasetKeys) {
+      const datasetValue = element.dataset?.[key];
+      if (typeof datasetValue === "string" && datasetValue.trim()) {
+        return datasetValue.trim();
+      }
+    }
+
+    const nameElement = element.querySelector?.("[data-product-name], .product-name, .product__title, h3, h2");
+    if (nameElement) {
+      const text = nameElement.textContent?.trim();
+      if (text) {
+        return text;
+      }
+    }
+
+    const ariaLabel = element.getAttribute?.("aria-label");
+    return ariaLabel ? ariaLabel.trim() : "";
+  }
+
+  function updateSortSelection(optionValue) {
+    sortOptions.forEach((option) => {
+      const isActive = option.dataset.sort === optionValue;
+      option.classList.toggle("is-active", isActive);
+      option.setAttribute("aria-selected", String(isActive));
+    });
+  }
+
+  function sortProducts(criteria) {
+    if (!productsContainer) return;
+
+    const items = Array.from(productsContainer.children).filter((child) => child.nodeType === Node.ELEMENT_NODE);
+    if (!items.length) return;
+
+    ensureOriginalOrder(items);
+
+    const sortedItems = items.slice().sort((a, b) => {
+      const priceA = getProductPrice(a);
+      const priceB = getProductPrice(b);
+      const nameA = getProductName(a);
+      const nameB = getProductName(b);
+      const originalA = Number.parseInt(a.dataset.originalIndex ?? "0", 10);
+      const originalB = Number.parseInt(b.dataset.originalIndex ?? "0", 10);
+
+      switch (criteria) {
+        case "price-asc":
+          if (priceA !== priceB) {
+            return priceA - priceB;
+          }
+          break;
+        case "price-desc":
+          if (priceA !== priceB) {
+            return priceB - priceA;
+          }
+          break;
+        case "name-asc": {
+          const comparison = nameCollator.compare(nameA, nameB);
+          if (comparison !== 0) {
+            return comparison;
+          }
+          break;
+        }
+        case "name-desc": {
+          const comparison = nameCollator.compare(nameB, nameA);
+          if (comparison !== 0) {
+            return comparison;
+          }
+          break;
+        }
+        default:
+          break;
+      }
+
+      return originalA - originalB;
+    });
+
+    sortedItems.forEach((item) => {
+      productsContainer.appendChild(item);
+    });
+  }
+
+  function closeSortDropdown() {
+    if (!sortDropdown || !sortButton) return;
+    sortDropdown.classList.remove("is-open");
+    sortButton.setAttribute("aria-expanded", "false");
+  }
+
+  function openSortDropdown() {
+    if (!sortDropdown || !sortButton) return;
+    sortDropdown.classList.add("is-open");
+    sortButton.setAttribute("aria-expanded", "true");
+  }
+
+  if (sortButton && sortOptions.length) {
+    sortOptions.forEach((option) => {
+      option.setAttribute("aria-selected", "false");
+      option.addEventListener("click", () => {
+        const { sort } = option.dataset;
+        if (!sort) return;
+
+        updateSortSelection(sort);
+        sortProducts(sort);
+        if (sortLabel) {
+          sortLabel.textContent = option.textContent?.trim() ? `Ordenar: ${option.textContent.trim()}` : "Ordenar";
+        }
+        closeSortDropdown();
+      });
+    });
+
+    sortButton.addEventListener("click", () => {
+      if (sortDropdown?.classList.contains("is-open")) {
+        closeSortDropdown();
+      } else {
+        openSortDropdown();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!sortDropdown?.classList.contains("is-open")) return;
+      const target = event.target;
+      if (!sortDropdown.contains(target)) {
+        closeSortDropdown();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && sortDropdown?.classList.contains("is-open")) {
+        closeSortDropdown();
+      }
+    });
+  }
+
+  /* ===========================
+     🔹 Filtros en modo mobile
+  =========================== */
+  const filtersPanel = document.getElementById("filters-panel");
+  const filtersToggleButton = document.querySelector(".filters-toggle");
+  const filtersCloseButton = filtersPanel?.querySelector(".filters-close");
+  const filtersOverlay = document.getElementById("filters-overlay");
+  const filtersMediaQuery = window.matchMedia("(max-width: 768px)");
+
+  function setFiltersVisibility(isVisible) {
+    if (!filtersPanel) return;
+    filtersPanel.classList.toggle("is-open", isVisible);
+    filtersPanel.setAttribute("aria-hidden", String(!isVisible));
+    document.body.classList.toggle("filters-open", isVisible);
+
+    if (filtersToggleButton) {
+      filtersToggleButton.setAttribute("aria-expanded", String(isVisible));
+    }
+
+    if (filtersOverlay) {
+      filtersOverlay.classList.toggle("is-visible", isVisible);
+      filtersOverlay.setAttribute("aria-hidden", String(!isVisible));
+    }
+  }
+
+  function openFilters() {
+    setFiltersVisibility(true);
+  }
+
+  function closeFilters() {
+    setFiltersVisibility(false);
+  }
+
+  function handleFiltersMediaChange(event) {
+    if (!filtersPanel) return;
+    if (event.matches) {
+      // Mobile view
+      filtersPanel.setAttribute("aria-hidden", "true");
+      filtersPanel.classList.remove("is-open");
+    } else {
+      // Desktop view
+      filtersPanel.setAttribute("aria-hidden", "false");
+      filtersPanel.classList.remove("is-open");
+      document.body.classList.remove("filters-open");
+      filtersToggleButton?.setAttribute("aria-expanded", "false");
+      if (filtersOverlay) {
+        filtersOverlay.classList.remove("is-visible");
+        filtersOverlay.setAttribute("aria-hidden", "true");
+      }
+    }
+  }
+
+  if (filtersPanel) {
+    filtersPanel.setAttribute("aria-hidden", filtersMediaQuery.matches ? "true" : "false");
+  }
+
+  filtersToggleButton?.addEventListener("click", () => {
+    if (filtersPanel?.classList.contains("is-open")) {
+      closeFilters();
+    } else {
+      openFilters();
+    }
+  });
+
+  filtersCloseButton?.addEventListener("click", closeFilters);
+  filtersOverlay?.addEventListener("click", closeFilters);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && filtersPanel?.classList.contains("is-open")) {
+      closeFilters();
+    }
+  });
+
+  filtersMediaQuery.addEventListener("change", handleFiltersMediaChange);
+  handleFiltersMediaChange(filtersMediaQuery);
+
 /* ===========================
    🔹 Sombra dinámica del header
 =========================== */

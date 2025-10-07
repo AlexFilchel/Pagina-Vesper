@@ -241,10 +241,15 @@
 
   <!-- Contenido principal -->
   <main class="container productos-page">
-    <aside class="filtros">
+    <aside class="filtros" id="filters-panel" aria-hidden="false">
     <div class="filtros-header">
         <h3>Filtros</h3>
-        <button class="filtros-limpiar">Limpiar todo</button>
+        <div class="filtros-header__actions">
+          <button class="filtros-limpiar" type="button">Limpiar todo</button>
+          <button class="filters-close" type="button" aria-label="Cerrar filtros">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          </button>
+        </div>
     </div>
 
               <!-- HACER QUE SI SE SELECCIONA PERFUME O DECANT SE MUESTREN SOLO LAS MARCAS DE PERFUMES, SI ES VAPE SE MUESTRAN LAS MARCAS DE VAPES Y SI NO LAS DOS -->
@@ -283,11 +288,32 @@
 
     <section class="productos">
 
+      <div class="productos-toolbar" aria-label="Herramientas de listado de productos">
+        <button class="filters-toggle" type="button" aria-controls="filters-panel" aria-expanded="false">
+          <span aria-hidden="true">🔽</span>
+          Filtros
+        </button>
+        <div class="sort-dropdown">
+          <button class="sort-button" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <span class="sort-button__label">Ordenar</span>
+            <span class="sort-button__icon" aria-hidden="true">↕</span>
+          </button>
+          <ul class="sort-options" role="listbox">
+            <li><button type="button" role="option" data-sort="price-asc">Precio: Menor a Mayor</button></li>
+            <li><button type="button" role="option" data-sort="price-desc">Precio: Mayor a Menor</button></li>
+            <li><button type="button" role="option" data-sort="name-asc">A - Z</button></li>
+            <li><button type="button" role="option" data-sort="name-desc">Z - A</button></li>
+          </ul>
+        </div>
+      </div>
+
       <div class="productos-grid" id="productos-lista">
         <!-- Aquí van los productos cargados desde la API con JS -->
       </div>
     </section>
   </main>
+
+  <div class="filters-overlay" id="filters-overlay" aria-hidden="true"></div>
 
   <!-- Footer -->
   <footer class="main-footer" role="contentinfo">
