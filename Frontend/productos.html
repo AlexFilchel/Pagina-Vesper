@@ -290,7 +290,6 @@
 
       <div class="productos-toolbar" aria-label="Herramientas de listado de productos">
         <button class="filters-toggle" type="button" aria-controls="filters-panel" aria-expanded="false">
-          <span aria-hidden="true">🔽</span>
           Filtros
         </button>
         <div class="sort-dropdown">
@@ -317,31 +316,53 @@
 
   <!-- Footer -->
   <footer class="main-footer" role="contentinfo">
-    <div class="container footer-inner">
-      <div class="footer-info">
-        <h3>Vesper</h3>
-        <p>Tu tienda de confianza para fragancias premium, vapes y tecnología.</p>
-      </div>
-      <div class="footer-links">
-        <h4>Productos</h4>
-        <ul id="footer-categorias"></ul>
-      </div>
-      <div class="footer-links">
-        <h4>Enlaces útiles</h4>
-        <ul>
-          <li><a href="#">Preguntas Frecuentes</a></li>
-        </ul>
-      </div>
-      <div class="footer-contact">
-        <h4>Contacto</h4>
-        <address>
-          📧 <a href="mailto:info@vesper.com">info@vesper.com</a><br>
-          📞 <a href="tel:+541112345678">+54 11 1234-5678</a><br>
-          📍 Mendoza, Argentina
-        </address>
+  <div class="container footer-inner">
+    
+    <!-- 🔹 Categorías -->
+    <div class="footer-links footer-categories">
+      <h4>Categorías</h4>
+      <ul>
+        <li><a href="productos.html?categoria=perfumes">Perfumes</a></li>
+        <li><a href="productos.html?categoria=vapes">Vapes</a></li>
+        <li><a href="productos.html?categoria=decants">Decants</a></li>
+      </ul>
+    </div>
+
+    <!-- 🔹 Enlaces útiles -->
+    <div class="footer-links">
+      <h4>Enlaces útiles</h4>
+      <ul>
+        <li><a href="#faq-envio">Preguntas Frecuentes</a></li>
+        <li><a href="#faq-pago">Métodos de Pago</a></li>
+        <li><a href="#faq-decant">Sobre Decants</a></li>
+      </ul>
+    </div>
+
+    <!-- 🔹 Contacto -->
+    <div class="footer-contact">
+      <h4>Contacto</h4>
+      <address>
+        📧 <a href="mailto:info@vesper.com">info@vesper.com</a><br>
+        📞 <a href="tel:+541112345678">+54 11 1234-5678</a><br>
+        📍 Mendoza, Argentina
+      </address>
+    </div>
+
+    <!-- 🔹 Seguinos en -->
+    <div class="footer-social">
+      <h4>Seguinos en</h4>
+      <div class="social-icons">
+        <a href="https://www.instagram.com/vesper.arr/" target="_blank" aria-label="Instagram">
+          <i class="fa-brands fa-instagram"></i>
+        </a>
+        <a href="https://www.tiktok.com/@vesper.arr" target="_blank" aria-label="TikTok">
+          <i class="fa-brands fa-tiktok"></i>
+        </a>
       </div>
     </div>
-  </footer>
+
+  </div>
+</footer>
 
   <!-- Carrito de compras -->
   <div class="cart-modal" id="cart-modal" aria-hidden="true">

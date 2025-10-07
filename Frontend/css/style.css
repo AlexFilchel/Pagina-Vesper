@@ -1982,3 +1982,120 @@ body.is-cart-open {
 .site-header__action-btn:focus-visible .material-symbols-outlined {
   color: #004aad; /* tu azul principal */
 }
+
+/* =======================
+   Footer: Categorías y Redes Sociales
+======================= */
+
+.footer-categories ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.footer-categories ul li {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  position: relative;
+}
+
+.footer-categories ul li a {
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-categories ul li a:hover {
+  color: #d1e0ff;
+  text-decoration: underline;
+}
+
+/* 🔹 Redes sociales */
+.footer-social {
+  text-align: center;
+}
+
+.footer-social h4 {
+  font-family: 'Merriweather', serif;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.social-icons a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 1.2rem;
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.social-icons a:hover {
+  background: #fff;
+  color: #004aad; /* azul principal */
+  transform: translateY(-2px);
+}
+
+/* 🔹 Responsive ajustes */
+@media (max-width: 768px) {
+  .footer-inner > div:not(:last-child)::after {
+    display: none;
+  }
+
+  .footer-categories ul li {
+    display: inline-block;
+    margin: 0 10px 8px;
+  }
+
+  .footer-social .social-icons {
+    justify-content: center;
+  }
+}
+
+
+/* ===========================
+   Footer - Separadores verticales entre columnas
+=========================== */
+
+/* Contenedor principal del footer */
+.footer-inner {
+  position: relative;
+}
+
+/* Cada bloque del footer */
+.footer-inner > div {
+  position: relative;
+  padding: 0 20px;
+}
+
+/* 🔹 Línea separadora vertical entre columnas (solo desktop) */
+.footer-inner > div:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  right: 0;
+  width: 1px;
+  height: 80%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 🔹 Responsive: eliminar separadores en mobile */
+@media (max-width: 768px) {
+  .footer-inner > div:not(:last-child)::after {
+    display: none;
+  }
+}
+
