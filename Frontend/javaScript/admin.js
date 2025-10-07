@@ -467,19 +467,47 @@ function renderProductsTable() {
   dom.productsTableBody.innerHTML = '';
   products.forEach((product) => {
     const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${product.name}</td>
-      <td>${product.brand}</td>
-      <td>${formatProductType(product.type)}</td>
-      <td>${currencyFormatter.format(product.price || 0)}</td>
-      <td>${product.stock ?? 0}</td>
-      <td class="column-actions">
-        <div class="table-actions">
-          <button type="button" class="btn btn--ghost js-edit-product" data-product-id="${product.id}">Modificar</button>
-          <button type="button" class="btn btn--danger js-delete-product" data-product-id="${product.id}">Eliminar</button>
-        </div>
-      </td>
-    `;
+    const nameCell = document.createElement('td');
+    nameCell.textContent = product.name ?? '';
+    row.appendChild(nameCell);
+
+    const brandCell = document.createElement('td');
+    brandCell.textContent = product.brand ?? '';
+    row.appendChild(brandCell);
+
+    const typeCell = document.createElement('td');
+    typeCell.textContent = formatProductType(product.type);
+    row.appendChild(typeCell);
+
+    const priceCell = document.createElement('td');
+    priceCell.textContent = currencyFormatter.format(product.price || 0);
+    row.appendChild(priceCell);
+
+    const stockCell = document.createElement('td');
+    stockCell.textContent = String(product.stock ?? 0);
+    row.appendChild(stockCell);
+
+    const actionsCell = document.createElement('td');
+    actionsCell.classList.add('column-actions');
+    const actionsWrapper = document.createElement('div');
+    actionsWrapper.classList.add('table-actions');
+
+    const editButton = document.createElement('button');
+    editButton.type = 'button';
+    editButton.className = 'btn btn--ghost js-edit-product';
+    editButton.dataset.productId = String(product.id);
+    editButton.textContent = 'Modificar';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'btn btn--danger js-delete-product';
+    deleteButton.dataset.productId = String(product.id);
+    deleteButton.textContent = 'Eliminar';
+
+    actionsWrapper.append(editButton, deleteButton);
+    actionsCell.appendChild(actionsWrapper);
+    row.appendChild(actionsCell);
+
     dom.productsTableBody.appendChild(row);
   });
 
@@ -524,21 +552,60 @@ function renderPromotionsTable() {
     const statusClass = promotion.active ? 'status-badge is-active' : 'status-badge is-inactive';
     const statusLabel = promotion.active ? 'ACTIVA' : 'INACTIVA';
     const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${product?.name || 'Producto eliminado'}</td>
-      <td>${promotion.description}</td>
-      <td>${promotion.discount}%</td>
-      <td>${promotion.startDate}</td>
-      <td>${promotion.endDate}</td>
-      <td><span class="${statusClass}">${statusLabel}</span></td>
-      <td class="column-actions">
-        <div class="table-actions">
-          <button type="button" class="btn btn--ghost js-edit-promotion" data-promotion-id="${promotion.id}">Modificar</button>
-          <button type="button" class="btn btn--warning js-toggle-promotion" data-promotion-id="${promotion.id}">${promotion.active ? 'Desactivar' : 'Activar'}</button>
-          <button type="button" class="btn btn--danger js-delete-promotion" data-promotion-id="${promotion.id}">Eliminar</button>
-        </div>
-      </td>
-    `;
+    const productCell = document.createElement('td');
+    productCell.textContent = product?.name ?? 'Producto eliminado';
+    row.appendChild(productCell);
+
+    const descriptionCell = document.createElement('td');
+    descriptionCell.textContent = promotion.description ?? '';
+    row.appendChild(descriptionCell);
+
+    const discountCell = document.createElement('td');
+    discountCell.textContent = `${promotion.discount}%`;
+    row.appendChild(discountCell);
+
+    const startCell = document.createElement('td');
+    startCell.textContent = promotion.startDate ?? '';
+    row.appendChild(startCell);
+
+    const endCell = document.createElement('td');
+    endCell.textContent = promotion.endDate ?? '';
+    row.appendChild(endCell);
+
+    const statusCell = document.createElement('td');
+    const statusBadge = document.createElement('span');
+    statusBadge.className = statusClass;
+    statusBadge.textContent = statusLabel;
+    statusCell.appendChild(statusBadge);
+    row.appendChild(statusCell);
+
+    const actionsCell = document.createElement('td');
+    actionsCell.classList.add('column-actions');
+    const actionsWrapper = document.createElement('div');
+    actionsWrapper.classList.add('table-actions');
+
+    const editButton = document.createElement('button');
+    editButton.type = 'button';
+    editButton.className = 'btn btn--ghost js-edit-promotion';
+    editButton.dataset.promotionId = String(promotion.id);
+    editButton.textContent = 'Modificar';
+
+    const toggleButton = document.createElement('button');
+    toggleButton.type = 'button';
+    toggleButton.className = 'btn btn--warning js-toggle-promotion';
+    toggleButton.dataset.promotionId = String(promotion.id);
+    toggleButton.textContent = promotion.active ? 'Desactivar' : 'Activar';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'btn btn--danger js-delete-promotion';
+    deleteButton.dataset.promotionId = String(promotion.id);
+    deleteButton.textContent = 'Eliminar';
+
+    actionsWrapper.append(editButton, toggleButton, deleteButton);
+    actionsCell.appendChild(actionsWrapper);
+    row.appendChild(actionsCell);
+
     dom.promotionsTableBody.appendChild(row);
   });
 
