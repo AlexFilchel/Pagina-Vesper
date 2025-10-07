@@ -1044,23 +1044,6 @@ body {
   color: #000;
 }
 
-.form-group input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  background: #fafafa;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.form-group input:focus {
-  border-color: #004aad;
-  outline: none;
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(0,74,173,0.15);
-}
-
 /* Dos columnas para nombre y apellido */
 .form-register .form-group:first-child {
   display: flex;
