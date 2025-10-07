@@ -735,6 +735,83 @@ body {
   width: 1px;
   background: rgba(0, 0, 0, 0.2);
 }
+
+.benefits__scroll-indicator {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .benefits {
+    position: relative;
+    padding: 28px 0;
+    margin-top: 0;
+  }
+
+  .benefits .container {
+    gap: 16px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: clamp(16px, 5vw, 32px);
+    padding-bottom: 8px;
+  }
+
+  .benefits .container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .benefit {
+    flex: 0 0 85%;
+    max-width: 85%;
+    scroll-snap-align: start;
+    background: #f7f7f7;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  }
+
+  .benefit:not(:last-child)::after {
+    display: none;
+  }
+
+  .benefits__scroll-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
+    right: clamp(8px, 4vw, 24px);
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(0, 74, 173, 0.9), rgba(0, 74, 173, 0.65));
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+    border: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .benefits__scroll-indicator .material-symbols-outlined {
+    font-size: 1.6rem;
+  }
+
+  .benefits__scroll-indicator.is-active {
+    opacity: 0.85;
+    pointer-events: auto;
+  }
+
+  .benefits__scroll-indicator.is-active:active {
+    transform: translateY(-50%) scale(0.96);
+  }
+
+  .benefits__scroll-indicator.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
 /* =======================
    Categorías
 ======================= */

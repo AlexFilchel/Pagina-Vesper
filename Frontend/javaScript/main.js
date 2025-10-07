@@ -335,6 +335,62 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("resize", handleResize);
   handleResize();
 
+  /* ===========================
+     🔹 Carrusel de beneficios en mobile
+  =========================== */
+  const benefitsContainer = document.querySelector(".benefits .container");
+  const benefitsIndicator = document.querySelector(".benefits__scroll-indicator");
+  const benefitsMediaQuery = window.matchMedia("(max-width: 768px)");
+
+  if (benefitsContainer && benefitsIndicator) {
+    const updateIndicatorVisibility = () => {
+      if (!benefitsMediaQuery.matches) return;
+
+      const tolerance = 4;
+      const isAtEnd = benefitsContainer.scrollLeft + benefitsContainer.clientWidth >= benefitsContainer.scrollWidth - tolerance;
+      benefitsIndicator.classList.toggle("is-hidden", isAtEnd);
+    };
+
+    const updateIndicatorState = () => {
+      if (!benefitsMediaQuery.matches) {
+        benefitsIndicator.classList.remove("is-active", "is-hidden");
+        return;
+      }
+
+      const hasOverflow = benefitsContainer.scrollWidth > benefitsContainer.clientWidth + 1;
+      benefitsIndicator.classList.toggle("is-active", hasOverflow);
+      if (!hasOverflow) {
+        benefitsIndicator.classList.remove("is-hidden");
+      } else {
+        updateIndicatorVisibility();
+      }
+    };
+
+    benefitsContainer.addEventListener("scroll", updateIndicatorVisibility, { passive: true });
+
+    benefitsIndicator.addEventListener("click", (event) => {
+      if (!benefitsMediaQuery.matches) return;
+      event.preventDefault();
+
+      const firstCard = benefitsContainer.querySelector(".benefit");
+      const cardWidth = firstCard ? firstCard.getBoundingClientRect().width : benefitsContainer.clientWidth * 0.85;
+      benefitsContainer.scrollBy({ left: cardWidth, behavior: "smooth" });
+    });
+
+    const onMediaChange = () => {
+      if (!benefitsMediaQuery.matches) {
+        benefitsContainer.scrollTo({ left: 0 });
+      }
+      updateIndicatorState();
+    };
+
+    benefitsMediaQuery.addEventListener("change", onMediaChange);
+    window.addEventListener("resize", updateIndicatorState);
+    window.addEventListener("load", updateIndicatorState);
+
+    updateIndicatorState();
+  }
+
   const currencyFormatter = new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",
