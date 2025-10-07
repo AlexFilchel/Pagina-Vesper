@@ -153,6 +153,171 @@
 }
 
 /* =======================
+   Barra de acciones productos
+======================= */
+.filtros-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.filtros-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filtros-close {
+  display: none;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 999px;
+  color: #6B7280;
+  cursor: pointer;
+  font-size: 1.1rem;
+  height: 32px;
+  width: 32px;
+  line-height: 1;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.filtros-close:hover {
+  background-color: #e5e7eb;
+  color: #374151;
+  transform: scale(1.05);
+}
+
+.productos-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.filters-toggle {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid rgba(0, 74, 173, 0.15);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-weight: 600;
+  color: #004aad;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.filters-toggle:hover,
+.filters-toggle:focus {
+  background: rgba(0, 74, 173, 0.08);
+  box-shadow: 0 8px 20px rgba(0, 74, 173, 0.15);
+  outline: none;
+}
+
+.filters-toggle__icon {
+  font-size: 1.1rem;
+}
+
+.sort-dropdown {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.sort-dropdown__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid rgba(0, 74, 173, 0.18);
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.sort-dropdown__trigger:hover,
+.sort-dropdown__trigger:focus {
+  background-color: rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+  outline: none;
+}
+
+.sort-dropdown__icon {
+  font-size: 1.1rem;
+}
+
+.sort-dropdown__menu {
+  margin: 8px 0 0;
+  list-style: none;
+  padding: 8px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 35px rgba(15, 23, 42, 0.15);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  min-width: 220px;
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+}
+
+.sort-dropdown.is-open .sort-dropdown__menu {
+  display: block;
+}
+
+.sort-dropdown__option {
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  color: #1f2937;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sort-dropdown__option:hover,
+.sort-dropdown__option:focus {
+  background-color: rgba(0, 74, 173, 0.12);
+  color: #004aad;
+  outline: none;
+}
+
+.sort-dropdown__option.is-active {
+  background-color: rgba(0, 74, 173, 0.18);
+  color: #004aad;
+  font-weight: 600;
+}
+
+.filters-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 40;
+  backdrop-filter: blur(2px);
+}
+
+.filters-overlay.is-visible {
+  display: block;
+}
+
+body.filters-modal-open {
+  overflow: hidden;
+}
+
+/* =======================
    Responsive
 ======================= */
 @media (max-width: 1024px) {
@@ -168,15 +333,48 @@
   }
 
   .filtros {
-    position: relative;
-    top: unset;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(320px, 85vw);
+    max-width: 100%;
+    transform: translateX(-110%);
+    transition: transform 0.3s ease;
+    box-shadow: 12px 0 30px rgba(15, 23, 42, 0.18);
+    border-radius: 0 18px 18px 0;
+    z-index: 60;
+    overflow-y: auto;
+    padding-bottom: 40px;
   }
-}
 
-/* Header de la sección Filtros */
-.filtros-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 30px;
+  .filtros.is-open {
+    transform: translateX(0);
+  }
+
+  .filtros-close {
+    display: inline-flex;
+  }
+
+  .productos {
+    position: relative;
+  }
+
+  .productos-toolbar {
+    justify-content: center;
+  }
+
+  .filters-toggle {
+    display: inline-flex;
+  }
+
+  .sort-dropdown {
+    align-items: center;
+  }
+
+  .sort-dropdown__menu {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }

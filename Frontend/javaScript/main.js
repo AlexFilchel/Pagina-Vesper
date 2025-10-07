@@ -420,6 +420,229 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ===========================
+     🔹 Ordenamiento de productos
+  =========================== */
+  const productosLista = document.getElementById("productos-lista");
+  const sortDropdown = document.querySelector(".sort-dropdown");
+  const sortTrigger = sortDropdown?.querySelector(".sort-dropdown__trigger");
+  const sortMenu = sortDropdown?.querySelector(".sort-dropdown__menu");
+  const sortLabel = sortTrigger?.querySelector(".sort-dropdown__label");
+  const sortOptions = sortDropdown ? Array.from(sortDropdown.querySelectorAll(".sort-dropdown__option")) : [];
+  const nameCollator = new Intl.Collator("es", { sensitivity: "base", ignorePunctuation: true });
+  let activeSort = sortDropdown?.dataset?.activeSort || "";
+  let isSortingProducts = false;
+
+  function closeSortMenu() {
+    if (!sortDropdown) return;
+    sortDropdown.classList.remove("is-open");
+    sortTrigger?.setAttribute("aria-expanded", "false");
+  }
+
+  function toggleSortMenu() {
+    if (!sortDropdown) return;
+    const willOpen = !sortDropdown.classList.contains("is-open");
+    sortDropdown.classList.toggle("is-open", willOpen);
+    sortTrigger?.setAttribute("aria-expanded", willOpen ? "true" : "false");
+  }
+
+  function getProductCards() {
+    if (!productosLista) return [];
+    return Array.from(productosLista.children).filter(child => child.classList?.contains("product"));
+  }
+
+  function getProductPrice(card) {
+    if (!card) return 0;
+    const datasetPrice = card.dataset?.productPrice || card.dataset?.price || card.getAttribute?.("data-product-price") || "";
+    if (datasetPrice) {
+      return parsePriceValue(datasetPrice);
+    }
+
+    const priceElement = card.querySelector?.("[data-product-price], .price, .product-price, .product__price");
+    return priceElement ? parsePriceValue(priceElement.textContent || "") : 0;
+  }
+
+  function getProductName(card) {
+    if (!card) return "";
+    const datasetName = card.dataset?.productName || card.dataset?.name || card.getAttribute?.("data-product-name");
+    if (datasetName) {
+      return datasetName.trim();
+    }
+
+    const nameElement = card.querySelector?.(".product-title, .product__title, h3, h2, .product-name");
+    return nameElement?.textContent?.trim() ?? "";
+  }
+
+  const sortComparators = {
+    "price-asc": (a, b) => getProductPrice(a) - getProductPrice(b),
+    "price-desc": (a, b) => getProductPrice(b) - getProductPrice(a),
+    "name-asc": (a, b) => nameCollator.compare(getProductName(a), getProductName(b)),
+    "name-desc": (a, b) => nameCollator.compare(getProductName(b), getProductName(a))
+  };
+
+  function updateSortOptions(criteria, { updateActiveOption = true } = {}) {
+    if (!sortOptions.length) return;
+    sortOptions.forEach(option => {
+      const isActive = option.dataset.sort === criteria;
+      option.classList.toggle("is-active", isActive);
+      option.setAttribute("aria-selected", isActive ? "true" : "false");
+      if (isActive && updateActiveOption) {
+        sortLabel && (sortLabel.textContent = option.textContent.trim());
+      }
+    });
+    if (!criteria && sortLabel) {
+      sortLabel.textContent = "Ordenar";
+    }
+  }
+
+  function applyProductSort(criteria, { updateActiveOption = true } = {}) {
+    if (!productosLista || !criteria || !sortComparators[criteria]) {
+      return;
+    }
+
+    const cards = getProductCards();
+    if (!cards.length) {
+      activeSort = criteria;
+      updateSortOptions(criteria, { updateActiveOption });
+      return;
+    }
+
+    isSortingProducts = true;
+    const sortedCards = cards.slice().sort(sortComparators[criteria]);
+    sortedCards.forEach(card => {
+      productosLista.appendChild(card);
+    });
+    isSortingProducts = false;
+
+    activeSort = criteria;
+    sortDropdown?.setAttribute("data-active-sort", criteria);
+    updateSortOptions(criteria, { updateActiveOption });
+  }
+
+  if (sortTrigger && sortMenu) {
+    sortTrigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      toggleSortMenu();
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!sortDropdown?.contains(event.target)) {
+        closeSortMenu();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeSortMenu();
+      }
+    });
+
+    sortOptions.forEach(option => {
+      option.addEventListener("click", () => {
+        const criteria = option.dataset.sort;
+        applyProductSort(criteria);
+        closeSortMenu();
+      });
+    });
+
+    updateSortOptions(activeSort, { updateActiveOption: true });
+  }
+
+  if (productosLista && sortOptions.length) {
+    const observer = new MutationObserver(() => {
+      if (isSortingProducts || !activeSort) return;
+      applyProductSort(activeSort, { updateActiveOption: false });
+    });
+
+    observer.observe(productosLista, { childList: true });
+  }
+
+  /* ===========================
+     🔹 Filtros responsive
+  =========================== */
+  const filtersPanel = document.getElementById("filtros-panel");
+  const filtersOverlay = document.getElementById("filtros-overlay");
+  const filtersToggle = document.querySelector(".filters-toggle");
+  const filtersClose = document.querySelector(".filtros-close");
+  const mobileFiltersMedia = window.matchMedia("(max-width: 768px)");
+  let filtersAreOpen = false;
+
+  function updateFiltersAria() {
+    if (!filtersPanel) return;
+    const isMobile = mobileFiltersMedia.matches;
+    const isHidden = !(filtersAreOpen && isMobile);
+    filtersPanel.setAttribute("aria-hidden", isHidden ? "true" : "false");
+    if (filtersOverlay) {
+      filtersOverlay.setAttribute("aria-hidden", isHidden ? "true" : "false");
+    }
+  }
+
+  function openFilters() {
+    if (!filtersPanel || !mobileFiltersMedia.matches) return;
+    filtersAreOpen = true;
+    filtersPanel.classList.add("is-open");
+    filtersToggle?.setAttribute("aria-expanded", "true");
+    filtersOverlay?.classList.add("is-visible");
+    document.body.classList.add("filters-modal-open");
+    updateFiltersAria();
+    requestAnimationFrame(() => {
+      filtersPanel.focus({ preventScroll: true });
+    });
+  }
+
+  function closeFilters({ restoreFocus = false } = {}) {
+    if (!filtersPanel) return;
+    filtersAreOpen = false;
+    filtersPanel.classList.remove("is-open");
+    filtersToggle?.setAttribute("aria-expanded", "false");
+    filtersOverlay?.classList.remove("is-visible");
+    document.body.classList.remove("filters-modal-open");
+    updateFiltersAria();
+    if (restoreFocus && filtersToggle) {
+      filtersToggle.focus();
+    }
+  }
+
+  function resetFiltersLayout() {
+    if (!filtersPanel) return;
+
+    if (!mobileFiltersMedia.matches) {
+      filtersAreOpen = false;
+      filtersPanel.classList.remove("is-open");
+      filtersPanel.setAttribute("aria-hidden", "false");
+      filtersOverlay?.classList.remove("is-visible");
+      filtersOverlay?.setAttribute("aria-hidden", "true");
+      filtersToggle?.setAttribute("aria-expanded", "false");
+      document.body.classList.remove("filters-modal-open");
+    } else {
+      updateFiltersAria();
+    }
+  }
+
+  filtersToggle?.addEventListener("click", () => {
+    if (filtersAreOpen) {
+      closeFilters();
+    } else {
+      openFilters();
+    }
+  });
+
+  filtersClose?.addEventListener("click", () => closeFilters({ restoreFocus: true }));
+  filtersOverlay?.addEventListener("click", () => closeFilters({ restoreFocus: true }));
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && filtersAreOpen && mobileFiltersMedia.matches) {
+      closeFilters({ restoreFocus: true });
+    }
+  });
+
+  if (typeof mobileFiltersMedia.addEventListener === "function") {
+    mobileFiltersMedia.addEventListener("change", resetFiltersLayout);
+  } else if (typeof mobileFiltersMedia.addListener === "function") {
+    mobileFiltersMedia.addListener(resetFiltersLayout);
+  }
+  resetFiltersLayout();
+
+  /* ===========================
      🔹 Carrito modal
   =========================== */
   const FREE_SHIPPING_THRESHOLD = 50000;
