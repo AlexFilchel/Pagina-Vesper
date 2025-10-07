@@ -33,6 +33,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalLogin = document.getElementById("modal-login");
   const modalRegister = document.getElementById("modal-register");
 
+  document.body.classList.remove("is-cart-open");
+
+  [modalLogin, modalRegister].forEach((modal) => {
+    if (modal) {
+      modal.classList.remove("active");
+      modal.setAttribute("aria-hidden", "true");
+    }
+  });
+
   const btnLogin = document.getElementById("btn-login");
   const btnRegister = document.getElementById("btn-register");
 
@@ -444,6 +453,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const cartTrigger = document.getElementById("link-carrito");
   const cartCountBadge = document.getElementById("cart-count");
   const toastLayer = document.querySelector(".cart-toast-layer");
+
+  if (cartModal) {
+    cartModal.classList.remove("is-open");
+    cartModal.setAttribute("aria-hidden", "true");
+  }
 
   const cartState = {
     items: [],
@@ -1031,6 +1045,75 @@ document.addEventListener("DOMContentLoaded", () => {
 
   filtersMediaQuery.addEventListener("change", handleFiltersMediaChange);
   handleFiltersMediaChange(filtersMediaQuery);
+
+  /* ===========================
+     🔹 Carrusel de beneficios (mobile)
+  =========================== */
+  const benefitsSection = document.querySelector(".benefits");
+  const benefitsTrack = benefitsSection?.querySelector(".container");
+  const benefitsIndicator = benefitsSection?.querySelector(".benefits__scroll-indicator");
+
+  if (benefitsTrack && benefitsIndicator) {
+    const mobileBenefitsQuery = window.matchMedia("(max-width: 768px)");
+
+    const ensureStartPosition = () => {
+      if (mobileBenefitsQuery.matches) {
+        benefitsTrack.scrollLeft = 0;
+      }
+    };
+
+    const toggleIndicator = () => {
+      if (!mobileBenefitsQuery.matches) {
+        benefitsIndicator.classList.add("is-hidden");
+        return;
+      }
+
+      const { scrollLeft, scrollWidth, clientWidth } = benefitsTrack;
+      const maxScroll = scrollWidth - clientWidth;
+      const canScroll = maxScroll > 2;
+
+      if (!canScroll) {
+        benefitsIndicator.classList.add("is-hidden");
+        return;
+      }
+
+      const isAtEnd = scrollLeft >= maxScroll - 2;
+      benefitsIndicator.classList.toggle("is-hidden", isAtEnd);
+    };
+
+    const handleScroll = () => {
+      window.requestAnimationFrame(toggleIndicator);
+    };
+
+    const handleResize = () => {
+      window.requestAnimationFrame(toggleIndicator);
+    };
+
+    benefitsTrack.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize);
+
+    const handleMediaChange = (event) => {
+      const matches = typeof event.matches === "boolean" ? event.matches : mobileBenefitsQuery.matches;
+      if (matches) {
+        ensureStartPosition();
+      }
+      toggleIndicator();
+    };
+
+    if (typeof mobileBenefitsQuery.addEventListener === "function") {
+      mobileBenefitsQuery.addEventListener("change", handleMediaChange);
+    } else if (typeof mobileBenefitsQuery.addListener === "function") {
+      mobileBenefitsQuery.addListener(handleMediaChange);
+    }
+
+    window.addEventListener("load", () => {
+      ensureStartPosition();
+      toggleIndicator();
+    });
+
+    ensureStartPosition();
+    toggleIndicator();
+  }
 
 /* ===========================
    🔹 Sombra dinámica del header
