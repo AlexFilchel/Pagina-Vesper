@@ -1032,6 +1032,56 @@ document.addEventListener("DOMContentLoaded", () => {
   filtersMediaQuery.addEventListener("change", handleFiltersMediaChange);
   handleFiltersMediaChange(filtersMediaQuery);
 
+  /* ===========================
+     🔹 Carrusel de beneficios (mobile)
+  =========================== */
+  const benefitsSection = document.querySelector(".benefits");
+  const benefitsTrack = benefitsSection?.querySelector(".container");
+  const benefitsIndicator = benefitsSection?.querySelector(".benefits__scroll-indicator");
+
+  if (benefitsTrack && benefitsIndicator) {
+    const mobileBenefitsQuery = window.matchMedia("(max-width: 768px)");
+
+    const toggleIndicator = () => {
+      if (!mobileBenefitsQuery.matches) {
+        benefitsIndicator.classList.add("is-hidden");
+        return;
+      }
+
+      const { scrollLeft, scrollWidth, clientWidth } = benefitsTrack;
+      const maxScroll = scrollWidth - clientWidth;
+      const canScroll = maxScroll > 2;
+
+      if (!canScroll) {
+        benefitsIndicator.classList.add("is-hidden");
+        return;
+      }
+
+      const isAtEnd = scrollLeft >= maxScroll - 2;
+      benefitsIndicator.classList.toggle("is-hidden", isAtEnd);
+    };
+
+    const handleScroll = () => {
+      window.requestAnimationFrame(toggleIndicator);
+    };
+
+    const handleResize = () => {
+      window.requestAnimationFrame(toggleIndicator);
+    };
+
+    benefitsTrack.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize);
+
+    if (typeof mobileBenefitsQuery.addEventListener === "function") {
+      mobileBenefitsQuery.addEventListener("change", toggleIndicator);
+    } else if (typeof mobileBenefitsQuery.addListener === "function") {
+      mobileBenefitsQuery.addListener(toggleIndicator);
+    }
+
+    window.addEventListener("load", toggleIndicator);
+    toggleIndicator();
+  }
+
 /* ===========================
    🔹 Sombra dinámica del header
 =========================== */
