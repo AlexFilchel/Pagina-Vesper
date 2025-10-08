@@ -1,0 +1,79 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.6'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'org'
+version = '0.0.1-SNAPSHOT'
+description = 'Vesper'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // ===============================
+    // Core Spring Boot
+    // ===============================
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // JPA + Hibernate
+    implementation 'org.springframework.boot:spring-boot-starter-security' // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-validation' // Validaciones DTOs/entidades
+    implementation 'org.springframework.boot:spring-boot-starter-web' // REST + Spring MVC
+
+    // ===============================
+    // Lombok
+    // ===============================
+    compileOnly 'org.projectlombok:lombok' // Solo para compilación, reduce boilerplate
+    annotationProcessor 'org.projectlombok:lombok' // Procesa anotaciones Lombok
+
+    // ===============================
+    // Desarrollo
+    // ===============================
+    developmentOnly 'org.springframework.boot:spring-boot-devtools' // Hot reload local
+
+    // ===============================
+    // Bases de datos
+    // ===============================
+    // H2
+    implementation 'com.h2database:h2' // para compilación y runtime
+
+    // MySQL
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+
+    // ===============================
+    // Testing
+    // ===============================
+    testImplementation 'org.springframework.boot:spring-boot-starter-test' // JUnit, Mockito
+    testImplementation 'org.springframework.security:spring-security-test' // Test de endpoints seguros
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher' // Ejecutar tests con JUnit Platform
+
+    // ===============================
+    // JWT
+    // ===============================
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // Interfaces y clases base para JWT
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5' // Implementación real de JWT
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // Serialización/deserialización de claims con Jackson
+
+    // ===============================
+    // Correo electrónico
+    // ===============================
+    implementation 'org.springframework.boot:spring-boot-starter-mail' // Enviar emails (recuperación de contraseña)
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
