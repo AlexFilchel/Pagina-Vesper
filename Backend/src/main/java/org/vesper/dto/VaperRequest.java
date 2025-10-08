@@ -12,9 +12,15 @@ import java.util.Set;
 @Data
 public class VaperRequest {
 
-    @NotBlank private String nombre;
-    @NotNull private Double precio;
+    @NotBlank(message = "El nombre es obligatorio")
+    private String nombre;
+    
+    @NotNull(message = "El precio es obligatorio")
+    private Double precio;
+    
     private String descripcion;
+    private String marca;
+    private Integer stock;
     //private String imagen;
 
     private Integer pitadas;

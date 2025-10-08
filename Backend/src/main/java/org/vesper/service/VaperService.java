@@ -6,6 +6,7 @@ import org.vesper.dto.VaperRequest;
 import org.vesper.dto.VaperResponse;
 import org.vesper.entity.Sabor;
 import org.vesper.entity.Vaper;
+import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.repo.SaborRepository;
 import org.vesper.repo.VaperRepository;
@@ -56,6 +57,11 @@ public class VaperService {
      * @return DTO del vaper creado
      */
     public VaperResponse crearVaper(VaperRequest request) {
+        // Validar duplicado por nombre
+        if (vaperRepository.existsByNombre(request.getNombre())) {
+            throw new AlreadyExistsException("Ya existe un vaper con el nombre: " + request.getNombre());
+        }
+
         Vaper vaper = toEntity(request);
         Vaper guardado = vaperRepository.save(vaper);
         return toResponse(guardado);
@@ -76,6 +82,10 @@ public class VaperService {
         existente.setNombre(request.getNombre());
         existente.setPrecio(request.getPrecio());
         existente.setDescripcion(request.getDescripcion());
+        existente.setMarca(request.getMarca());
+        if (request.getStock() != null) {
+            existente.setStock(request.getStock());
+        }
         //existente.setImagen(request.getImagen());
         existente.setPitadas(request.getPitadas());
         existente.setModos(request.getModos());
@@ -101,6 +111,43 @@ public class VaperService {
         }
         vaperRepository.deleteById(id);
     }
+
+    /**
+     * Busca vapers por nombre (búsqueda parcial).
+     */
+    public List<VaperResponse> buscarPorNombre(String nombre) {
+        return vaperRepository.findByNombreContainingIgnoreCase(nombre).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca vapers por rango de pitadas.
+     */
+    public List<VaperResponse> buscarPorPitadas(Integer minPitadas, Integer maxPitadas) {
+        return vaperRepository.findByPitadasBetween(minPitadas, maxPitadas).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca vapers por sabor.
+     */
+    public List<VaperResponse> buscarPorSabor(String saborNombre) {
+        return vaperRepository.findBySaborNombre(saborNombre).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca vapers por rango de precio.
+     */
+    public List<VaperResponse> buscarPorPrecio(Double precioMin, Double precioMax) {
+        return vaperRepository.findByPrecioBetween(precioMin, precioMax).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
 
     // ---------------------------
     // Métodos auxiliares privados
@@ -132,6 +179,8 @@ public class VaperService {
                 .nombre(request.getNombre())
                 .precio(request.getPrecio())
                 .descripcion(request.getDescripcion())
+                .marca(request.getMarca())
+                .stock(request.getStock() != null ? request.getStock() : 0)
                 //.imagen(request.getImagen())
                 .pitadas(request.getPitadas())
                 .modos(request.getModos())

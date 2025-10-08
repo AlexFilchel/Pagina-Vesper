@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.vesper.dto.*;
+import org.vesper.service.EmailService;
 import org.vesper.service.JwtService;
 import org.vesper.service.UsuarioService;
 
@@ -26,6 +27,7 @@ public class UsuarioController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UsuarioService usuarioService;
+    private final EmailService emailService;
 
     /**
      * Endpoint para login de usuario.
@@ -77,7 +79,7 @@ public class UsuarioController {
     public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         String resetToken = usuarioService.generarTokenRecuperacion(request.getEmail(), jwtService);
         String resetLink = "http://127.0.0.1:5500/reset-password.html?token=" + resetToken;
-        //usuarioService.enviarEmailRecuperacion(request.getEmail(), resetLink, emailService);
+        usuarioService.enviarEmailRecuperacion(request.getEmail(), resetLink, emailService);
         return ResponseEntity.ok("Link de recuperación: " + resetLink);
     }
 

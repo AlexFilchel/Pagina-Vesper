@@ -34,7 +34,23 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable());  //desactiva csrf porque se va a usar JWT
 
         http.authorizeHttpRequests( auth -> auth
-                .anyRequest().permitAll() //DESPUES DEFINIR CUALES SON PRIVADAS Y CUAL PUBLIC 
+                // Endpoints públicos (sin autenticación)
+                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/perfumes", "/perfumes/{id}", "/perfumes/buscar").permitAll()
+                .requestMatchers("/vapers", "/vapers/{id}", "/vapers/buscar").permitAll()
+                .requestMatchers("/sabores", "/sabores/{id}").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
+                
+                // Endpoints administrativos (requieren rol ADMIN o SUPERADMIN)
+                .requestMatchers("/perfumes/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                .requestMatchers("/vapers/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                .requestMatchers("/sabores/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                
+                // Endpoints de gestión de usuarios (solo SUPERADMIN)
+                .requestMatchers("/admin/users/**").hasRole("SUPERADMIN")
+                
+                // Cualquier otra petición requiere autenticación
+                .anyRequest().authenticated()
         );
 
         http.exceptionHandling(ex -> ex.authenticationEntryPoint(authEntryPoint));

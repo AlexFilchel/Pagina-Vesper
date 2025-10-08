@@ -34,7 +34,4 @@ public class Producto {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "imagen_id")
     private Imagen imagen;
-
-    @Builder.Default
-    private boolean activo = true;
 }

@@ -15,7 +15,7 @@ import java.util.List;
  * Proporciona endpoints CRUD y de búsqueda.
  */
 @RestController
-@RequestMapping("/api/vapers")
+@RequestMapping("/vapers")
 @RequiredArgsConstructor
 public class VaperController {
 
@@ -78,4 +78,37 @@ public class VaperController {
         vaperService.eliminarVaper(id);
         return ResponseEntity.ok("Vaper eliminado correctamente");
     }
+
+    // ======================= ENDPOINTS DE BÚSQUEDA =======================
+
+    /**
+     * Endpoint para buscar vapers con múltiples criterios.
+     */
+    @GetMapping("/buscar")
+    public ResponseEntity<List<VaperResponse>> buscarVapers(
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String sabor,
+            @RequestParam(required = false) Integer minPitadas,
+            @RequestParam(required = false) Integer maxPitadas,
+            @RequestParam(required = false) Double precioMin,
+            @RequestParam(required = false) Double precioMax) {
+        
+        // Búsquedas específicas
+        if (nombre != null) {
+            return ResponseEntity.ok(vaperService.buscarPorNombre(nombre));
+        }
+        if (sabor != null) {
+            return ResponseEntity.ok(vaperService.buscarPorSabor(sabor));
+        }
+        if (minPitadas != null && maxPitadas != null) {
+            return ResponseEntity.ok(vaperService.buscarPorPitadas(minPitadas, maxPitadas));
+        }
+        if (precioMin != null && precioMax != null) {
+            return ResponseEntity.ok(vaperService.buscarPorPrecio(precioMin, precioMax));
+        }
+        
+        // Si no hay criterios, devolver todos los vapers
+        return ResponseEntity.ok(vaperService.listarVapers());
+    }
+
 }

@@ -53,6 +53,10 @@ public class PerfumeService {
         existente.setNombre(request.getNombre());
         existente.setPrecio(request.getPrecio());
         existente.setDescripcion(request.getDescripcion());
+        existente.setMarca(request.getMarca());
+        if (request.getStock() != null) {
+            existente.setStock(request.getStock());
+        }
         existente.setVolumen(request.getVolumen());
         existente.setGenero(request.getGenero());
         existente.setNotasPrincipales(request.getNotasPrincipales());
@@ -74,6 +78,81 @@ public class PerfumeService {
             throw new ResourceNotFoundException("Perfume no encontrado con id: " + id);
         }
         perfumeRepository.deleteById(id);
+    }
+
+    /**
+     * Busca perfumes por nombre (búsqueda parcial).
+     */
+    public List<PerfumeResponse> buscarPorNombre(String nombre) {
+        return perfumeRepository.findByNombreContainingIgnoreCase(nombre).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca perfumes por género.
+     */
+    public List<PerfumeResponse> buscarPorGenero(String genero) {
+        return perfumeRepository.findByGenero(genero).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca perfumes por familia olfativa.
+     */
+    public List<PerfumeResponse> buscarPorFamiliaOlfativa(String familiaOlfativa) {
+        return perfumeRepository.findByFamiliaOlfativa(familiaOlfativa).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca perfumes por rango de precio.
+     */
+    public List<PerfumeResponse> buscarPorPrecio(Double precioMin, Double precioMax) {
+        return perfumeRepository.findByPrecioBetween(precioMin, precioMax).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca perfumes por marca.
+     */
+    public List<PerfumeResponse> buscarPorMarca(String marca) {
+        return perfumeRepository.findByMarca(marca).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca perfumes por volumen.
+     */
+    public List<PerfumeResponse> buscarPorVolumen(String volumen) {
+        return perfumeRepository.findByVolumen(volumen).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca perfumes que sean decant o no.
+     */
+    public List<PerfumeResponse> buscarPorDecant(boolean decant) {
+        return perfumeRepository.findByDecant(decant).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+
+    /**
+     * Búsqueda avanzada con múltiples criterios.
+     */
+    public List<PerfumeResponse> buscarPerfumesAvanzado(String nombre, String genero, String familiaOlfativa, 
+                                                       Double precioMin, Double precioMax, String marca) {
+        return perfumeRepository.buscarPerfumesAvanzado(nombre, genero, familiaOlfativa, precioMin, precioMax, marca)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     // ---------------------------
@@ -105,6 +184,8 @@ public class PerfumeService {
                 .nombre(request.getNombre())
                 .precio(request.getPrecio())
                 .descripcion(request.getDescripcion())
+                .marca(request.getMarca())
+                .stock(request.getStock() != null ? request.getStock() : 0)
                 //.imagen(null) // imagen temporalmente ignorada
                 .volumen(request.getVolumen())
                 .genero(request.getGenero())
@@ -117,8 +198,6 @@ public class PerfumeService {
                 .decant(request.isDecant())
                 .fragancia(request.getFragancia())
                 .ml(request.getMl())
-                .activo(true) // activo por defecto
-                .stock(0) // stock inicial temporal
                 .build();
     }
 }

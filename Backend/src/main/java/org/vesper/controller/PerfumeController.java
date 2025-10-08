@@ -78,4 +78,55 @@ public class PerfumeController {
         perfumeService.eliminarPerfume(id);
         return ResponseEntity.ok("Perfume eliminado correctamente");
     }
+
+    // ======================= ENDPOINTS DE BÚSQUEDA =======================
+
+    /**
+     * Endpoint para buscar perfumes por nombre (búsqueda parcial).
+     */
+    @GetMapping("/buscar")
+    public ResponseEntity<List<PerfumeResponse>> buscarPerfumes(
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String genero,
+            @RequestParam(required = false) String familiaOlfativa,
+            @RequestParam(required = false) String marca,
+            @RequestParam(required = false) String volumen,
+            @RequestParam(required = false) Boolean decant,
+            @RequestParam(required = false) Double precioMin,
+            @RequestParam(required = false) Double precioMax) {
+        
+        // Si se proporcionan múltiples criterios, usar búsqueda avanzada
+        if (nombre != null || genero != null || familiaOlfativa != null || 
+            marca != null || precioMin != null || precioMax != null) {
+            return ResponseEntity.ok(perfumeService.buscarPerfumesAvanzado(
+                    nombre, genero, familiaOlfativa, precioMin, precioMax, marca));
+        }
+        
+        // Búsquedas específicas
+        if (nombre != null) {
+            return ResponseEntity.ok(perfumeService.buscarPorNombre(nombre));
+        }
+        if (genero != null) {
+            return ResponseEntity.ok(perfumeService.buscarPorGenero(genero));
+        }
+        if (familiaOlfativa != null) {
+            return ResponseEntity.ok(perfumeService.buscarPorFamiliaOlfativa(familiaOlfativa));
+        }
+        if (marca != null) {
+            return ResponseEntity.ok(perfumeService.buscarPorMarca(marca));
+        }
+        if (volumen != null) {
+            return ResponseEntity.ok(perfumeService.buscarPorVolumen(volumen));
+        }
+        if (decant != null) {
+            return ResponseEntity.ok(perfumeService.buscarPorDecant(decant));
+        }
+        if (precioMin != null && precioMax != null) {
+            return ResponseEntity.ok(perfumeService.buscarPorPrecio(precioMin, precioMax));
+        }
+        
+        // Si no hay criterios, devolver todos los perfumes
+        return ResponseEntity.ok(perfumeService.listarPerfumes());
+    }
+
 }
