@@ -14,6 +14,7 @@
   <meta property="og:image" content="/img/og-image.jpg">
   <meta property="og:type" content="website">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link rel="icon" href="img/vesper_logo_sin_fondo.png" type="image/x-icon">
 
 
   <!-- Estilos -->
@@ -75,9 +76,10 @@
 </div>
 
 
-      <a href="#" class="site-header__action" id="link-carrito">
+      <a href="#" class="site-header__action" id="link-carrito" aria-haspopup="dialog">
   <span class="site-header__action-icon">
     <span class="material-symbols-outlined">shopping_cart</span>
+    <span class="cart-count-badge" id="cart-count" aria-live="polite">0</span>
   </span>
   <span class="site-header__action-label"></span>
 </a>
@@ -228,21 +230,24 @@
     <section class="benefits">
       <div class="container">
         <article class="benefit">
-          <h3>6 Cuotas sin interés</h3>
+          <h3>6 CUOTAS SIN INTERES</h3>
           <p>En compras superiores a $30.000</p>
         </article>
         <article class="benefit">
-          <h3>Envíos a todo el país</h3>
+          <h3>ENVIOS A TODO EL PAIS</h3>
           <p>Gratis en compras superiores a $50.000</p>
         </article>
         <article class="benefit">
-          <h3>100% originales</h3>
+          <h3>100% ORIGINALES</h3>
           <p>Garantía de autenticidad en todos nuestros productos</p>
         </article>
         <article class="benefit">
-          <h3>Descuentos hasta 30%</h3>
+          <h3>DESCUENTOS HASTA 30%</h3>
           <p>En efectivo y transferencia bancaria</p>
         </article>
+      </div>
+      <div class="benefits__scroll-indicator" aria-hidden="true">
+        <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
       </div>
     </section>
 
@@ -253,7 +258,7 @@
       
       <a href="productos.html" class="category-card">
         <div class="category-content">
-          <h3>Fragancias Premium</h3>
+          <h3>Perfumes</h3>
           <p>Descubre nuestra colección exclusiva de perfumes de lujo</p>
         </div>
       </a>
@@ -289,31 +294,53 @@
 
   <!-- Footer -->
   <footer class="main-footer" role="contentinfo">
-    <div class="container footer-inner">
-      <div class="footer-info">
-        <h3>Vesper</h3>
-        <p>Tu tienda de confianza para fragancias premium, vapes y tecnología.</p>
-      </div>
-      <div class="footer-links">
-        <h4>Productos</h4>
-        <ul id="footer-categorias"></ul>
-      </div>
-      <div class="footer-links">
-        <h4>Enlaces útiles</h4>
-        <ul>
-          <li><a href="#">Preguntas Frecuentes</a></li>
-        </ul>
-      </div>
-      <div class="footer-contact">
-        <h4>Contacto</h4>
-        <address>
-          📧 <a href="mailto:info@vesper.com">info@vesper.com</a><br>
-          📞 <a href="tel:+541112345678">+54 11 1234-5678</a><br>
-          📍 Mendoza, Argentina
-        </address>
+  <div class="container footer-inner">
+    
+    <!-- 🔹 Categorías -->
+    <div class="footer-links footer-categories">
+      <h4>Categorías</h4>
+      <ul>
+        <li><a href="productos.html?categoria=perfumes">Perfumes</a></li>
+        <li><a href="productos.html?categoria=vapes">Vapes</a></li>
+        <li><a href="productos.html?categoria=decants">Decants</a></li>
+      </ul>
+    </div>
+
+    <!-- 🔹 Enlaces útiles -->
+    <div class="footer-links">
+      <h4>Enlaces útiles</h4>
+      <ul>
+        <li><a href="#faq-envio">Preguntas Frecuentes</a></li>
+        <li><a href="#faq-pago">Métodos de Pago</a></li>
+        <li><a href="#faq-decant">Sobre Decants</a></li>
+      </ul>
+    </div>
+
+    <!-- 🔹 Contacto -->
+    <div class="footer-contact">
+      <h4>Contacto</h4>
+      <address>
+        📧 <a href="mailto:info@vesper.com">info@vesper.com</a><br>
+        📞 <a href="tel:+541112345678">+54 11 1234-5678</a><br>
+        📍 Mendoza, Argentina
+      </address>
+    </div>
+
+    <!-- 🔹 Seguinos en -->
+    <div class="footer-social">
+      <h4>Seguinos en</h4>
+      <div class="social-icons">
+        <a href="https://www.instagram.com/vesper.arr/" target="_blank" aria-label="Instagram">
+          <i class="fa-brands fa-instagram"></i>
+        </a>
+        <a href="https://www.tiktok.com/@vesper.arr" target="_blank" aria-label="TikTok">
+          <i class="fa-brands fa-tiktok"></i>
+        </a>
       </div>
     </div>
-  </footer>
+
+  </div>
+</footer>
   
 <!-- Modal Iniciar Sesión -->
 <div class="modal" id="modal-login" aria-hidden="true">
@@ -395,6 +422,59 @@
 </div>
 
 
+
+<!-- Carrito de compras -->
+<div class="cart-modal" id="cart-modal" aria-hidden="true">
+  <div class="cart-modal__overlay" role="presentation"></div>
+  <aside class="cart-modal__panel" role="dialog" aria-labelledby="cartModalTitle">
+    <header class="cart-modal__header">
+      <div>
+        <h2 id="cartModalTitle">Tu carrito</h2>
+        <p class="cart-modal__subtitle">Revisa tus productos antes de continuar</p>
+      </div>
+      <button class="cart-modal__close" type="button" aria-label="Cerrar carrito">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </header>
+    <div class="cart-modal__body">
+      <div class="cart-empty-state" id="cart-empty-state">
+        <span class="material-symbols-outlined cart-empty-state__icon" aria-hidden="true">shopping_bag</span>
+        <h3>Tu carrito está vacío</h3>
+        <p>Agrega algunos productos para comenzar tu compra</p>
+        <button type="button" class="btn btn--primary cart-empty-state__cta">Seguir Comprando</button>
+      </div>
+      <div class="cart-items" id="cart-items" aria-live="polite"></div>
+      <section class="shipping-section" id="shipping-section" aria-labelledby="shippingTitle">
+        <h3 id="shippingTitle">Medios de envío</h3>
+        <form class="shipping-form" id="shipping-form">
+          <label class="visually-hidden" for="shipping-zip">Código postal</label>
+          <input type="text" id="shipping-zip" name="shippingZip" placeholder="Tu código postal" inputmode="numeric" autocomplete="postal-code">
+          <button type="submit">CALCULAR</button>
+        </form>
+        <p class="shipping-result" id="shipping-result" aria-live="polite"></p>
+      </section>
+    </div>
+    <footer class="summary-section" id="summary-section">
+      <div class="summary-line">
+        <span id="summary-count">0 productos</span>
+        <span id="summary-subtotal">$0</span>
+      </div>
+      <div class="summary-line summary-line--total">
+        <div class="summary-total__label">
+          <span>Total</span>
+          <small id="summary-shipping-note">Envío a calcular</small>
+        </div>
+        <span id="summary-total">$0</span>
+      </div>
+      <div class="summary-actions">
+        <button type="button" class="btn btn--primary summary-actions__primary">Iniciar compra</button>
+        <button type="button" class="btn summary-actions__secondary">Ver más productos</button>
+      </div>
+    </footer>
+  </aside>
+</div>
+
+<div class="cart-toast-layer" aria-live="polite" aria-atomic="true"></div>
 
   <script src="javaScript/main.js"></script>
 </body>

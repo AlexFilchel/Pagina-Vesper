@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="../Frontend/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="../Frontend/css/productos.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </head>
 <body>
   <!-- Banner superior -->
@@ -29,40 +30,127 @@
     </button>
 
     <a href="index.html" class="site-header__logo" aria-label="Vesper - Página de inicio">
-      <img src="img/logo_vesper.jpg" alt="Logo Vesper" class="img-fluid logo">
+      <img src="img/vesper_logo_sin_fondo.png"Logo Vesper" class="img-fluid logo">
     </a>
 
     <form class="site-header__search" role="search" aria-label="Buscador de productos">
       <label class="visually-hidden" for="search-input">Buscar en Vesper</label>
       <input type="search" id="search-input" name="search" placeholder="Buscá por productos, marcas y categorías" aria-label="Buscar perfumes y marcas">
       <button type="submit" aria-label="Buscar">
-        <i class="fa-solid fa-magnifying-glass"></i>
+        <span class="material-symbols-outlined">search</span>
       </button>
     </form>
 
     <div class="site-header__actions">
       <!-- Botón de búsqueda en mobile -->
       <button class="search-toggle" aria-label="Abrir buscador">
-        <i class="fa-solid fa-magnifying-glass"></i>
+        <span class="material-symbols-outlined">search</span>
       </button>
+
       <!-- Menú desplegable Mi cuenta -->
       <div class="site-header__action site-header__action--has-dropdown">
-        <button class="site-header__action-btn" type="button">
-          <span class="site-header__action-icon"><i class="fa-solid fa-user"></i></span>
-          <span class="site-header__action-label">Mi cuenta</span>
-        </button>
-        <div class="site-header__dropdown">
-          <ul class="site-header__dropdown-list">
-            <li><a href="#" id="btn-login">Iniciar sesión</a></li>
-            <li><a href="#" id="btn-register">Crear cuenta</a></li>
-          </ul>
-        </div>
+  <button class="site-header__action-btn" type="button">
+    <span class="site-header__action-icon">
+      <span class="material-symbols-outlined">person_outline</span>
+    </span>
+    <span class="site-header__action-label">Mi cuenta</span>
+  </button>
+  <div class="site-header__dropdown">
+    <ul class="site-header__dropdown-list">
+      <li><a href="#" id="btn-login">Iniciar sesión</a></li>
+      <li><a href="#" id="btn-register">Crear cuenta</a></li>
+    </ul>
+  </div>
+</div>
+
+<!-- Modal Iniciar Sesión -->
+<div class="modal" id="modal-login" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content">
+    <button class="modal-close" data-close="modal-login">&times;</button>
+    <h2>Iniciar Sesión</h2>
+    <form class="form-login">
+      <div class="form-group">
+        <label for="login-email">Correo electrónico</label>
+        <input id="login-email" type="email" required>
       </div>
 
-      <a href="#" class="site-header__action" id="link-carrito">
-        <span class="site-header__action-icon"><i class="fa-solid fa-cart-shopping"></i></span>
-        <span class="site-header__action-label">Carrito (<span id="cart-count">0</span>)</span>
-      </a>
+      <!-- 🔹 Contraseña-->
+      <div class="form-group password-field">
+        <label for="login-password">Contraseña</label>
+        <input id="login-password" type="password" required>
+        <span class="toggle-password" data-target="login-password">
+          <i class="fa-solid fa-eye"></i>
+        </span>
+      </div>
+
+      <!-- 🔹 Enlace de recuperar contraseña -->
+      <div class="form-footer">
+        <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+      </div>
+
+      <button type="submit" class="btn btn--primary">Ingresar</button>
+      <p>¿No tienes cuenta? <a href="#" id="switch-to-register">Crear cuenta</a></p>
+    </form>
+  </div>
+</div>
+
+
+<!-- Modal Crear Cuenta -->
+<div class="modal" id="modal-register" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content">
+    <button class="modal-close" data-close="modal-register">&times;</button>
+    <h2>Crear Cuenta</h2>
+    <form class="form-register">
+      <div class="form-group two-columns">
+        <div>
+          <label for="register-nombre">Nombre</label>
+          <input id="register-nombre" type="text" required>
+        </div>
+        <div>
+          <label for="register-apellido">Apellido</label>
+          <input id="register-apellido" type="text"  required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="register-email">Correo electrónico</label>
+        <input id="register-email" type="email" required>
+      </div>
+
+      <!-- 🔹 Contraseña-->
+      <div class="form-group password-field">
+        <label for="register-password">Contraseña</label>
+        <input id="register-password" type="password" required>
+        <span class="toggle-password" data-target="register-password">
+          <i class="fa-solid fa-eye"></i>
+        </span>
+      </div>
+
+      <!-- 🔹 Confirmación-->
+      <div class="form-group password-field">
+        <label for="register-password-confirm">Confirmar contraseña</label>
+        <input id="register-password-confirm" type="password" required>
+        <span class="toggle-password" data-target="register-password-confirm">
+          <i class="fa-solid fa-eye"></i>
+        </span>
+      </div>
+
+      <button type="submit" class="btn btn--primary">Crear Cuenta</button>
+      <p>¿Ya tienes cuenta? <a href="#" id="switch-to-login">Iniciar sesión</a></p>
+    </form>
+  </div>
+</div>
+
+
+
+      <a href="#" class="site-header__action" id="link-carrito" aria-haspopup="dialog">
+  <span class="site-header__action-icon">
+    <span class="material-symbols-outlined">shopping_cart</span>
+    <span class="cart-count-badge" id="cart-count" aria-live="polite">0</span>
+  </span>
+  <span class="site-header__action-label"></span>
+</a>
     </div>
   </div>
 </header>
@@ -153,10 +241,15 @@
 
   <!-- Contenido principal -->
   <main class="container productos-page">
-    <aside class="filtros">
+    <aside class="filtros" id="filters-panel" aria-hidden="false">
     <div class="filtros-header">
         <h3>Filtros</h3>
-        <button class="filtros-limpiar">Limpiar todo</button>
+        <div class="filtros-header__actions">
+          <button class="filtros-limpiar" type="button">Limpiar todo</button>
+          <button class="filters-close" type="button" aria-label="Cerrar filtros">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          </button>
+        </div>
     </div>
 
               <!-- HACER QUE SI SE SELECCIONA PERFUME O DECANT SE MUESTREN SOLO LAS MARCAS DE PERFUMES, SI ES VAPE SE MUESTRAN LAS MARCAS DE VAPES Y SI NO LAS DOS -->
@@ -195,39 +288,134 @@
 
     <section class="productos">
 
+      <div class="productos-toolbar" aria-label="Herramientas de listado de productos">
+        <button class="filters-toggle" type="button" aria-controls="filters-panel" aria-expanded="false">
+          Filtros
+        </button>
+        <div class="sort-dropdown">
+          <button class="sort-button" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <span class="sort-button__label">Ordenar</span>
+            <span class="sort-button__icon" aria-hidden="true">↕</span>
+          </button>
+          <ul class="sort-options" role="listbox">
+            <li><button type="button" role="option" data-sort="price-asc">Precio: Menor a Mayor</button></li>
+            <li><button type="button" role="option" data-sort="price-desc">Precio: Mayor a Menor</button></li>
+            <li><button type="button" role="option" data-sort="name-asc">A - Z</button></li>
+            <li><button type="button" role="option" data-sort="name-desc">Z - A</button></li>
+          </ul>
+        </div>
+      </div>
+
       <div class="productos-grid" id="productos-lista">
         <!-- Aquí van los productos cargados desde la API con JS -->
       </div>
     </section>
   </main>
 
+  <div class="filters-overlay" id="filters-overlay" aria-hidden="true"></div>
+
   <!-- Footer -->
   <footer class="main-footer" role="contentinfo">
-    <div class="container footer-inner">
-      <div class="footer-info">
-        <h3>Vesper</h3>
-        <p>Tu tienda de confianza para fragancias premium, vapes y tecnología.</p>
-      </div>
-      <div class="footer-links">
-        <h4>Productos</h4>
-        <ul id="footer-categorias"></ul>
-      </div>
-      <div class="footer-links">
-        <h4>Enlaces útiles</h4>
-        <ul>
-          <li><a href="#">Preguntas Frecuentes</a></li>
-        </ul>
-      </div>
-      <div class="footer-contact">
-        <h4>Contacto</h4>
-        <address>
-          📧 <a href="mailto:info@vesper.com">info@vesper.com</a><br>
-          📞 <a href="tel:+541112345678">+54 11 1234-5678</a><br>
-          📍 Mendoza, Argentina
-        </address>
+  <div class="container footer-inner">
+    
+    <!-- 🔹 Categorías -->
+    <div class="footer-links footer-categories">
+      <h4>Categorías</h4>
+      <ul>
+        <li><a href="productos.html?categoria=perfumes">Perfumes</a></li>
+        <li><a href="productos.html?categoria=vapes">Vapes</a></li>
+        <li><a href="productos.html?categoria=decants">Decants</a></li>
+      </ul>
+    </div>
+
+    <!-- 🔹 Enlaces útiles -->
+    <div class="footer-links">
+      <h4>Enlaces útiles</h4>
+      <ul>
+        <li><a href="#faq-envio">Preguntas Frecuentes</a></li>
+        <li><a href="#faq-pago">Métodos de Pago</a></li>
+        <li><a href="#faq-decant">Sobre Decants</a></li>
+      </ul>
+    </div>
+
+    <!-- 🔹 Contacto -->
+    <div class="footer-contact">
+      <h4>Contacto</h4>
+      <address>
+        📧 <a href="mailto:info@vesper.com">info@vesper.com</a><br>
+        📞 <a href="tel:+541112345678">+54 11 1234-5678</a><br>
+        📍 Mendoza, Argentina
+      </address>
+    </div>
+
+    <!-- 🔹 Seguinos en -->
+    <div class="footer-social">
+      <h4>Seguinos en</h4>
+      <div class="social-icons">
+        <a href="https://www.instagram.com/vesper.arr/" target="_blank" aria-label="Instagram">
+          <i class="fa-brands fa-instagram"></i>
+        </a>
+        <a href="https://www.tiktok.com/@vesper.arr" target="_blank" aria-label="TikTok">
+          <i class="fa-brands fa-tiktok"></i>
+        </a>
       </div>
     </div>
-  </footer>
+
+  </div>
+</footer>
+
+  <!-- Carrito de compras -->
+  <div class="cart-modal" id="cart-modal" aria-hidden="true">
+    <div class="cart-modal__overlay" role="presentation"></div>
+    <aside class="cart-modal__panel" role="dialog" aria-labelledby="cartModalTitle">
+      <header class="cart-modal__header">
+        <div>
+          <h2 id="cartModalTitle">Tu carrito</h2>
+          <p class="cart-modal__subtitle">Revisa tus productos antes de continuar</p>
+        </div>
+        <button class="cart-modal__close" type="button" aria-label="Cerrar carrito">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </header>
+      <div class="cart-modal__body">
+        <div class="cart-empty-state" id="cart-empty-state">
+          <span class="material-symbols-outlined cart-empty-state__icon" aria-hidden="true">shopping_bag</span>
+          <h3>Tu carrito está vacío</h3>
+          <p>Agrega algunos productos para comenzar tu compra</p>
+          <button type="button" class="btn btn--primary cart-empty-state__cta">Seguir Comprando</button>
+        </div>
+        <div class="cart-items" id="cart-items" aria-live="polite"></div>
+        <section class="shipping-section" id="shipping-section" aria-labelledby="shippingTitle">
+          <h3 id="shippingTitle">Medios de envío</h3>
+          <form class="shipping-form" id="shipping-form">
+            <label class="visually-hidden" for="shipping-zip">Código postal</label>
+            <input type="text" id="shipping-zip" name="shippingZip" placeholder="Tu código postal" inputmode="numeric" autocomplete="postal-code">
+            <button type="submit">CALCULAR</button>
+          </form>
+          <p class="shipping-result" id="shipping-result" aria-live="polite"></p>
+        </section>
+      </div>
+      <footer class="summary-section" id="summary-section">
+        <div class="summary-line">
+          <span id="summary-count">0 productos</span>
+          <span id="summary-subtotal">$0</span>
+        </div>
+        <div class="summary-line summary-line--total">
+          <div class="summary-total__label">
+            <span>Total</span>
+            <small id="summary-shipping-note">Envío a calcular</small>
+          </div>
+          <span id="summary-total">$0</span>
+        </div>
+        <div class="summary-actions">
+          <button type="button" class="btn btn--primary summary-actions__primary">Iniciar compra</button>
+          <button type="button" class="btn summary-actions__secondary">Ver más productos</button>
+        </div>
+      </footer>
+    </aside>
+  </div>
+
+  <div class="cart-toast-layer" aria-live="polite" aria-atomic="true"></div>
 
   <!-- Scripts -->
   <script src="../Frontend/javaScript/main.js"></script>
