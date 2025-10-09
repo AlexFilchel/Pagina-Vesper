@@ -3,12 +3,8 @@ package org.vesper.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Table(name = "usuarios")
 @Data
@@ -35,6 +31,7 @@ public class Usuario {
     @Column(nullable = false)
     private Rol rol;
 
+    @Builder.Default
     private boolean activo = true;
 
     @Builder.Default

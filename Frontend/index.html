@@ -19,6 +19,7 @@
 
   <!-- Estilos -->
   <link rel="stylesheet" href="../Frontend/css/style.css">
+
 </head>
 <body>
 
@@ -69,8 +70,8 @@
   </button>
   <div class="site-header__dropdown">
     <ul class="site-header__dropdown-list">
-      <li><a href="#" id="btn-login">Iniciar sesión</a></li>
-      <li><a href="#" id="btn-register">Crear cuenta</a></li>
+      <li><button id="btn-login" class="link-button">Iniciar sesión</button></li>
+      <li><button id="btn-register" class="link-button">Crear cuenta</button></li>
     </ul>
   </div>
 </div>
@@ -342,86 +343,6 @@
   </div>
 </footer>
   
-<!-- Modal Iniciar Sesión -->
-<div class="modal" id="modal-login" aria-hidden="true">
-  <div class="modal-overlay"></div>
-  <div class="modal-content">
-    <button class="modal-close" data-close="modal-login">&times;</button>
-    <h2>Iniciar Sesión</h2>
-    <form class="form-login">
-      <div class="form-group">
-        <label for="login-email">Correo electrónico</label>
-        <input id="login-email" type="email" required>
-      </div>
-
-      <!-- 🔹 Contraseña-->
-      <div class="form-group password-field">
-        <label for="login-password">Contraseña</label>
-        <input id="login-password" type="password" required>
-        <span class="toggle-password" data-target="login-password">
-          <i class="fa-solid fa-eye"></i>
-        </span>
-      </div>
-
-      <!-- 🔹 Enlace de recuperar contraseña -->
-      <div class="form-footer">
-        <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
-      </div>
-
-      <button type="submit" class="btn btn--primary">Ingresar</button>
-      <p>¿No tienes cuenta? <a href="#" id="switch-to-register">Crear cuenta</a></p>
-    </form>
-  </div>
-</div>
-
-
-<!-- Modal Crear Cuenta -->
-<div class="modal" id="modal-register" aria-hidden="true">
-  <div class="modal-overlay"></div>
-  <div class="modal-content">
-    <button class="modal-close" data-close="modal-register">&times;</button>
-    <h2>Crear Cuenta</h2>
-    <form class="form-register">
-      <div class="form-group two-columns">
-        <div>
-          <label for="register-nombre">Nombre</label>
-          <input id="register-nombre" type="text" required>
-        </div>
-        <div>
-          <label for="register-apellido">Apellido</label>
-          <input id="register-apellido" type="text"  required>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="register-email">Correo electrónico</label>
-        <input id="register-email" type="email" required>
-      </div>
-
-      <!-- 🔹 Contraseña-->
-      <div class="form-group password-field">
-        <label for="register-password">Contraseña</label>
-        <input id="register-password" type="password" required>
-        <span class="toggle-password" data-target="register-password">
-          <i class="fa-solid fa-eye"></i>
-        </span>
-      </div>
-
-      <!-- 🔹 Confirmación-->
-      <div class="form-group password-field">
-        <label for="register-password-confirm">Confirmar contraseña</label>
-        <input id="register-password-confirm" type="password" required>
-        <span class="toggle-password" data-target="register-password-confirm">
-          <i class="fa-solid fa-eye"></i>
-        </span>
-      </div>
-
-      <button type="submit" class="btn btn--primary">Crear Cuenta</button>
-      <p>¿Ya tienes cuenta? <a href="#" id="switch-to-login">Iniciar sesión</a></p>
-    </form>
-  </div>
-</div>
-
-
 
 <!-- Carrito de compras -->
 <div class="cart-modal" id="cart-modal" aria-hidden="true">
@@ -475,7 +396,9 @@
 </div>
 
 <div class="cart-toast-layer" aria-live="polite" aria-atomic="true"></div>
-
+  
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="javaScript/auth0-config.js"></script>
   <script src="javaScript/main.js"></script>
 </body>
 </html>

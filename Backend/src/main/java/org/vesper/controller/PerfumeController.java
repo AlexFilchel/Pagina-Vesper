@@ -102,31 +102,9 @@ public class PerfumeController {
                     nombre, genero, familiaOlfativa, precioMin, precioMax, marca));
         }
         
-        // Búsquedas específicas
-        if (nombre != null) {
-            return ResponseEntity.ok(perfumeService.buscarPorNombre(nombre));
-        }
-        if (genero != null) {
-            return ResponseEntity.ok(perfumeService.buscarPorGenero(genero));
-        }
-        if (familiaOlfativa != null) {
-            return ResponseEntity.ok(perfumeService.buscarPorFamiliaOlfativa(familiaOlfativa));
-        }
-        if (marca != null) {
-            return ResponseEntity.ok(perfumeService.buscarPorMarca(marca));
-        }
-        if (volumen != null) {
-            return ResponseEntity.ok(perfumeService.buscarPorVolumen(volumen));
-        }
-        if (decant != null) {
-            return ResponseEntity.ok(perfumeService.buscarPorDecant(decant));
-        }
-        if (precioMin != null && precioMax != null) {
-            return ResponseEntity.ok(perfumeService.buscarPorPrecio(precioMin, precioMax));
-        }
+        return ResponseEntity.ok(perfumeService.buscarPerfumesAvanzado(
+            nombre, genero, familiaOlfativa, precioMin, precioMax, marca));
         
-        // Si no hay criterios, devolver todos los perfumes
-        return ResponseEntity.ok(perfumeService.listarPerfumes());
     }
 
 }

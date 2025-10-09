@@ -2,7 +2,6 @@ package org.vesper.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 
@@ -30,5 +29,6 @@ public class Promocion {
 
     private LocalDate fechaFin;
 
+    @Builder.Default
     private boolean activo = true;
 }

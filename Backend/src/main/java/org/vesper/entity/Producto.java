@@ -1,6 +1,5 @@
 package org.vesper.entity;
 
-import com.fasterxml.jackson.databind.deser.BuilderBasedDeserializer;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
