@@ -1,179 +1,102 @@
-let auth0Client = null;
+(function() {
+  'use strict';
 
-// ✅ Configuración de tu app Auth0
-const REDIRECT_URI = "http://127.0.0.1:5500/Frontend/index.html";
-const config = {
-  domain: "dev-txbkgaorh27oni5i.us.auth0.com",
-  clientId: "n6ccBcUaLGxOIQTA6Ka29j0AD4Xi88Jn",
-  authorizationParams: {
-    redirect_uri: REDIRECT_URI
-  }
-};
+  let auth0Client = null;
+  const REDIRECT_URI = "http://127.0.0.1:5500/Frontend/index.html";
 
-console.log("📦 Buscando SDK de Auth0:", typeof createAuth0Client);
-// ✅ Espera a que el SDK de Auth0 esté disponible
-function waitForAuth0SDK() {
-  return new Promise((resolve, reject) => {
-    // Si ya está disponible, resolver inmediatamente
-    if (typeof createAuth0Client !== 'undefined') {
-      resolve();
-      return;
-    }
+  // Cargar SDK de Auth0
+  const script = document.createElement('script');
+  script.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js';
+  
+  script.onload = function() {
+    console.log('✅ SDK de Auth0 cargado');
+    initAuth0();
+  };
 
-    // Esperar hasta 10 segundos
-    let attempts = 0;
-    const maxAttempts = 100;
-    
-    const checkInterval = setInterval(() => {
-      attempts++;
-      
-      if (typeof createAuth0Client !== 'undefined') {
-        clearInterval(checkInterval);
-        console.log('✅ SDK de Auth0 cargado');
-        resolve();
-      } else if (attempts >= maxAttempts) {
-        clearInterval(checkInterval);
-        reject(new Error('Timeout esperando SDK de Auth0'));
+  script.onerror = function() {
+    console.error('❌ Error cargando SDK de Auth0');
+  };
+
+  document.head.appendChild(script);
+
+  async function initAuth0() {
+    try {
+      // Esperar a que esté disponible
+      if (!window.createAuth0Client && !window.auth0?.createAuth0Client) {
+        console.error('❌ createAuth0Client no está disponible');
+        return;
       }
-    }, 100);
-  });
-}
 
-// ✅ Inicializa Auth0 al cargar
-async function initAuth0() {
-  try {
-    // Esperar a que el SDK esté disponible
-    await waitForAuth0SDK();
-    
-    auth0Client = await createAuth0Client(config);
-    console.log("✅ Auth0 inicializado correctamente");
-
-    // Verifica si viene de un redirect de Auth0
-    if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
-      console.log("📥 Procesando callback de Auth0...");
+      const createClient = window.createAuth0Client || window.auth0.createAuth0Client;
       
-      try {
-        await auth0Client.handleRedirectCallback();
-        console.log("✅ Callback procesado exitosamente");
-        
-        // Limpia la URL sin perder el path
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (err) {
-        console.error("❌ Error manejando callback:", err);
-        alert("Error al iniciar sesión. Por favor, intenta nuevamente.");
-      }
-    }
+      auth0Client = await createClient({
+        domain: "vesperarg.us.auth0.com",
+        clientId: "pYeprEq6ZK2yUBxV6agbfDIiExVkU0xD",
+        authorizationParams: {
+          redirect_uri: REDIRECT_URI
+        }
+      });
 
-    await updateUI();
-  } catch (error) {
-    console.error("❌ Error inicializando Auth0:", error);
-    if (error.message.includes('Timeout')) {
-      alert("Error cargando el sistema de autenticación. Por favor, recarga la página.");
+      console.log("✅ Auth0 inicializado correctamente");
+
+      // Manejar callback
+      if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+        console.log("📥 Procesando callback...");
+        try {
+          await auth0Client.handleRedirectCallback();
+          console.log("✅ Callback procesado");
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (err) {
+          console.error("❌ Error en callback:", err);
+        }
+      }
+
+      setupUI();
+    } catch (error) {
+      console.error("❌ Error inicializando Auth0:", error);
     }
   }
-}
 
-// ✅ Actualiza la interfaz
-async function updateUI() {
-  try {
-    if (!auth0Client) {
-      console.warn("⚠️ Auth0 client no disponible aún");
+  async function setupUI() {
+    const loginBtn = document.getElementById("btn-login");
+    const registerBtn = document.getElementById("btn-register");
+
+    if (!loginBtn || !registerBtn) {
+      console.warn("⚠️ Botones no encontrados");
       return;
     }
 
-    const isAuthenticated = await auth0Client.isAuthenticated();
-    console.log("🔐 Usuario autenticado:", isAuthenticated);
-    
-    const loginButton = document.getElementById("btn-login");
-    const registerButton = document.getElementById("btn-register");
+    const isAuth = await auth0Client.isAuthenticated();
+    console.log("🔐 Autenticado:", isAuth);
 
-    if (!loginButton || !registerButton) {
-      console.warn("⚠️ Botones de login no encontrados");
-      return;
-    }
-
-    if (isAuthenticated) {
+    if (isAuth) {
       const user = await auth0Client.getUser();
-      console.log("👤 Usuario logueado:", user);
-
-      loginButton.textContent = user.name || "Mi perfil";
-      loginButton.onclick = event => {
-        event.preventDefault();
-        alert(`Bienvenido, ${user.name || "usuario"}\nEmail: ${user.email}`);
+      loginBtn.textContent = user.name || "Mi perfil";
+      loginBtn.onclick = (e) => {
+        e.preventDefault();
+        alert(`Hola ${user.name}\n${user.email}`);
       };
-
-      registerButton.textContent = "Cerrar sesión";
-      registerButton.onclick = event => {
-        event.preventDefault();
-        logout();
+      registerBtn.textContent = "Cerrar sesión";
+      registerBtn.onclick = (e) => {
+        e.preventDefault();
+        auth0Client.logout({
+          logoutParams: { returnTo: REDIRECT_URI }
+        });
       };
-
     } else {
-      console.log("🔓 Usuario no autenticado");
-
-      loginButton.textContent = "Iniciar sesión";
-      registerButton.textContent = "Crear cuenta";
-
-      loginButton.onclick = event => {
-        event.preventDefault();
-        login();
+      loginBtn.textContent = "Iniciar sesión";
+      registerBtn.textContent = "Crear cuenta";
+      
+      const handleLogin = (e) => {
+        e.preventDefault();
+        console.log("🚀 Login...");
+        auth0Client.loginWithRedirect({
+          authorizationParams: { redirect_uri: REDIRECT_URI }
+        });
       };
-      registerButton.onclick = event => {
-        event.preventDefault();
-        login();
-      };
+
+      loginBtn.onclick = handleLogin;
+      registerBtn.onclick = handleLogin;
     }
-  } catch (error) {
-    console.error("❌ Error actualizando UI:", error);
   }
-}
-
-// ✅ Login con Auth0
-async function login() {
-  try {
-    if (!auth0Client) {
-      console.warn("⚠️ Auth0 aún no está listo. Intenta nuevamente en un momento.");
-      alert("El sistema de autenticación aún se está cargando. Intenta en un momento.");
-      return;
-    }
-
-    console.log("🚀 Iniciando login...");
-    console.log("📍 Redirect URI:", REDIRECT_URI);
-
-    await auth0Client.loginWithRedirect({
-      authorizationParams: {
-        redirect_uri: REDIRECT_URI
-      }
-    });
-  } catch (error) {
-    console.error("❌ Error en login:", error);
-    alert("Error al iniciar sesión. Verifica tu configuración de Auth0.");
-  }
-}
-
-// ✅ Logout con Auth0
-function logout() {
-  try {
-    console.log("👋 Cerrando sesión...");
-    
-    if (!auth0Client) {
-      console.warn("⚠️ Auth0 aún no está listo");
-      return;
-    }
-
-    auth0Client.logout({
-      logoutParams: {
-        returnTo: REDIRECT_URI
-      }
-    });
-  } catch (error) {
-    console.error("❌ Error en logout:", error);
-  }
-}
-
-// Inicializa cuando el DOM esté listo
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initAuth0);
-} else {
-  initAuth0();
-}
+})();
