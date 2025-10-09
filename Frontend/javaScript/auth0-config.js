@@ -1,11 +1,12 @@
 let auth0Client = null;
 
 // ✅ Configuración de tu app Auth0
+const REDIRECT_URI = "http://127.0.0.1:5500/Frontend/index.html";
 const config = {
   domain: "dev-txbkgaorh27oni5i.us.auth0.com",
-  clientId: "n6ccBcUaLGxOIQTA6Ka29j0AD4Xi88Jn",
+  clientId: "n6ccBcUaLGx0IQTA6Ka29j0AD4Xi88Jn",
   authorizationParams: {
-    redirect_uri: window.location.origin + window.location.pathname
+    redirect_uri: REDIRECT_URI
   }
 };
 
@@ -51,30 +52,36 @@ async function updateUI() {
       return;
     }
 
-    // Previene comportamiento por defecto
-    loginButton.addEventListener("click", e => e.preventDefault());
-    registerButton.addEventListener("click", e => e.preventDefault());
-
     if (isAuthenticated) {
       const user = await auth0Client.getUser();
       console.log("👤 Usuario logueado:", user);
 
       loginButton.textContent = user.name || "Mi perfil";
-      loginButton.onclick = () => {
+      loginButton.onclick = event => {
+        event.preventDefault();
         alert(`Bienvenido, ${user.name || "usuario"}\nEmail: ${user.email}`);
       };
-      
+
       registerButton.textContent = "Cerrar sesión";
-      registerButton.onclick = logout;
+      registerButton.onclick = event => {
+        event.preventDefault();
+        logout();
+      };
 
     } else {
       console.log("🔓 Usuario no autenticado");
-      
+
       loginButton.textContent = "Iniciar sesión";
       registerButton.textContent = "Crear cuenta";
 
-      loginButton.onclick = login;
-      registerButton.onclick = login;
+      loginButton.onclick = event => {
+        event.preventDefault();
+        login();
+      };
+      registerButton.onclick = event => {
+        event.preventDefault();
+        login();
+      };
     }
   } catch (error) {
     console.error("❌ Error actualizando UI:", error);
@@ -84,12 +91,17 @@ async function updateUI() {
 // ✅ Login con Auth0
 async function login() {
   try {
+    if (!auth0Client) {
+      console.warn("⚠️ Auth0 aún no está listo para iniciar sesión");
+      return;
+    }
+
     console.log("🚀 Iniciando login...");
-    console.log("📍 Redirect URI:", window.location.origin + window.location.pathname);
-    
+    console.log("📍 Redirect URI:", REDIRECT_URI);
+
     await auth0Client.loginWithRedirect({
       authorizationParams: {
-        redirect_uri: window.location.origin + window.location.pathname
+        redirect_uri: REDIRECT_URI
       }
     });
   } catch (error) {
@@ -103,9 +115,14 @@ function logout() {
   try {
     console.log("👋 Cerrando sesión...");
     
+    if (!auth0Client) {
+      console.warn("⚠️ Auth0 aún no está listo para cerrar sesión");
+      return;
+    }
+
     auth0Client.logout({
       logoutParams: {
-        returnTo: window.location.origin + window.location.pathname
+        returnTo: REDIRECT_URI
       }
     });
   } catch (error) {
