@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="../Frontend/css/productos.css">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link rel="icon" href="img/vesper_logo_sin_fondo.png" type="image/x-icon">
 </head>
 <body>
   <!-- Banner superior -->
@@ -57,91 +58,10 @@
   </button>
   <div class="site-header__dropdown">
     <ul class="site-header__dropdown-list">
-      <li><a href="#" id="btn-login">Iniciar sesión</a></li>
-      <li><a href="#" id="btn-register">Crear cuenta</a></li>
+      <li><a href="#" id="btn-login" class="login-link">Iniciar sesión</a></li>
     </ul>
   </div>
 </div>
-
-<!-- Modal Iniciar Sesión -->
-<div class="modal" id="modal-login" aria-hidden="true">
-  <div class="modal-overlay"></div>
-  <div class="modal-content">
-    <button class="modal-close" data-close="modal-login">&times;</button>
-    <h2>Iniciar Sesión</h2>
-    <form class="form-login">
-      <div class="form-group">
-        <label for="login-email">Correo electrónico</label>
-        <input id="login-email" type="email" required>
-      </div>
-
-      <!-- 🔹 Contraseña-->
-      <div class="form-group password-field">
-        <label for="login-password">Contraseña</label>
-        <input id="login-password" type="password" required>
-        <span class="toggle-password" data-target="login-password">
-          <i class="fa-solid fa-eye"></i>
-        </span>
-      </div>
-
-      <!-- 🔹 Enlace de recuperar contraseña -->
-      <div class="form-footer">
-        <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
-      </div>
-
-      <button type="submit" class="btn btn--primary">Ingresar</button>
-      <p>¿No tienes cuenta? <a href="#" id="switch-to-register">Crear cuenta</a></p>
-    </form>
-  </div>
-</div>
-
-
-<!-- Modal Crear Cuenta -->
-<div class="modal" id="modal-register" aria-hidden="true">
-  <div class="modal-overlay"></div>
-  <div class="modal-content">
-    <button class="modal-close" data-close="modal-register">&times;</button>
-    <h2>Crear Cuenta</h2>
-    <form class="form-register">
-      <div class="form-group two-columns">
-        <div>
-          <label for="register-nombre">Nombre</label>
-          <input id="register-nombre" type="text" required>
-        </div>
-        <div>
-          <label for="register-apellido">Apellido</label>
-          <input id="register-apellido" type="text"  required>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="register-email">Correo electrónico</label>
-        <input id="register-email" type="email" required>
-      </div>
-
-      <!-- 🔹 Contraseña-->
-      <div class="form-group password-field">
-        <label for="register-password">Contraseña</label>
-        <input id="register-password" type="password" required>
-        <span class="toggle-password" data-target="register-password">
-          <i class="fa-solid fa-eye"></i>
-        </span>
-      </div>
-
-      <!-- 🔹 Confirmación-->
-      <div class="form-group password-field">
-        <label for="register-password-confirm">Confirmar contraseña</label>
-        <input id="register-password-confirm" type="password" required>
-        <span class="toggle-password" data-target="register-password-confirm">
-          <i class="fa-solid fa-eye"></i>
-        </span>
-      </div>
-
-      <button type="submit" class="btn btn--primary">Crear Cuenta</button>
-      <p>¿Ya tienes cuenta? <a href="#" id="switch-to-login">Iniciar sesión</a></p>
-    </form>
-  </div>
-</div>
-
 
 
       <a href="#" class="site-header__action" id="link-carrito" aria-haspopup="dialog">
@@ -417,7 +337,8 @@
 
   <div class="cart-toast-layer" aria-live="polite" aria-atomic="true"></div>
 
-  <!-- Scripts -->
-  <script src="../Frontend/javaScript/main.js"></script>
+  <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script defer src="javaScript/auth0-config.js"></script>
+  <script defer src="javaScript/main.js"></script>
 </body>
 </html>

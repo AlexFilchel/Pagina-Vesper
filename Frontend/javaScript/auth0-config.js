@@ -2,9 +2,8 @@
   'use strict';
 
   let auth0Client = null;
-  const REDIRECT_URI = "http://127.0.0.1:5500/Frontend/index.html";
+  const REDIRECT_URI = window.location.origin + window.location.pathname;
 
-  // Cargar SDK de Auth0
   const script = document.createElement('script');
   script.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js';
   
@@ -21,12 +20,6 @@
 
   async function initAuth0() {
     try {
-      // Esperar a que esté disponible
-      if (!window.createAuth0Client && !window.auth0?.createAuth0Client) {
-        console.error('❌ createAuth0Client no está disponible');
-        return;
-      }
-
       const createClient = window.createAuth0Client || window.auth0.createAuth0Client;
       
       auth0Client = await createClient({
@@ -34,21 +27,19 @@
         clientId: "pYeprEq6ZK2yUBxV6agbfDIiExVkU0xD",
         authorizationParams: {
           redirect_uri: REDIRECT_URI
-        }
+        },
+        // 🔒 Mantener sesión activa
+        useRefreshTokens: true,
+        cacheLocation: "localstorage"
       });
 
       console.log("✅ Auth0 inicializado correctamente");
 
-      // Manejar callback
+      // Manejar callback si vuelve de login
       if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
         console.log("📥 Procesando callback...");
-        try {
-          await auth0Client.handleRedirectCallback();
-          console.log("✅ Callback procesado");
-          window.history.replaceState({}, document.title, window.location.pathname);
-        } catch (err) {
-          console.error("❌ Error en callback:", err);
-        }
+        await auth0Client.handleRedirectCallback();
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
 
       setupUI();
@@ -59,10 +50,10 @@
 
   async function setupUI() {
     const loginBtn = document.getElementById("btn-login");
-    const registerBtn = document.getElementById("btn-register");
+    const accountLabel = document.querySelector(".site-header__action-label");
 
-    if (!loginBtn || !registerBtn) {
-      console.warn("⚠️ Botones no encontrados");
+    if (!loginBtn || !accountLabel) {
+      console.warn("⚠️ Elementos no encontrados en esta página");
       return;
     }
 
@@ -71,32 +62,28 @@
 
     if (isAuth) {
       const user = await auth0Client.getUser();
-      loginBtn.textContent = user.name || "Mi perfil";
+
+      const username =
+        user.nickname || user.username || user.given_name || user.name || "Usuario";
+
+      accountLabel.textContent = username;
+
+      loginBtn.textContent = "Cerrar sesión";
       loginBtn.onclick = (e) => {
         e.preventDefault();
-        alert(`Hola ${user.name}\n${user.email}`);
-      };
-      registerBtn.textContent = "Cerrar sesión";
-      registerBtn.onclick = (e) => {
-        e.preventDefault();
         auth0Client.logout({
-          logoutParams: { returnTo: REDIRECT_URI }
+          logoutParams: { returnTo: window.location.origin + "/Frontend/index.html" }
         });
       };
     } else {
+      accountLabel.textContent = "Mi cuenta";
       loginBtn.textContent = "Iniciar sesión";
-      registerBtn.textContent = "Crear cuenta";
-      
-      const handleLogin = (e) => {
+      loginBtn.onclick = (e) => {
         e.preventDefault();
-        console.log("🚀 Login...");
         auth0Client.loginWithRedirect({
           authorizationParams: { redirect_uri: REDIRECT_URI }
         });
       };
-
-      loginBtn.onclick = handleLogin;
-      registerBtn.onclick = handleLogin;
     }
   }
 })();
