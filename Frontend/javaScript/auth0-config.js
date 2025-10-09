@@ -1,7 +1,24 @@
 let auth0Client = null;
 
 // ✅ Configuración de tu app Auth0
-const REDIRECT_URI = "http://127.0.0.1:5500/Frontend/index.html";
+const APP_REDIRECT_PATH = "/Frontend/index.html";
+const AUTH0_SDK_URL = window.__AUTH0_SDK_URL__ || "https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js";
+
+const resolveOrigin = () => {
+  if (window.location.origin && window.location.origin !== "null") {
+    return window.location.origin;
+  }
+
+  const { protocol, host } = window.location;
+  if (protocol && host) {
+    return `${protocol}//${host}`;
+  }
+
+  return window.location.href;
+};
+
+const REDIRECT_URI = new URL(APP_REDIRECT_PATH, resolveOrigin()).href;
+
 const config = {
   domain: "dev-txbkgaorh27oni5i.us.auth0.com",
   clientId: "n6ccBcUaLGxOIQTA6Ka29j0AD4Xi88Jn",
@@ -10,53 +27,85 @@ const config = {
   }
 };
 
-console.log("📦 Buscando SDK de Auth0:", typeof createAuth0Client);
-// ✅ Espera a que el SDK de Auth0 esté disponible
-function waitForAuth0SDK() {
-  return new Promise((resolve, reject) => {
-    // Si ya está disponible, resolver inmediatamente
-    if (typeof createAuth0Client !== 'undefined') {
-      resolve();
+console.log("📦 Buscando SDK de Auth0:", typeof window.createAuth0Client);
+
+const SDK_SCRIPT_SELECTOR = "script[data-auth0-spa-sdk]";
+let sdkLoadingPromise = null;
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function loadAuth0SDK() {
+  if (typeof window.createAuth0Client !== "undefined") {
+    return Promise.resolve();
+  }
+
+  if (sdkLoadingPromise) {
+    return sdkLoadingPromise;
+  }
+
+  sdkLoadingPromise = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector(SDK_SCRIPT_SELECTOR);
+
+    if (existingScript) {
+      if (existingScript.dataset.loaded === "true") {
+        resolve();
+        return;
+      }
+
+      existingScript.addEventListener("load", () => resolve(), { once: true });
+      existingScript.addEventListener("error", () => reject(new Error("No se pudo cargar el SDK de Auth0")), { once: true });
       return;
     }
 
-    // Esperar hasta 10 segundos
-    let attempts = 0;
-    const maxAttempts = 100;
-    
-    const checkInterval = setInterval(() => {
-      attempts++;
-      
-      if (typeof createAuth0Client !== 'undefined') {
-        clearInterval(checkInterval);
-        console.log('✅ SDK de Auth0 cargado');
-        resolve();
-      } else if (attempts >= maxAttempts) {
-        clearInterval(checkInterval);
-        reject(new Error('Timeout esperando SDK de Auth0'));
-      }
-    }, 100);
+    const script = document.createElement("script");
+    script.src = AUTH0_SDK_URL;
+    script.async = true;
+    script.defer = true;
+    script.setAttribute("data-auth0-spa-sdk", "true");
+    script.onload = () => {
+      script.dataset.loaded = "true";
+      resolve();
+    };
+    script.onerror = () => {
+      reject(new Error("No se pudo cargar el SDK de Auth0"));
+    };
+
+    document.head.appendChild(script);
   });
+
+  return sdkLoadingPromise;
+}
+
+async function ensureAuth0SDK(timeoutMs = 12000) {
+  await loadAuth0SDK();
+
+  const startedAt = Date.now();
+  while (typeof window.createAuth0Client === "undefined") {
+    if (Date.now() - startedAt > timeoutMs) {
+      throw new Error("Timeout esperando SDK de Auth0");
+    }
+
+    await delay(50);
+  }
 }
 
 // ✅ Inicializa Auth0 al cargar
 async function initAuth0() {
   try {
-    // Esperar a que el SDK esté disponible
-    await waitForAuth0SDK();
-    
-    auth0Client = await createAuth0Client(config);
+    await ensureAuth0SDK();
+
+    auth0Client = await window.createAuth0Client(config);
     console.log("✅ Auth0 inicializado correctamente");
 
-    // Verifica si viene de un redirect de Auth0
     if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
       console.log("📥 Procesando callback de Auth0...");
-      
+
       try {
         await auth0Client.handleRedirectCallback();
         console.log("✅ Callback procesado exitosamente");
-        
-        // Limpia la URL sin perder el path
+
         window.history.replaceState({}, document.title, window.location.pathname);
       } catch (err) {
         console.error("❌ Error manejando callback:", err);
@@ -67,8 +116,12 @@ async function initAuth0() {
     await updateUI();
   } catch (error) {
     console.error("❌ Error inicializando Auth0:", error);
-    if (error.message.includes('Timeout')) {
-      alert("Error cargando el sistema de autenticación. Por favor, recarga la página.");
+    const message = error?.message || "";
+
+    if (message.includes("Timeout") || message.includes("No se pudo cargar")) {
+      alert("Error cargando el sistema de autenticación. Por favor, verifica tu conexión e intenta nuevamente.");
+    } else {
+      alert("Ocurrió un problema al inicializar la autenticación. Intenta nuevamente más tarde.");
     }
   }
 }
@@ -83,7 +136,7 @@ async function updateUI() {
 
     const isAuthenticated = await auth0Client.isAuthenticated();
     console.log("🔐 Usuario autenticado:", isAuthenticated);
-    
+
     const loginButton = document.getElementById("btn-login");
     const registerButton = document.getElementById("btn-register");
 
@@ -96,10 +149,10 @@ async function updateUI() {
       const user = await auth0Client.getUser();
       console.log("👤 Usuario logueado:", user);
 
-      loginButton.textContent = user.name || "Mi perfil";
+      loginButton.textContent = user?.name || "Mi perfil";
       loginButton.onclick = event => {
         event.preventDefault();
-        alert(`Bienvenido, ${user.name || "usuario"}\nEmail: ${user.email}`);
+        alert(`Bienvenido, ${user?.name || "usuario"}\nEmail: ${user?.email || "Sin email"}`);
       };
 
       registerButton.textContent = "Cerrar sesión";
@@ -107,7 +160,6 @@ async function updateUI() {
         event.preventDefault();
         logout();
       };
-
     } else {
       console.log("🔓 Usuario no autenticado");
 
@@ -120,7 +172,11 @@ async function updateUI() {
       };
       registerButton.onclick = event => {
         event.preventDefault();
-        login();
+        login({
+          authorizationParams: {
+            screen_hint: "signup"
+          }
+        });
       };
     }
   } catch (error) {
@@ -129,7 +185,7 @@ async function updateUI() {
 }
 
 // ✅ Login con Auth0
-async function login() {
+async function login(options = {}) {
   try {
     if (!auth0Client) {
       console.warn("⚠️ Auth0 aún no está listo. Intenta nuevamente en un momento.");
@@ -140,11 +196,17 @@ async function login() {
     console.log("🚀 Iniciando login...");
     console.log("📍 Redirect URI:", REDIRECT_URI);
 
-    await auth0Client.loginWithRedirect({
-      authorizationParams: {
-        redirect_uri: REDIRECT_URI
-      }
-    });
+    const authorizationParams = {
+      redirect_uri: REDIRECT_URI,
+      ...(options.authorizationParams || {})
+    };
+
+    const finalOptions = {
+      ...options,
+      authorizationParams
+    };
+
+    await auth0Client.loginWithRedirect(finalOptions);
   } catch (error) {
     console.error("❌ Error en login:", error);
     alert("Error al iniciar sesión. Verifica tu configuración de Auth0.");
@@ -155,7 +217,7 @@ async function login() {
 function logout() {
   try {
     console.log("👋 Cerrando sesión...");
-    
+
     if (!auth0Client) {
       console.warn("⚠️ Auth0 aún no está listo");
       return;
@@ -172,8 +234,22 @@ function logout() {
 }
 
 // Inicializa cuando el DOM esté listo
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initAuth0);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initAuth0);
 } else {
   initAuth0();
 }
+
+// Exponer funciones para debugging si es necesario
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && auth0Client) {
+    updateUI();
+  }
+});
+
+window.__auth0 = {
+  get client() {
+    return auth0Client;
+  },
+  refreshUI: updateUI
+};
