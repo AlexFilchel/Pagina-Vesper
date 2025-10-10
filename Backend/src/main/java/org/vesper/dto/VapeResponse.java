@@ -12,7 +12,7 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class VaperResponse {
+public class VapeResponse {
     private Long id;
     private String nombre;
     private Double precio;

@@ -9,58 +9,92 @@ import org.vesper.dto.PerfumeResponse;
 import org.vesper.service.PerfumeService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controlador REST para la gestión de perfumes.
- * Proporciona endpoints CRUD y de búsqueda.
+ * Endpoints divididos por nivel de acceso:
+ * - /api/public/... : acceso sin autenticación
+ * - /api/user/...   : requiere sesión
+ * - /api/admin/...  : requiere rol ADMIN
  */
 @RestController
-@RequestMapping("/perfumes")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class PerfumeController {
 
     private final PerfumeService perfumeService;
 
+    // =========================================================
+    // 🟢 ENDPOINTS PÚBLICOS (acceso libre)
+    // =========================================================
+
     /**
-     * Endpoint para listar todos los perfumes.
-     *
-     * @return Lista de perfumes registrados
+     * Lista todos los perfumes disponibles para el catálogo público.
      */
-    @GetMapping
-    public ResponseEntity<List<PerfumeResponse>> listarPerfumes() {
+    @GetMapping("/public/perfumes")
+    public ResponseEntity<List<PerfumeResponse>> listarPerfumesPublicos() {
         return ResponseEntity.ok(perfumeService.listarPerfumes());
     }
 
     /**
-     * Endpoint para obtener un perfume por su ID.
-     *
-     * @param id Identificador del perfume
-     * @return Detalle del perfume encontrado
+     * Obtiene un perfume específico por su ID (acceso público).
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<PerfumeResponse> obtenerPerfume(@PathVariable Long id) {
+    @GetMapping("/public/perfumes/{id}")
+    public ResponseEntity<PerfumeResponse> obtenerPerfumePublico(@PathVariable Long id) {
         return ResponseEntity.ok(perfumeService.obtenerPerfume(id));
     }
 
     /**
-     * Endpoint para crear un nuevo perfume.
-     *
-     * @param request DTO con los datos del perfume
-     * @return Perfume creado
+     * Busca perfumes mediante filtros opcionales (nombre, género, precio, marca, etc.).
      */
-    @PostMapping
+    @GetMapping("/public/perfumes/buscar")
+    public ResponseEntity<List<PerfumeResponse>> buscarPerfumesPublicos(
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String genero,
+            @RequestParam(required = false) String notasPrincipales,
+            @RequestParam(required = false) String marca,
+            @RequestParam(required = false) String volumen,
+            @RequestParam(required = false) Boolean decant,
+            @RequestParam(required = false) Double precioMin,
+            @RequestParam(required = false) Double precioMax) {
+
+        return ResponseEntity.ok(
+                perfumeService.buscarPerfumesAvanzado(
+                        nombre, genero, notasPrincipales, precioMin, precioMax, marca
+                )
+        );
+    }
+
+    // =========================================================
+    // 🟡 ENDPOINTS DE USUARIO (requieren login)
+    // =========================================================
+
+    /**
+     * Ejemplo: perfumes recomendados para el usuario autenticado.
+     * Podés implementar lógica personalizada en el futuro.
+     */
+    @GetMapping("/user/perfumes/recomendados")
+    public ResponseEntity<List<PerfumeResponse>> obtenerPerfumesRecomendados() {
+        return ResponseEntity.ok(perfumeService.listarPerfumes());
+    }
+
+    // =========================================================
+    // 🔴 ENDPOINTS DE ADMIN (requieren rol ADMIN)
+    // =========================================================
+
+    /**
+     * Crea un nuevo perfume (solo para administradores).
+     */
+    @PostMapping("/admin/perfumes")
     public ResponseEntity<PerfumeResponse> crearPerfume(@Valid @RequestBody PerfumeRequest request) {
         return ResponseEntity.ok(perfumeService.crearPerfume(request));
     }
 
     /**
-     * Endpoint para actualizar un perfume existente.
-     *
-     * @param id      Identificador del perfume
-     * @param request DTO con los datos actualizados
-     * @return Perfume actualizado
+     * Actualiza un perfume existente (solo para administradores).
      */
-    @PutMapping("/{id}")
+    @PutMapping("/admin/perfumes/{id}")
     public ResponseEntity<PerfumeResponse> actualizarPerfume(
             @PathVariable Long id,
             @Valid @RequestBody PerfumeRequest request) {
@@ -68,43 +102,11 @@ public class PerfumeController {
     }
 
     /**
-     * Endpoint para eliminar un perfume.
-     *
-     * @param id Identificador del perfume
-     * @return Mensaje de confirmación
+     * Elimina un perfume (solo para administradores).
      */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> eliminarPerfume(@PathVariable Long id) {
+    @DeleteMapping("/admin/perfumes/{id}")
+    public ResponseEntity<Map<String, String>> eliminarPerfume(@PathVariable Long id) {
         perfumeService.eliminarPerfume(id);
-        return ResponseEntity.ok("Perfume eliminado correctamente");
+        return ResponseEntity.ok(Map.of("message", "Perfume eliminado correctamente"));
     }
-
-    // ======================= ENDPOINTS DE BÚSQUEDA =======================
-
-    /**
-     * Endpoint para buscar perfumes por nombre (búsqueda parcial).
-     */
-    @GetMapping("/buscar")
-    public ResponseEntity<List<PerfumeResponse>> buscarPerfumes(
-            @RequestParam(required = false) String nombre,
-            @RequestParam(required = false) String genero,
-            @RequestParam(required = false) String familiaOlfativa,
-            @RequestParam(required = false) String marca,
-            @RequestParam(required = false) String volumen,
-            @RequestParam(required = false) Boolean decant,
-            @RequestParam(required = false) Double precioMin,
-            @RequestParam(required = false) Double precioMax) {
-        
-        // Si se proporcionan múltiples criterios, usar búsqueda avanzada
-        if (nombre != null || genero != null || familiaOlfativa != null || 
-            marca != null || precioMin != null || precioMax != null) {
-            return ResponseEntity.ok(perfumeService.buscarPerfumesAvanzado(
-                    nombre, genero, familiaOlfativa, precioMin, precioMax, marca));
-        }
-        
-        return ResponseEntity.ok(perfumeService.buscarPerfumesAvanzado(
-            nombre, genero, familiaOlfativa, precioMin, precioMax, marca));
-        
-    }
-
 }

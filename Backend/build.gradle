@@ -25,6 +25,9 @@ repositories {
 }
 
 dependencies {
+
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server:4.0.0-M3")
+
     // ===============================
     // Core Spring Boot
     // ===============================

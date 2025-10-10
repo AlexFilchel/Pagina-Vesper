@@ -4,111 +4,118 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.vesper.dto.VaperRequest;
-import org.vesper.dto.VaperResponse;
-import org.vesper.service.VaperService;
+import org.vesper.dto.VapeRequest;
+import org.vesper.dto.VapeResponse;
+import org.vesper.service.VapeService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- * Controlador REST para la gestión de vapers.
- * Proporciona endpoints CRUD y de búsqueda.
+ * Controlador REST para la gestión de vapers (dispositivos electrónicos).
+ * Estructura dividida por niveles de acceso:
+ * - /api/public/... → acceso sin autenticación
+ * - /api/user/...   → acceso con sesión
+ * - /api/admin/...  → acceso restringido a ADMIN
  */
 @RestController
-@RequestMapping("/vapers")
+@RequestMapping("/api")
 @RequiredArgsConstructor
-public class VaperController {
+public class VapeController {
 
-    private final VaperService vaperService;
+    private final VapeService vapeService;
+
+    // =========================================================
+    // 🟢 ENDPOINTS PÚBLICOS
+    // =========================================================
 
     /**
-     * Endpoint para listar todos los vapers.
-     *
-     * @return Lista de vapers registrados
+     * Lista todos los vapes disponibles para el catálogo público.
      */
-    @GetMapping
-    public ResponseEntity<List<VaperResponse>> listarVapers() {
-        return ResponseEntity.ok(vaperService.listarVapers());
+    @GetMapping("/public/vapes")
+    public ResponseEntity<List<VapeResponse>> listarVapesPublicos() {
+        return ResponseEntity.ok(vapeService.listarVapes());
     }
 
     /**
-     * Endpoint para obtener un vaper por su ID.
-     *
-     * @param id Identificador del vaper
-     * @return Detalle del vaper encontrado
+     * Obtiene un vape por su ID (acceso público).
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<VaperResponse> obtenerVaper(@PathVariable Long id) {
-        return ResponseEntity.ok(vaperService.obtenerVaper(id));
+    @GetMapping("/public/vapes/{id}")
+    public ResponseEntity<VapeResponse> obtenerVapePublico(@PathVariable Long id) {
+        return ResponseEntity.ok(vapeService.obtenerVape(id));
     }
 
     /**
-     * Endpoint para crear un nuevo vaper.
-     *
-     * @param request DTO con los datos del vaper
-     * @return Vaper creado
+     * Busca vapes por nombre, sabor, pitadas o rango de precio.
      */
-    @PostMapping
-    public ResponseEntity<VaperResponse> crearVaper(@Valid @RequestBody VaperRequest request) {
-        return ResponseEntity.ok(vaperService.crearVaper(request));
-    }
-
-    /**
-     * Endpoint para actualizar un vaper existente.
-     *
-     * @param id      Identificador del vaper
-     * @param request DTO con los datos actualizados
-     * @return Vaper actualizado
-     */
-    @PutMapping("/{id}")
-    public ResponseEntity<VaperResponse> actualizarVaper(
-            @PathVariable Long id,
-            @Valid @RequestBody VaperRequest request) {
-        return ResponseEntity.ok(vaperService.actualizarVaper(id, request));
-    }
-
-    /**
-     * Endpoint para eliminar un vaper.
-     *
-     * @param id Identificador del vaper
-     * @return Mensaje de confirmación
-     */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> eliminarVaper(@PathVariable Long id) {
-        vaperService.eliminarVaper(id);
-        return ResponseEntity.ok("Vaper eliminado correctamente");
-    }
-
-    // ======================= ENDPOINTS DE BÚSQUEDA =======================
-
-    /**
-     * Endpoint para buscar vapers con múltiples criterios.
-     */
-    @GetMapping("/buscar")
-    public ResponseEntity<List<VaperResponse>> buscarVapers(
+    @GetMapping("/public/vapes/buscar")
+    public ResponseEntity<List<VapeResponse>> buscarVapesPublicos(
             @RequestParam(required = false) String nombre,
             @RequestParam(required = false) String sabor,
             @RequestParam(required = false) Integer minPitadas,
             @RequestParam(required = false) Integer maxPitadas,
             @RequestParam(required = false) Double precioMin,
             @RequestParam(required = false) Double precioMax) {
-        
-        // Búsquedas específicas
+
+        // orden de prioridad: nombre → sabor → pitadas → precio
         if (nombre != null) {
-            return ResponseEntity.ok(vaperService.buscarPorNombre(nombre));
+            return ResponseEntity.ok(vapeService.buscarPorNombre(nombre));
         }
         if (sabor != null) {
-            return ResponseEntity.ok(vaperService.buscarPorSabor(sabor));
+            return ResponseEntity.ok(vapeService.buscarPorSabor(sabor));
         }
         if (minPitadas != null && maxPitadas != null) {
-            return ResponseEntity.ok(vaperService.buscarPorPitadas(minPitadas, maxPitadas));
+            return ResponseEntity.ok(vapeService.buscarPorPitadas(minPitadas, maxPitadas));
         }
         if (precioMin != null && precioMax != null) {
-            return ResponseEntity.ok(vaperService.buscarPorPrecio(precioMin, precioMax));
+            return ResponseEntity.ok(vapeService.buscarPorPrecio(precioMin, precioMax));
         }
-        
-        // Si no hay criterios, devolver todos los vapers
-        return ResponseEntity.ok(vaperService.listarVapers());
+
+        // Si no hay filtros, devolver todos
+        return ResponseEntity.ok(vapeService.listarVapes());
     }
 
+    // =========================================================
+    // 🟡 ENDPOINTS DE USUARIO (requieren login)
+    // =========================================================
+
+    /**
+     * Ejemplo: obtener recomendaciones de vapes para el usuario autenticado.
+     */
+    @GetMapping("/user/vapes/recomendados")
+    public ResponseEntity<List<VapeResponse>> obtenerVapesRecomendados() {
+        // lógica futura (ejemplo: personalización según historial)
+        return ResponseEntity.ok(vapeService.listarVapes());
+    }
+
+    // =========================================================
+    // 🔴 ENDPOINTS DE ADMIN (requieren rol ADMIN)
+    // =========================================================
+
+    /**
+     * Crea un nuevo vape (solo administradores).
+     */
+    @PostMapping("/admin/vapes")
+    public ResponseEntity<VapeResponse> crearVape(@Valid @RequestBody VapeRequest request) {
+        return ResponseEntity.ok(vapeService.crearVape(request));
+    }
+
+    /**
+     * Actualiza un vape existente (solo administradores).
+     */
+    @PutMapping("/admin/vapes/{id}")
+    public ResponseEntity<VapeResponse> actualizarVape(
+            @PathVariable Long id,
+            @Valid @RequestBody VapeRequest request) {
+        return ResponseEntity.ok(vapeService.actualizarVape(id, request));
+    }
+
+    /**
+     * Elimina un vape (solo administradores).
+     */
+    @DeleteMapping("/admin/vapes/{id}")
+    public ResponseEntity<Map<String, String>> eliminarVape(@PathVariable Long id) {
+        vapeService.eliminarVape(id);
+        return ResponseEntity.ok(Map.of("message", "Vape eliminado correctamente"));
+    }
 }

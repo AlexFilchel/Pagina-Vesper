@@ -2,186 +2,171 @@ package org.vesper.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.vesper.dto.VaperRequest;
-import org.vesper.dto.VaperResponse;
+import org.vesper.dto.VapeRequest;
+import org.vesper.dto.VapeResponse;
 import org.vesper.entity.Sabor;
-import org.vesper.entity.Vaper;
+import org.vesper.entity.Vape;
 import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.repo.SaborRepository;
-import org.vesper.repo.VaperRepository;
-
+import org.vesper.repo.VapeRepository;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Servicio para la gestión de vapers.
- * Contiene la lógica de negocio y conversión de entidades a DTOs.
+ * Servicio para la gestión de vapes (dispositivos electrónicos).
+ * Contiene la lógica de negocio, validaciones y conversión DTO <-> Entidad.
  */
 @Service
 @RequiredArgsConstructor
-public class VaperService {
+public class VapeService {
 
-    private final VaperRepository vaperRepository;
+    private final VapeRepository vapeRepository;
     private final SaborRepository saborRepository;
 
+    // =========================================================
+    // MÉTODOS CRUD
+    // =========================================================
+
     /**
-     * Lista todos los vapers registrados.
-     *
-     * @return Lista de VaperResponse
+     * Lista todos los vapes registrados.
      */
-    public List<VaperResponse> listarVapers() {
-        return vaperRepository.findAll().stream()
+    public List<VapeResponse> listarVapes() {
+        return vapeRepository.findAll().stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Obtiene un vaper por su ID.
-     *
-     * @param id Identificador del vaper
-     * @return DTO del vaper encontrado
-     * @throws ResourceNotFoundException si no existe
+     * Obtiene un vape por su ID.
      */
-    public VaperResponse obtenerVaper(Long id) {
-        Vaper vaper = vaperRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vaper no encontrado con id: " + id));
-        return toResponse(vaper);
+    public VapeResponse obtenerVape(Long id) {
+        Vape vape = vapeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vape no encontrado con id: " + id));
+        return toResponse(vape);
     }
 
     /**
-     * Crea un nuevo vaper a partir del DTO recibido.
-     *
-     * @param request DTO con los datos del vaper
-     * @return DTO del vaper creado
+     * Crea un nuevo vape.
      */
-    public VaperResponse crearVaper(VaperRequest request) {
-        // Validar duplicado por nombre
-        if (vaperRepository.existsByNombre(request.getNombre())) {
-            throw new AlreadyExistsException("Ya existe un vaper con el nombre: " + request.getNombre());
+    public VapeResponse crearVape(VapeRequest request) {
+        if (vapeRepository.existsByNombre(request.getNombre())) {
+            throw new AlreadyExistsException("Ya existe un vape con el nombre: " + request.getNombre());
         }
 
-        Vaper vaper = toEntity(request);
-        Vaper guardado = vaperRepository.save(vaper);
+        Vape vape = toEntity(request);
+        Vape guardado = vapeRepository.save(vape);
         return toResponse(guardado);
     }
 
     /**
-     * Actualiza un vaper existente.
-     *
-     * @param id      Identificador del vaper
-     * @param request DTO con los datos actualizados
-     * @return DTO del vaper actualizado
-     * @throws ResourceNotFoundException si no existe
+     * Actualiza un vape existente.
      */
-    public VaperResponse actualizarVaper(Long id, VaperRequest request) {
-        Vaper existente = vaperRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vaper no encontrado con id: " + id));
+    public VapeResponse actualizarVape(Long id, VapeRequest request) {
+        Vape existente = vapeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vape no encontrado con id: " + id));
 
         existente.setNombre(request.getNombre());
         existente.setPrecio(request.getPrecio());
         existente.setDescripcion(request.getDescripcion());
         existente.setMarca(request.getMarca());
-        if (request.getStock() != null) {
-            existente.setStock(request.getStock());
-        }
-        //existente.setImagen(request.getImagen());
+        existente.setStock(request.getStock() != null ? request.getStock() : existente.getStock());
         existente.setPitadas(request.getPitadas());
         existente.setModos(request.getModos());
 
         if (request.getSaboresIds() != null) {
-            Set<Sabor> sabores = saborRepository.findAllById(request.getSaboresIds()).stream().collect(Collectors.toSet());
+            Set<Sabor> sabores = new HashSet<>(saborRepository.findAllById(request.getSaboresIds()));
             existente.setSabores(sabores);
         }
 
-        Vaper actualizado = vaperRepository.save(existente);
+        Vape actualizado = vapeRepository.save(existente);
         return toResponse(actualizado);
     }
 
     /**
-     * Elimina un vaper por su ID.
-     *
-     * @param id Identificador del vaper
-     * @throws ResourceNotFoundException si no existe
+     * Elimina un vape por su ID.
      */
-    public void eliminarVaper(Long id) {
-        if (!vaperRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Vaper no encontrado con id: " + id);
+    public void eliminarVape(Long id) {
+        if (!vapeRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Vape no encontrado con id: " + id);
         }
-        vaperRepository.deleteById(id);
+        vapeRepository.deleteById(id);
     }
 
+    // =========================================================
+    // MÉTODOS DE BÚSQUEDA
+    // =========================================================
+
     /**
-     * Busca vapers por nombre (búsqueda parcial).
+     * Busca vapes por nombre (búsqueda parcial).
      */
-    public List<VaperResponse> buscarPorNombre(String nombre) {
-        return vaperRepository.findByNombreContainingIgnoreCase(nombre).stream()
+    public List<VapeResponse> buscarPorNombre(String nombre) {
+        return vapeRepository.findByNombreContainingIgnoreCase(nombre).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Busca vapers por rango de pitadas.
+     * Busca vapes por rango de pitadas.
      */
-    public List<VaperResponse> buscarPorPitadas(Integer minPitadas, Integer maxPitadas) {
-        return vaperRepository.findByPitadasBetween(minPitadas, maxPitadas).stream()
+    public List<VapeResponse> buscarPorPitadas(Integer minPitadas, Integer maxPitadas) {
+        return vapeRepository.findByPitadasBetween(minPitadas, maxPitadas).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Busca vapers por sabor.
+     * Busca vapes por sabor.
      */
-    public List<VaperResponse> buscarPorSabor(String saborNombre) {
-        return vaperRepository.findBySaborNombre(saborNombre).stream()
+    public List<VapeResponse> buscarPorSabor(String saborNombre) {
+        return vapeRepository.findBySaborNombre(saborNombre).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Busca vapers por rango de precio.
+     * Busca vapes por rango de precio.
      */
-    public List<VaperResponse> buscarPorPrecio(Double precioMin, Double precioMax) {
-        return vaperRepository.findByPrecioBetween(precioMin, precioMax).stream()
+    public List<VapeResponse> buscarPorPrecio(Double precioMin, Double precioMax) {
+        return vapeRepository.findByPrecioBetween(precioMin, precioMax).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
+    // =========================================================
+    // MAPEOS PRIVADOS
+    // =========================================================
 
-    // ---------------------------
-    // Métodos auxiliares privados
-    // ---------------------------
-
-    private VaperResponse toResponse(Vaper vaper) {
-        Set<String> sabores = vaper.getSabores().stream()
+    private VapeResponse toResponse(Vape vape) {
+        Set<String> sabores = vape.getSabores().stream()
                 .map(Sabor::getNombre)
                 .collect(Collectors.toSet());
 
-        return new VaperResponse(
-                vaper.getId(),
-                vaper.getNombre(),
-                vaper.getPrecio(),
-                vaper.getDescripcion(),
+        return new VapeResponse(
+                vape.getId(),
+                vape.getNombre(),
+                vape.getPrecio(),
+                vape.getDescripcion(),
                 null,
-                vaper.getPitadas(),
-                vaper.getModos(),
+                vape.getPitadas(),
+                vape.getModos(),
                 sabores
         );
     }
 
-    private Vaper toEntity(VaperRequest request) {
+    private Vape toEntity(VapeRequest request) {
         Set<Sabor> sabores = request.getSaboresIds() != null
-                ? saborRepository.findAllById(request.getSaboresIds()).stream().collect(Collectors.toSet())
-                : Set.of();
+                ? new HashSet<>(saborRepository.findAllById(request.getSaboresIds()))
+                : new HashSet<>();
 
-        return Vaper.builder()
+        return Vape.builder()
                 .nombre(request.getNombre())
                 .precio(request.getPrecio())
                 .descripcion(request.getDescripcion())
                 .marca(request.getMarca())
                 .stock(request.getStock() != null ? request.getStock() : 0)
-                //.imagen(request.getImagen())
                 .pitadas(request.getPitadas())
                 .modos(request.getModos())
                 .sabores(sabores)
