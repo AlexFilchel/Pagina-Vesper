@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Controlador REST para la gestión de vapers (dispositivos electrónicos).
+ * Controlador REST para la gestión de vapes (dispositivos electrónicos).
  * Estructura dividida por niveles de acceso:
  * - /api/public/... → acceso sin autenticación
  * - /api/user/...   → acceso con sesión

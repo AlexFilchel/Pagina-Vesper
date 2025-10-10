@@ -19,8 +19,8 @@ public class Vape extends Producto {
     private String modos;
     @ManyToMany
     @JoinTable(
-            name = "vaper_sabor",
-            joinColumns = @JoinColumn(name = "vaper_id"),
+            name = "vape_sabor",
+            joinColumns = @JoinColumn(name = "vape_id"),
             inverseJoinColumns = @JoinColumn(name = "sabor_id")
     )
     @Builder.Default
