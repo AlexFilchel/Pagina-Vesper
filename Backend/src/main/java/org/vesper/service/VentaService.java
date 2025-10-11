@@ -91,14 +91,22 @@ public class VentaService {
     }
 
     @Transactional(readOnly = true)
-    public List<VentaResponse> listarPorUsuario(String usuarioAuth0Id) {
+    public List<VentaResponse> listarPorUsuario(Jwt jwt) {
+        String usuarioAuth0Id = obtenerClaim(jwt, "sub");
+
         if (!StringUtils.hasText(usuarioAuth0Id)) {
             throw new UnauthorizedException("Usuario no autorizado");
         }
-        return ventaRepository.findByUsuarioAuth0Id(usuarioAuth0Id).stream()
+
+        return ventaRepository.findByUsuarioAuth0Id(usuarioAuth0Id)
+                .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
+
+    // =========================================================
+    // 🔧 Métodos auxiliares
+    // =========================================================
 
     private VentaResponse toResponse(Venta venta) {
         List<DetalleVentaResponse> detalles = venta.getDetalles() == null
@@ -136,3 +144,4 @@ public class VentaService {
         return value;
     }
 }
+

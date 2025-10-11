@@ -5,20 +5,23 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
 import org.vesper.dto.VentaRequest;
 import org.vesper.dto.VentaResponse;
-import org.vesper.exception.UnauthorizedException;
 import org.vesper.service.VentaService;
 
 import java.util.List;
 
+/**
+ * Controlador REST para la gestión de ventas.
+ * <p>
+ * Las rutas están organizadas por nivel de acceso:
+ * <ul>
+ *     <li><b>/api/public/ventas</b>: acceso libre (si aplica).</li>
+ *     <li><b>/api/user/ventas</b>: requiere autenticación (rol USER o ADMIN).</li>
+ *     <li><b>/api/admin/ventas</b>: requiere rol ADMIN.</li>
+ * </ul>
+ */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -26,36 +29,57 @@ public class VentaController {
 
     private final VentaService ventaService;
 
-    @PostMapping("/ventas")
-    public ResponseEntity<VentaResponse> registrarVenta(@Valid @RequestBody VentaRequest request,
-                                                        @AuthenticationPrincipal Jwt jwt) {
+    // =========================================================
+    // 🟡 ENDPOINTS DE USUARIO (requieren login)
+    // =========================================================
+
+    /**
+     * Registra una nueva venta asociada al usuario autenticado.
+     *
+     * @param request Datos de la venta.
+     * @param jwt     Token JWT validado del usuario autenticado.
+     * @return Venta registrada con éxito.
+     */
+    @PostMapping("/user/ventas")
+    public ResponseEntity<VentaResponse> registrarVenta(
+            @Valid @RequestBody VentaRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(ventaService.registrarVenta(request, jwt));
     }
 
-    @GetMapping("/ventas")
-    public ResponseEntity<List<VentaResponse>> listarVentas() {
+    /**
+     * Lista todas las ventas pertenecientes al usuario autenticado.
+     *
+     * @param jwt Token JWT validado del usuario autenticado.
+     * @return Lista de ventas del usuario.
+     */
+    @GetMapping("/user/ventas")
+    public ResponseEntity<List<VentaResponse>> listarVentasUsuario(@AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(ventaService.listarPorUsuario(jwt));
+    }
+
+    // =========================================================
+    // 🔴 ENDPOINTS DE ADMIN (requieren rol ADMIN)
+    // =========================================================
+
+    /**
+     * Lista todas las ventas registradas en el sistema.
+     *
+     * @return Lista de todas las ventas (solo administradores).
+     */
+    @GetMapping("/admin/ventas")
+    public ResponseEntity<List<VentaResponse>> listarTodasLasVentasAdmin() {
         return ResponseEntity.ok(ventaService.listarTodas());
     }
 
-    @GetMapping("/ventas/{id}")
-    public ResponseEntity<VentaResponse> obtenerVenta(@PathVariable Long id) {
+    /**
+     * Obtiene una venta específica por su ID (solo administradores).
+     *
+     * @param id ID de la venta.
+     * @return Detalle de la venta solicitada.
+     */
+    @GetMapping("/admin/ventas/{id}")
+    public ResponseEntity<VentaResponse> obtenerVentaAdmin(@PathVariable Long id) {
         return ResponseEntity.ok(ventaService.obtenerPorId(id));
-    }
-
-    @GetMapping("/ventas/usuario")
-    public ResponseEntity<List<VentaResponse>> listarVentasUsuario(@AuthenticationPrincipal Jwt jwt) {
-        String usuarioAuth0Id = obtenerUsuarioDesdeJwt(jwt);
-        return ResponseEntity.ok(ventaService.listarPorUsuario(usuarioAuth0Id));
-    }
-
-    private String obtenerUsuarioDesdeJwt(Jwt jwt) {
-        if (jwt == null) {
-            throw new UnauthorizedException("Usuario no autorizado");
-        }
-        String sub = jwt.getClaim("sub");
-        if (!StringUtils.hasText(sub)) {
-            throw new UnauthorizedException("Usuario no autorizado");
-        }
-        return sub;
     }
 }
