@@ -30,12 +30,11 @@ public class PerfumeRequest {
     private String volumen;
     private String genero;
     private String notasPrincipales;
-    private String familiaOlfativa;
     private String salida;
     private String corazon;
     private String fondo;
     private String inspiracion;
-    private boolean decant;
+    private Boolean decant;
     private String fragancia;
-    private Integer ml;
+    private Double ml;
 }

@@ -1,6 +1,7 @@
 package org.vesper.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class PerfumeResponse {
     private Long id;
     private String nombre;
@@ -20,13 +22,14 @@ public class PerfumeResponse {
     private String volumen;
     private String genero;
     private String notasPrincipales;
-    private String familiaOlfativa;
     private String salida;
     private String corazon;
     private String fondo;
     private String inspiracion;
-    private boolean decant;
+    private Boolean decant;
     private String fragancia;
-    private Integer ml;
+    private Double ml;
+    private String marca;
+    private Integer stock;
 
 }

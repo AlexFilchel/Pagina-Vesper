@@ -7,9 +7,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserResponse {
+public class DomicilioResponse {
     private Long id;
-    private String nombre;
-    private String apellido;
-    private String email;
+    private String calle;
+    private String ciudad;
+    private String provincia;
+    private String codigoPostal;
 }

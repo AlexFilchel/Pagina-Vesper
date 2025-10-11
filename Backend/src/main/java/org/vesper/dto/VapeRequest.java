@@ -10,7 +10,7 @@ import java.util.Set;
  * DTO para la creación o actualización de un vaper.
  */
 @Data
-public class VaperRequest {
+public class VapeRequest {
 
     @NotBlank(message = "El nombre es obligatorio")
     private String nombre;

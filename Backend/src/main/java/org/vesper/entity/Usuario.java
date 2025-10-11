@@ -1,10 +1,10 @@
 package org.vesper.entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.HashSet;
+import java.util.Set;
 
-import java.time.LocalDateTime;
 @Entity
 @Table(name = "usuarios")
 @Data
@@ -17,23 +17,26 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nombre;
+    @Column(unique = true)
+    private String auth0Id; // 🔑 vínculo con Auth0
 
+    private String nombre;
     private String apellido;
 
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
-    private String password;
+    private Integer telefono;
+    private Integer dni;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Rol rol;
-
+    // 🔹 Relación muchos-a-muchos con tabla intermedia
+    @ManyToMany
+    @JoinTable(
+            name = "usuario_domicilio",
+            joinColumns = @JoinColumn(name = "usuario_id"),
+            inverseJoinColumns = @JoinColumn(name = "domicilio_id")
+    )
     @Builder.Default
-    private boolean activo = true;
-
-    @Builder.Default
-    private LocalDateTime fechaCreacion = LocalDateTime.now();
+    private Set<Domicilio> domicilios = new HashSet<>();
 }
+

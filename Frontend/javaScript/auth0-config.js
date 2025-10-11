@@ -1,4 +1,5 @@
-let auth0Client = null;
+(function() {
+  'use strict';
 
 // ✅ Configuración de tu app Auth0
 const APP_REDIRECT_PATH = "/Frontend/index.html";
@@ -107,11 +108,7 @@ async function initAuth0() {
         console.log("✅ Callback procesado exitosamente");
 
         window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (err) {
-        console.error("❌ Error manejando callback:", err);
-        alert("Error al iniciar sesión. Por favor, intenta nuevamente.");
       }
-    }
 
     await updateUI();
   } catch (error) {
@@ -124,15 +121,10 @@ async function initAuth0() {
       alert("Ocurrió un problema al inicializar la autenticación. Intenta nuevamente más tarde.");
     }
   }
-}
 
-// ✅ Actualiza la interfaz
-async function updateUI() {
-  try {
-    if (!auth0Client) {
-      console.warn("⚠️ Auth0 client no disponible aún");
-      return;
-    }
+  async function setupUI() {
+    const loginBtn = document.getElementById("btn-login");
+    const accountLabel = document.querySelector(".site-header__action-label");
 
     const isAuthenticated = await auth0Client.isAuthenticated();
     console.log("🔐 Usuario autenticado:", isAuthenticated);
@@ -163,12 +155,14 @@ async function updateUI() {
     } else {
       console.log("🔓 Usuario no autenticado");
 
-      loginButton.textContent = "Iniciar sesión";
-      registerButton.textContent = "Crear cuenta";
+      accountLabel.textContent = username;
 
-      loginButton.onclick = event => {
-        event.preventDefault();
-        login();
+      loginBtn.textContent = "Cerrar sesión";
+      loginBtn.onclick = (e) => {
+        e.preventDefault();
+        auth0Client.logout({
+          logoutParams: { returnTo: window.location.origin + "/Frontend/index.html" }
+        });
       };
       registerButton.onclick = event => {
         event.preventDefault();
