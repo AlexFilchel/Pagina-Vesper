@@ -25,4 +25,7 @@ public class Domicilio {
     private String codigoPostal;
     private String observaciones;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
 }
