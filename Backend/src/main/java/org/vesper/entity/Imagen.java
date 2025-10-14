@@ -39,6 +39,10 @@ public class Imagen {
      * tener múltiples imágenes asociadas.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "producto_id", nullable = false)
-    private Producto producto;
+    @JoinColumn(name = "perfume_id")
+    private Perfume perfume;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vape_id")
+    private Vape vape;
 }
