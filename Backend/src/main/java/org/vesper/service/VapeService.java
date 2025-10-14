@@ -10,7 +10,6 @@ import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.repo.SaborRepository;
 import org.vesper.repo.VapeRepository;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,39 +50,67 @@ public class VapeService {
     /**
      * Crea un nuevo vape.
      */
-    public VapeResponse crearVape(VapeRequest request) {
-        if (vapeRepository.existsByNombre(request.getNombre())) {
-            throw new AlreadyExistsException("Ya existe un vape con el nombre: " + request.getNombre());
-        }
-
-        Vape vape = toEntity(request);
-        Vape guardado = vapeRepository.save(vape);
-        return toResponse(guardado);
+    /**
+ * Crea un nuevo vape.
+ */
+public VapeResponse crearVape(VapeRequest request) {
+    if (vapeRepository.existsByNombre(request.getNombre())) {
+        throw new AlreadyExistsException("Ya existe un vape con el nombre: " + request.getNombre());
     }
+
+    Vape vape = new Vape();
+    vape.setNombre(request.getNombre());
+    vape.setPrecio(request.getPrecio());
+    vape.setDescripcion(request.getDescripcion());
+    vape.setMarca(request.getMarca());
+    vape.setStock(request.getStock() != null ? request.getStock() : 0);
+    vape.setPitadas(request.getPitadas());
+    vape.setModos(request.getModos());
+
+    // ✅ Procesar sabores
+    if (request.getSabores() != null && !request.getSabores().isEmpty()) {
+        Set<Sabor> sabores = request.getSabores().stream()
+                .map(nombre -> saborRepository.findByNombreIgnoreCase(nombre)
+                        .orElseGet(() -> saborRepository.save(Sabor.builder().nombre(nombre).build())))
+                .collect(Collectors.toSet());
+
+        vape.setSabores(sabores);
+    }
+
+    Vape guardado = vapeRepository.save(vape);
+    return toResponse(guardado);
+}
+
 
     /**
      * Actualiza un vape existente.
      */
     public VapeResponse actualizarVape(Long id, VapeRequest request) {
-        Vape existente = vapeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vape no encontrado con id: " + id));
+    Vape existente = vapeRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Vape no encontrado con id: " + id));
 
-        existente.setNombre(request.getNombre());
-        existente.setPrecio(request.getPrecio());
-        existente.setDescripcion(request.getDescripcion());
-        existente.setMarca(request.getMarca());
-        existente.setStock(request.getStock() != null ? request.getStock() : existente.getStock());
-        existente.setPitadas(request.getPitadas());
-        existente.setModos(request.getModos());
+    existente.setNombre(request.getNombre());
+    existente.setPrecio(request.getPrecio());
+    existente.setDescripcion(request.getDescripcion());
+    existente.setMarca(request.getMarca());
+    existente.setStock(request.getStock() != null ? request.getStock() : existente.getStock());
+    existente.setPitadas(request.getPitadas());
+    existente.setModos(request.getModos());
 
-        if (request.getSaboresIds() != null) {
-            Set<Sabor> sabores = new HashSet<>(saborRepository.findAllById(request.getSaboresIds()));
-            existente.setSabores(sabores);
-        }
+    // ✅ NUEVO BLOQUE: actualizar sabores por nombres
+    if (request.getSabores() != null) {
+        Set<Sabor> nuevosSabores = request.getSabores().stream()
+                .map(nombre -> saborRepository.findByNombreIgnoreCase(nombre)
+                        .orElseGet(() -> saborRepository.save(Sabor.builder().nombre(nombre).build())))
+                .collect(Collectors.toSet());
 
-        Vape actualizado = vapeRepository.save(existente);
-        return toResponse(actualizado);
+        existente.setSabores(nuevosSabores);
     }
+
+    Vape actualizado = vapeRepository.save(existente);
+    return toResponse(actualizado);
+}
+
 
     /**
      * Elimina un vape por su ID.
@@ -154,22 +181,5 @@ public class VapeService {
                 vape.getModos(),
                 sabores
         );
-    }
-
-    private Vape toEntity(VapeRequest request) {
-        Set<Sabor> sabores = request.getSaboresIds() != null
-                ? new HashSet<>(saborRepository.findAllById(request.getSaboresIds()))
-                : new HashSet<>();
-
-        return Vape.builder()
-                .nombre(request.getNombre())
-                .precio(request.getPrecio())
-                .descripcion(request.getDescripcion())
-                .marca(request.getMarca())
-                .stock(request.getStock() != null ? request.getStock() : 0)
-                .pitadas(request.getPitadas())
-                .modos(request.getModos())
-                .sabores(sabores)
-                .build();
     }
 }

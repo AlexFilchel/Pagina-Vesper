@@ -581,6 +581,11 @@ function toPerfumeRequest(product) {
 }
 
 function toVapeRequest(product) {
+  // 🔹 Extrae los nombres de sabores del array product.flavors (que ya viene del form)
+  const sabores = Array.isArray(product.flavors)
+    ? product.flavors.map(flavor => flavor.name.trim()).filter(Boolean)
+    : [];
+
   return {
     nombre: product.name,
     precio: product.price,
@@ -588,7 +593,8 @@ function toVapeRequest(product) {
     marca: product.brand,
     stock: product.stock,
     pitadas: product.puffs,
-    modos: product.modes
+    modos: product.modes,
+    sabores // ✅ nuevo campo que el backend espera
   };
 }
 

@@ -25,5 +25,5 @@ public class VapeRequest {
 
     private Integer pitadas;
     private String modos;
-    private Set<Long> saboresIds; // IDs de sabores seleccionados
+    private Set<String> sabores; 
 }

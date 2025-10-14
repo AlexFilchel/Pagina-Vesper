@@ -17,7 +17,7 @@ import java.util.Set;
 public class Vape extends Producto {
     private Integer pitadas;
     private String modos;
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "vape_sabor",
             joinColumns = @JoinColumn(name = "vape_id"),
