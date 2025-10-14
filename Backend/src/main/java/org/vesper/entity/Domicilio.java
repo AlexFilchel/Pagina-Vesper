@@ -18,22 +18,6 @@ public class Domicilio {
 
     @NotBlank
     @Size(max = 255)
-    private String nombre;
-
-    @NotBlank
-    @Size(max = 255)
-    private String apellido;
-
-    @NotBlank
-    @Pattern(regexp = "\\d{7,15}")
-    private String telefono;
-
-    @NotBlank
-    @Pattern(regexp = "\\d{7,8}")
-    private String dni;
-
-    @NotBlank
-    @Size(max = 255)
     private String calle;
 
     @NotBlank

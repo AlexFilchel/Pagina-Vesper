@@ -4,125 +4,88 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.vesper.entity.Sabor;
-import org.vesper.repo.SaborRepository;
+import org.vesper.dto.SaborRequest;
+import org.vesper.dto.SaborResponse;
+import org.vesper.service.SaborService;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Controlador REST para la gestión de sabores de vapers.
- * Estructurado según niveles de acceso:
- * - /api/public/... → acceso libre
- * - /api/user/...   → requiere sesión
- * - /api/admin/...  → requiere rol ADMIN
  */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class SaborController {
 
-    private final SaborRepository saborRepository;
+    private final SaborService saborService;
 
     // =========================================================
-    // 🟢 ENDPOINTS PÚBLICOS (acceso sin autenticación)
+    // 🟢 PÚBLICO
     // =========================================================
 
-    /**
-     * Lista todos los sabores disponibles (acceso público).
-     */
     @GetMapping("/public/sabores")
-    public ResponseEntity<List<Sabor>> listarSaboresPublicos() {
-        return ResponseEntity.ok(saborRepository.findAll());
+    public ResponseEntity<List<SaborResponse>> listarSaboresPublicos() {
+        return ResponseEntity.ok(saborService.listarTodos());
     }
 
-    /**
-     * Obtiene un sabor por su ID (acceso público).
-     */
     @GetMapping("/public/sabores/{id}")
-    public ResponseEntity<Sabor> obtenerSaborPublico(@PathVariable Long id) {
-        return saborRepository.findById(id)
+    public ResponseEntity<SaborResponse> obtenerSaborPublico(@PathVariable Long id) {
+        return saborService.obtenerPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Busca sabores por nombre (parcial o completo).
-     */
     @GetMapping("/public/sabores/buscar")
-    public ResponseEntity<List<Sabor>> buscarSaboresPublicos(
+    public ResponseEntity<List<SaborResponse>> buscarSaboresPublicos(
             @RequestParam(required = false) String nombre) {
 
         if (nombre == null || nombre.isEmpty()) {
-            return ResponseEntity.ok(saborRepository.findAll());
+            return ResponseEntity.ok(saborService.listarTodos());
         }
-
-        return ResponseEntity.ok(saborRepository.findByNombreContainingIgnoreCase(nombre));
+        return ResponseEntity.ok(saborService.buscarPorNombre(nombre));
     }
 
     // =========================================================
-    // 🟡 ENDPOINTS DE USUARIO (requieren login)
+    // 🟡 USUARIO
     // =========================================================
 
-    /**
-     * Ejemplo de endpoint privado para usuarios autenticados.
-     * (Podrías personalizarlo en el futuro, por ejemplo, para guardar sabores favoritos).
-     */
     @GetMapping("/user/sabores/favoritos")
-    public ResponseEntity<List<Sabor>> obtenerSaboresFavoritos() {
-        // Placeholder: podés implementar la lógica de usuario más adelante.
-        return ResponseEntity.ok(saborRepository.findAll());
+    public ResponseEntity<List<SaborResponse>> obtenerSaboresFavoritos() {
+        return ResponseEntity.ok(saborService.listarTodos());
     }
 
     // =========================================================
-    // 🔴 ENDPOINTS DE ADMIN (requieren rol ADMIN)
+    // 🔴 ADMIN
     // =========================================================
 
-    /**
-     * Crea un nuevo sabor (solo para administradores).
-     */
     @PostMapping("/admin/sabores")
-    public ResponseEntity<?> crearSabor(@Valid @RequestBody Sabor sabor) {
-        if (saborRepository.findByNombreIgnoreCase(sabor.getNombre()).isPresent()) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Ya existe un sabor con el nombre: " + sabor.getNombre()));
+    public ResponseEntity<?> crearSabor(@Valid @RequestBody SaborRequest request) {
+        try {
+            return ResponseEntity.ok(saborService.crear(request));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
-
-        Sabor guardado = saborRepository.save(sabor);
-        return ResponseEntity.ok(guardado);
     }
 
-    /**
-     * Actualiza un sabor existente (solo para administradores).
-     */
     @PutMapping("/admin/sabores/{id}")
-    public ResponseEntity<?> actualizarSabor(
-            @PathVariable Long id,
-            @Valid @RequestBody Sabor sabor) {
-
-        Optional<Sabor> existente = saborRepository.findById(id);
-        if (existente.isEmpty()) {
-            return ResponseEntity.status(404)
-                    .body(Map.of("error", "Sabor no encontrado con id: " + id));
+    public ResponseEntity<?> actualizarSabor(@PathVariable Long id,
+                                             @Valid @RequestBody SaborRequest request) {
+        try {
+            return ResponseEntity.ok(saborService.actualizar(id, request));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
         }
-
-        sabor.setId(id);
-        Sabor actualizado = saborRepository.save(sabor);
-        return ResponseEntity.ok(actualizado);
     }
 
-    /**
-     * Elimina un sabor (solo para administradores).
-     */
     @DeleteMapping("/admin/sabores/{id}")
-    public ResponseEntity<Map<String, String>> eliminarSabor(@PathVariable Long id) {
-        if (!saborRepository.existsById(id)) {
-            return ResponseEntity.status(404)
-                    .body(Map.of("error", "Sabor no encontrado con id: " + id));
+    public ResponseEntity<?> eliminarSabor(@PathVariable Long id) {
+        try {
+            saborService.eliminar(id);
+            return ResponseEntity.ok(Map.of("message", "Sabor eliminado correctamente"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
         }
-
-        saborRepository.deleteById(id);
-        return ResponseEntity.ok(Map.of("message", "Sabor eliminado correctamente"));
     }
 }

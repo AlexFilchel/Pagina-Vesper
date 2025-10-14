@@ -12,22 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DomicilioRequest {
 
-    @NotBlank(message = "El nombre es obligatorio")
-    @Size(max = 255)
-    private String nombre;
-
-    @NotBlank(message = "El apellido es obligatorio")
-    @Size(max = 255)
-    private String apellido;
-
-    @NotBlank(message = "El teléfono es obligatorio")
-    @Pattern(regexp = "\\d{7,15}", message = "El teléfono debe contener solo números")
-    private String telefono;
-
-    @NotBlank(message = "El DNI es obligatorio")
-    @Pattern(regexp = "\\d{7,8}", message = "El DNI debe tener 7 u 8 dígitos")
-    private String dni;
-
     @NotBlank(message = "La calle es obligatoria")
     @Size(max = 255)
     private String calle;
