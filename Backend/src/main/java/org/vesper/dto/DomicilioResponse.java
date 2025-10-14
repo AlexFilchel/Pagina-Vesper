@@ -9,8 +9,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DomicilioResponse {
     private Long id;
+    private String nombre;
+    private String apellido;
+    private String telefono;
+    private String dni;
     private String calle;
-    private String ciudad;
+    private String numero;
+    private String piso;
+    private String departamento;
+    private String torre;
+    private String entreCalles;
     private String provincia;
+    private String localidad;
     private String codigoPostal;
+    private String observaciones;
 }

@@ -18,7 +18,7 @@ public class Usuario {
     private Long id;
 
     @Column(unique = true)
-    private String auth0Id; // 🔑 vínculo con Auth0
+    private String auth0Id;
 
     private String nombre;
     private String apellido;
@@ -29,14 +29,18 @@ public class Usuario {
     private Integer telefono;
     private Integer dni;
 
-    // 🔹 Relación muchos-a-muchos con tabla intermedia
-    @ManyToMany
-    @JoinTable(
-            name = "usuario_domicilio",
-            joinColumns = @JoinColumn(name = "usuario_id"),
-            inverseJoinColumns = @JoinColumn(name = "domicilio_id")
-    )
+    
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private Set<Domicilio> domicilios = new HashSet<>();
-}
 
+    public void agregarDomicilio(Domicilio domicilio) {
+        domicilios.add(domicilio);
+        domicilio.setUsuario(this);
+    }
+
+    public void eliminarDomicilio(Domicilio domicilio) {
+        domicilios.remove(domicilio);
+        domicilio.setUsuario(null);
+    }
+}

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vesper - Seleccioná la forma de entrega</title>
+  <link rel="icon" href="img/vesper_logo_sin_fondo.png" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link rel="stylesheet" href="../Frontend/css/style.css">
+  <link rel="stylesheet" href="../Frontend/css/checkout.css">
+</head>
+<body>
+  <aside class="top-banner" aria-label="Promociones vigentes">
+    <div class="banner-content">
+      <p>
+        💳 6 cuotas sin interés a partir de $30.000 &nbsp;&nbsp;&nbsp;
+        🚚 Envío gratis en compras superiores a $50.000 &nbsp;&nbsp;&nbsp;
+        💰 20% OFF pagando por transferencia
+      </p>
+    </div>
+  </aside>
+
+<!-- Header -->
+<header class="site-header" role="banner">
+  <div class="container site-header__top">
+    <button class="menu-toggle" aria-label="Abrir menú">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <a href="index.html" class="site-header__logo" aria-label="Vesper - Página de inicio">
+      <img src="img/vesper_logo_sin_fondo.png"Logo Vesper" class="img-fluid logo">
+    </a>
+
+    <form class="site-header__search" role="search" aria-label="Buscador de productos">
+      <label class="visually-hidden" for="search-input">Buscar en Vesper</label>
+      <input type="search" id="search-input" name="search" placeholder="Buscá por productos, marcas y categorías" aria-label="Buscar perfumes y marcas">
+      <button type="submit" aria-label="Buscar">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+    </form>
+
+    <div class="site-header__actions">
+      <!-- Botón de búsqueda en mobile -->
+      <button class="search-toggle" aria-label="Abrir buscador">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+
+      <!-- Menú desplegable Mi cuenta -->
+      <div class="site-header__action site-header__action--has-dropdown">
+  <button class="site-header__action-btn" type="button">
+    <span class="site-header__action-icon">
+      <span class="material-symbols-outlined">person_outline</span>
+    </span>
+    <span class="site-header__action-label">Mi cuenta</span>
+  </button>
+  <div class="site-header__dropdown">
+    <ul class="site-header__dropdown-list">
+      <li><a href="#" id="btn-login" class="login-link">Iniciar sesión</a></li>
+    </ul>
+  </div>
+</div>
+
+
+      <a href="#" class="site-header__action" id="link-carrito" aria-haspopup="dialog">
+  <span class="site-header__action-icon">
+    <span class="material-symbols-outlined">shopping_cart</span>
+    <span class="cart-count-badge" id="cart-count" aria-live="polite">0</span>
+  </span>
+  <span class="site-header__action-label"></span>
+</a>
+    </div>
+  </div>
+</header>
+
+  <nav class="site-header__bottom" aria-label="Categorías principales">
+    <div class="container">
+      <ul class="main-nav">
+        <li class="main-nav__item main-nav__item--has-dropdown">
+          <a href="javascript:void(0)" class="main-nav__link">
+            Perfumes <span class="main-nav__icon" aria-hidden="true">▾</span>
+          </a>
+          <div id="submenu-perfumes" class="main-nav__dropdown" role="menu">
+            <ul class="main-nav__list">
+              <li><a href="productos.html" role="menuitem">Masculinos</a></li>
+              <li><a href="productos.html" role="menuitem">Femeninos</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="main-nav__item">
+          <a href="/productos?categoria=vapes" class="main-nav__link main-nav__link--direct">Vapes</a>
+        </li>
+        <li class="main-nav__item main-nav__item--has-dropdown">
+          <a href="javascript:void(0)" class="main-nav__link">
+            Decants <span class="main-nav__icon" aria-hidden="true">▾</span>
+          </a>
+          <div id="submenu-decants" class="main-nav__dropdown" role="menu">
+            <ul class="main-nav__list">
+              <li><a href="productos.html" role="menuitem">Masculinos</a></li>
+              <li><a href="productos.html" role="menuitem">Femeninos</a></li>
+              <li><a href="productos.html" role="menuitem">Combos</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="main-nav__item main-nav__item--has-dropdown">
+          <a href="javascript:void(0)" class="main-nav__link">
+            Marcas <span class="main-nav__icon" aria-hidden="true">▾</span>
+          </a>
+          <div id="submenu-marcas" class="main-nav__dropdown main-nav__dropdown--columns" role="menu">
+            <div class="main-nav__column">
+              <h4 class="main-nav__column-title">Perfumes</h4>
+              <ul class="main-nav__list" data-brand-list="perfumes" aria-label="Marcas de perfumes"></ul>
+            </div>
+            <div class="main-nav__column">
+              <h4 class="main-nav__column-title">Vapes</h4>
+              <ul class="main-nav__list" data-brand-list="vapes" aria-label="Marcas de vapes"></ul>
+            </div>
+          </div>
+        </li>
+        <li class="main-nav__item main-nav__item--has-dropdown">
+          <a href="javascript:void(0)" class="main-nav__link">
+            Preguntas Frecuentes <span class="main-nav__icon" aria-hidden="true">▾</span>
+          </a>
+          <div id="submenu-faq" class="main-nav__dropdown" role="menu">
+            <ul class="main-nav__list">
+              <li><a href="#faq-envio" role="menuitem">¿Cuánto tarda el envío?</a></li>
+              <li><a href="#faq-decant" role="menuitem">¿Qué es un decant?</a></li>
+              <li><a href="#faq-pago" role="menuitem">¿Puedo pagar contra entrega?</a></li>
+            </ul>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="mobile-search-overlay" aria-hidden="true">
+    <form class="mobile-search-form" role="search" aria-label="Buscador de productos">
+      <label class="visually-hidden" for="mobile-search-input">Buscar en Vesper</label>
+      <input type="search" id="mobile-search-input" name="mobile-search" placeholder="Buscá por productos, marcas y categorías" autocomplete="off">
+      <button type="submit" aria-label="Buscar">
+        <span class="material-symbols-outlined" aria-hidden="true">search</span>
+      </button>
+    </form>
+  </div>
+
+  <aside class="mobile-menu" id="mobileMenu">
+    <button class="menu-close" aria-label="Cerrar menú">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <nav class="mobile-nav">
+      <ul>
+        <li><a href="#">Perfumes</a></li>
+        <li><a href="#">Vapes</a></li>
+        <li><a href="#">Decants</a></li>
+        <li><a href="#">Marcas</a></li>
+        <li><a href="#">Preguntas frecuentes</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="checkout-main">
+    <div class="container checkout-container">
+      <section class="checkout-content">
+        <div class="checkout-header">
+          <p class="checkout-kicker">Paso actual</p>
+          <h1>Elegí la forma de entrega</h1>
+          <p class="checkout-subtitle">Completá los datos de envío para continuar con tu compra. Podés cambiar la opción en cualquier momento.</p>
+          <div class="checkout-progress">
+            <span class="progress-step" data-progress-step="method">Entrega</span>
+            <span class="progress-divider"></span>
+            <span class="progress-step" data-progress-step="summary">Resumen</span>
+            <span class="progress-divider"></span>
+            <span class="progress-step" data-progress-step="payment">Pago</span>
+          </div>
+        </div>
+
+        <section class="step" data-step="method">
+          <div class="delivery-options">
+            <button class="delivery-card" data-delivery="domicilio">
+              <div class="delivery-card__icon">
+                <span class="material-symbols-outlined">local_shipping</span>
+              </div>
+              <div class="delivery-card__content">
+                <h2>Envío a domicilio</h2>
+                <p>Recibí tu pedido en tu casa o trabajo.</p>
+              </div>
+            </button>
+            <button class="delivery-card" data-delivery="retiro">
+              <div class="delivery-card__icon">
+                <span class="material-symbols-outlined">store</span>
+              </div>
+              <div class="delivery-card__content">
+                <h2>Retiro en punto de entrega</h2>
+                <p>Elegí retirarlo por nuestro pick-up o correo.</p>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <section class="step hidden" data-step="address-list">
+          <div class="step-header">
+            <h2>Seleccioná una dirección</h2>
+            <p>Elegí una dirección existente o agregá una nueva.</p>
+          </div>
+          <div class="address-actions">
+            <button class="btn btn-secondary" data-action="go-back-method">
+              <span class="material-symbols-outlined">arrow_back</span> Volver
+            </button>
+            <button class="btn btn-primary" data-action="add-address">
+              <span class="material-symbols-outlined">add</span> Agregar dirección
+            </button>
+          </div>
+          <div class="address-list" data-address-list>
+            <div class="empty-state" data-empty-address>
+              <span class="material-symbols-outlined empty-state__icon">home_pin</span>
+              <p>No tenés direcciones guardadas.</p>
+              <button class="btn btn-primary" data-action="add-address">Agregar dirección</button>
+            </div>
+          </div>
+          <div class="address-footer">
+            <button class="btn btn-primary" data-action="confirm-address" disabled>Continuar con este domicilio</button>
+          </div>
+        </section>
+
+        <section class="step hidden" data-step="address-form">
+          <div class="step-header">
+            <h2>Agregar nueva dirección</h2>
+            <p>Completá los datos para guardar tu domicilio.</p>
+          </div>
+          <form class="address-form" novalidate>
+            <div class="form-grid">
+              <label class="form-field">
+                <span>Nombre *</span>
+                <input name="nombre" type="text" required autocomplete="given-name">
+              </label>
+              <label class="form-field">
+                <span>Apellido *</span>
+                <input name="apellido" type="text" required autocomplete="family-name">
+              </label>
+              <label class="form-field">
+                <span>Teléfono *</span>
+                <input name="telefono" type="tel" inputmode="numeric" pattern="\\d{7,15}" required>
+              </label>
+              <label class="form-field">
+                <span>DNI *</span>
+                <input name="dni" type="text" inputmode="numeric" pattern="\\d{7,8}" required>
+              </label>
+              <label class="form-field form-field--wide">
+                <span>Calle *</span>
+                <input name="calle" type="text" required autocomplete="address-line1">
+              </label>
+              <label class="form-field">
+                <span>Número *</span>
+                <input name="numero" type="text" required autocomplete="address-line2">
+              </label>
+              <label class="form-field">
+                <span>Piso</span>
+                <input name="piso" type="text" autocomplete="address-line2">
+              </label>
+              <label class="form-field">
+                <span>Departamento</span>
+                <input name="departamento" type="text" autocomplete="address-line2">
+              </label>
+              <label class="form-field">
+                <span>Torre</span>
+                <input name="torre" type="text">
+              </label>
+              <label class="form-field form-field--wide">
+                <span>Entre calles *</span>
+                <input name="entreCalles" type="text" required>
+              </label>
+              <label class="form-field">
+                <span>Código Postal *</span>
+                <input name="codigoPostal" type="text" inputmode="numeric" pattern="\\d{4,5}" required>
+              </label>
+              <label class="form-field">
+                <span>Provincia *</span>
+                <select name="provincia" required>
+                  <option value="" disabled selected>Seleccioná una provincia</option>
+                  <option value="Buenos Aires">Buenos Aires</option>
+                  <option value="Catamarca">Catamarca</option>
+                  <option value="Chaco">Chaco</option>
+                  <option value="Chubut">Chubut</option>
+                  <option value="Ciudad Autónoma de Buenos Aires">Ciudad Autónoma de Buenos Aires</option>
+                  <option value="Córdoba">Córdoba</option>
+                  <option value="Corrientes">Corrientes</option>
+                  <option value="Entre Ríos">Entre Ríos</option>
+                  <option value="Formosa">Formosa</option>
+                  <option value="Jujuy">Jujuy</option>
+                  <option value="La Pampa">La Pampa</option>
+                  <option value="La Rioja">La Rioja</option>
+                  <option value="Mendoza">Mendoza</option>
+                  <option value="Misiones">Misiones</option>
+                  <option value="Neuquén">Neuquén</option>
+                  <option value="Río Negro">Río Negro</option>
+                  <option value="Salta">Salta</option>
+                  <option value="San Juan">San Juan</option>
+                  <option value="San Luis">San Luis</option>
+                  <option value="Santa Cruz">Santa Cruz</option>
+                  <option value="Santa Fe">Santa Fe</option>
+                  <option value="Santiago del Estero">Santiago del Estero</option>
+                  <option value="Tierra del Fuego">Tierra del Fuego</option>
+                  <option value="Tucumán">Tucumán</option>
+                </select>
+              </label>
+              <label class="form-field">
+                <span>Localidad *</span>
+                <input name="localidad" type="text" required>
+              </label>
+              <label class="form-field form-field--wide">
+                <span>Observaciones</span>
+                <textarea name="observaciones" rows="3" placeholder="Indicaciones para la entrega"></textarea>
+              </label>
+            </div>
+            <div class="form-footer">
+              <button type="button" class="btn btn-secondary" data-action="cancel-address">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Guardar dirección</button>
+            </div>
+            <p class="form-feedback" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="step hidden" data-step="delivery-summary">
+          <div class="step-header">
+            <h2>Confirmá la entrega</h2>
+            <p>Revisá que los datos sean correctos antes de continuar.</p>
+          </div>
+          <div class="selected-delivery" data-selected-delivery>
+            <!-- contenido dinámico -->
+          </div>
+          <div class="delivery-method">
+            <div class="delivery-method__header">
+              <span class="material-symbols-outlined">local_shipping</span>
+              <div>
+                <h3>Andreani</h3>
+                <p>Entrega segura y asegurada en todo el país.</p>
+              </div>
+            </div>
+            <div class="delivery-method__body">
+              <p>Costo de envío calculado automáticamente según tu domicilio.</p>
+            </div>
+          </div>
+          <div class="step-actions">
+            <button class="btn btn-secondary" data-action="back-to-address">Atrás</button>
+            <button class="btn btn-primary" data-action="go-to-payment">Siguiente</button>
+          </div>
+        </section>
+
+        <section class="step hidden" data-step="payment">
+          <div class="step-header">
+            <h2>Elegí el medio de pago</h2>
+            <p>Seleccioná cómo querés abonar tu compra.</p>
+          </div>
+          <div class="payment-options" role="group" aria-label="Medios de pago disponibles">
+            <button class="payment-card" data-payment="tarjeta">
+              <span class="material-symbols-outlined">credit_card</span>
+              <div>
+                <h3>Tarjeta de crédito o débito</h3>
+                <p>Hasta 6 cuotas sin interés con bancos seleccionados.</p>
+              </div>
+            </button>
+            <button class="payment-card" data-payment="transferencia">
+              <span class="material-symbols-outlined">payments</span>
+              <div>
+                <h3>Transferencia o depósito</h3>
+                <p>25% de descuento automático al confirmar el pago.</p>
+              </div>
+            </button>
+            <button class="payment-card" data-payment="mercado_pago">
+              <span class="material-symbols-outlined">account_balance_wallet</span>
+              <div>
+                <h3>Mercado Pago</h3>
+                <p>Pagá con tu dinero en cuenta o tarjeta guardada.</p>
+              </div>
+            </button>
+          </div>
+          <div class="step-actions">
+            <button class="btn btn-secondary" data-action="back-to-summary">Atrás</button>
+            <button class="btn btn-primary" data-action="confirm-order" disabled>Continuar</button>
+          </div>
+          <p class="payment-feedback" aria-live="polite"></p>
+        </section>
+
+        <div class="alert-stack" data-alerts aria-live="polite"></div>
+        <div class="loading-indicator hidden" data-loading>
+          <span class="spinner"></span>
+          <span>Cargando datos...</span>
+        </div>
+      </section>
+
+      <aside class="order-summary" aria-label="Resumen de compra">
+        <div class="order-summary__header">
+          <h2>Resumen de compra</h2>
+          <p>Revisá la información de tu pedido antes de pagar.</p>
+        </div>
+        <div class="order-summary__items" data-summary-items>
+          <!-- Items dinámicos -->
+        </div>
+        <dl class="order-summary__totals">
+          <div class="order-summary__row">
+            <dt>Subtotal</dt>
+            <dd data-summary-subtotal>$0</dd>
+          </div>
+          <div class="order-summary__row">
+            <dt>Envío</dt>
+            <dd data-summary-shipping>$0</dd>
+          </div>
+          <div class="order-summary__row order-summary__row--highlight" data-summary-discount-row>
+            <dt>Descuento transferencia</dt>
+            <dd data-summary-discount>-$0</dd>
+          </div>
+          <div class="order-summary__row order-summary__row--total">
+            <dt>Total</dt>
+            <dd data-summary-total>$0</dd>
+          </div>
+        </dl>
+        <p class="order-summary__note">Los costos de envío pueden variar según el destino seleccionado.</p>
+      </aside>
+    </div>
+  </main>
+
+  <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script defer src="javaScript/auth0-config.js"></script>
+  <script defer src="javaScript/main.js"></script>
+  <script defer src="javaScript/checkout-entrega.js"></script>
+  
+</body>
+</html>
