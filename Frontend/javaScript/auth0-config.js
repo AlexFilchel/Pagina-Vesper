@@ -68,6 +68,14 @@
       const username =
         user.nickname || user.username || user.given_name || user.name || "Usuario";
 
+      if (window.apiClient?.ensureUserRegistered) {
+        try {
+          await window.apiClient.ensureUserRegistered(user);
+        } catch (error) {
+          console.warn('⚠️ No se pudo registrar al usuario autenticado.', error);
+        }
+      }
+
       accountLabel.textContent = username;
 
       loginBtn.textContent = "Cerrar sesión";

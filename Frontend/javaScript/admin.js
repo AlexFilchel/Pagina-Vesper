@@ -4,85 +4,10 @@ const currencyFormatter = new Intl.NumberFormat('es-AR', {
   maximumFractionDigits: 0
 });
 
-const products = [
-  {
-    id: 1,
-    type: 'perfume',
-    name: 'Aventus',
-    brand: 'Creed',
-    description: 'Fragancia icónica con notas frescas y amaderadas pensada para destacar en cada ocasión.',
-    volume: 100,
-    gender: 'Masculino',
-    notes: 'Piña, grosella negra, bergamota',
-    family: 'Chipre Frutal',
-    piramide: {
-      salida: 'Piña, grosella negra, bergamota',
-      corazon: 'Jazmín, rosa, abedul',
-      fondo: 'Musgo de roble, vainilla, ámbar gris'
-    },
-    inspired: 'Éxito y liderazgo',
-    imagesCount: 3,
-    stock: 8,
-    price: 320000
-  },
-  {
-    id: 2,
-    type: 'decant',
-    name: 'Good Girl Decant',
-    brand: 'Carolina Herrera',
-    description: 'Decant 10 ml de uno de los perfumes más vendidos: dulce, floral y sofisticado.',
-    volume: 10,
-    gender: 'Femenino',
-    notes: 'Café, almendra, jazmín',
-    family: 'Oriental Floral',
-    piramide: {
-      salida: 'Café, almendra, limón',
-      corazon: 'Jazmín sambac, nardos',
-      fondo: 'Cacao, vainilla, tonka'
-    },
-    inspired: 'Good Girl',
-    imagesCount: 2,
-    stock: 22,
-    price: 14500
-  },
-  {
-    id: 3,
-    type: 'vape',
-    name: 'Nebula 5K',
-    brand: 'Nebula Labs',
-    description: 'Vape recargable con modos inteligentes y batería de larga duración.',
-    puffs: 5000,
-    modes: 'Smart, Boost, Eco',
-    flavors: [
-      { name: 'Frutilla Ice', stock: 12 },
-      { name: 'Menta Polar', stock: 18 },
-      { name: 'Mango Tropical', stock: 15 }
-    ],
-    price: 58000,
-    stock: 45
-  }
-];
+let products = [];
+let promotions = [];
 
-const promotions = [
-  {
-    id: 1,
-    productId: 1,
-    description: '10% off en Aventus hasta agotar stock.',
-    discount: 10,
-    startDate: '2024-04-01',
-    endDate: '2024-04-30',
-    active: true
-  },
-  {
-    id: 2,
-    productId: 3,
-    description: 'Bundle de lanzamiento Nebula 5K con envío gratis.',
-    discount: 15,
-    startDate: '2024-05-15',
-    endDate: '2024-06-30',
-    active: false
-  }
-];
+const flavorCache = new Map();
 
 const dom = {
   accordionHeaders: document.querySelectorAll('.accordion-header'),
@@ -117,7 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
   setTodayAsDefault(dom.addPromotionForm?.querySelector('#promotionStart'));
   setupModalTriggers();
 
-  dom.addProductForm?.addEventListener('submit', (event) => {
+  initializeAdmin();
+
+  dom.addProductForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!dom.addProductForm.checkValidity()) {
       dom.addProductForm.reportValidity();
@@ -135,17 +62,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const newProduct = collectProductData(dom.addProductForm);
-    newProduct.id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now();
-    products.push(newProduct);
 
-    renderProductsTable();
-    populateProductOptions();
-    dom.addProductForm.reset();
-    addProductHelpers?.reset?.();
-    showToast('Producto agregado correctamente (simulación).');
+    try {
+      const savedProduct = await createProduct(newProduct);
+      if (!savedProduct) {
+        throw new Error('El producto no pudo guardarse en la base de datos.');
+      }
+      products.push(savedProduct);
+      renderProductsTable();
+      populateProductOptions();
+      dom.addProductForm.reset();
+      addProductHelpers?.reset?.();
+      showToast('Producto agregado correctamente.');
+    } catch (error) {
+      console.error(error);
+      showToast(error?.message || 'No se pudo guardar el producto.');
+    }
   });
 
-  dom.editProductForm?.addEventListener('submit', (event) => {
+  dom.editProductForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!dom.editProductForm.checkValidity()) {
       dom.editProductForm.reportValidity();
@@ -158,13 +93,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const editedProduct = collectProductData(dom.editProductForm);
     const productId = dom.editProductForm.dataset.productId;
     const index = products.findIndex((item) => String(item.id) === String(productId));
-    if (index !== -1) {
-      editedProduct.id = products[index].id;
-      products[index] = editedProduct;
+    if (index === -1) {
+      showToast('No se encontró el producto seleccionado.');
+      return;
+    }
+    if (products[index].type !== editedProduct.type) {
+      showToast('No es posible cambiar el tipo del producto.');
+      return;
+    }
+
+    try {
+      const updatedProduct = await updateProduct(productId, editedProduct);
+      products[index] = updatedProduct;
       renderProductsTable();
       populateProductOptions();
       closeModal(dom.productModal);
-      showToast('Producto actualizado (simulación).');
+      showToast('Producto actualizado correctamente.');
+    } catch (error) {
+      console.error(error);
+      showToast(error?.message || 'No se pudo actualizar el producto.');
     }
   });
 
@@ -266,10 +213,11 @@ function setupProductForm(form) {
       const row = document.createElement('div');
       row.className = 'dynamic-flavor-row';
       const flavor = flavorData[i - 1] || {};
+      const flavorIdAttribute = flavor.id ? ` data-flavor-id="${flavor.id}"` : '';
       row.innerHTML = `
         <div class="form-field">
           <label for="${prefix}FlavorName${i}">Nombre del Sabor ${i}</label>
-          <input type="text" id="${prefix}FlavorName${i}" name="flavorName${i}" value="${flavor.name || ''}" required>
+          <input type="text" id="${prefix}FlavorName${i}" name="flavorName${i}" value="${flavor.name || ''}"${flavorIdAttribute} required>
         </div>
         <div class="form-field">
           <label for="${prefix}FlavorStock${i}">Stock del Sabor ${i}</label>
@@ -336,14 +284,8 @@ function setupProductForm(form) {
         const flavors = product.flavors || [];
         if (flavorSelect) {
           flavorSelect.value = String(flavors.length);
-          flavorSelect.dispatchEvent(new Event('change', { bubbles: true }));
+          renderFlavorInputs(flavors.length, flavors);
         }
-        flavors.forEach((flavor, index) => {
-          const flavorName = form.querySelector(`#${prefix}FlavorName${index + 1}`);
-          const flavorStock = form.querySelector(`#${prefix}FlavorStock${index + 1}`);
-          if (flavorName) flavorName.value = flavor.name || '';
-          if (flavorStock) flavorStock.value = flavor.stock ?? '';
-        });
       } else {
         const nameField = form.querySelector('input[name="name"]');
         const brandField = form.querySelector('input[name="brand"]');
@@ -423,7 +365,9 @@ function collectProductData(form) {
     for (let i = 1; i <= flavorCount; i += 1) {
       const nameField = form.querySelector(`[name="flavorName${i}"]`);
       const stockField = form.querySelector(`[name="flavorStock${i}"]`);
+      const flavorId = nameField?.dataset.flavorId ? Number(nameField.dataset.flavorId) : null;
       flavors.push({
+        id: Number.isFinite(flavorId) ? flavorId : null,
         name: nameField?.value || '',
         stock: Number(stockField?.value || 0)
       });
@@ -458,8 +402,257 @@ function collectProductData(form) {
       fondo: form.piramideFondo?.value || ''
     },
     inspired: form.inspired?.value || '',
-    price: Number(form.price?.value || 0)
+    price: Number(form.price?.value || 0),
+    decant: type === 'decant'
   };
+}
+
+async function initializeAdmin() {
+  if (!window.apiClient) {
+    console.warn('⚠️ Cliente API no disponible.');
+    return;
+  }
+
+  try {
+    const [flavors, perfumes, vapes] = await Promise.all([
+      window.apiClient.fetchFlavors().catch(() => []),
+      window.apiClient.fetchPerfumes(),
+      window.apiClient.fetchVapes()
+    ]);
+
+    updateFlavorCache(Array.isArray(flavors) ? flavors : []);
+
+    const perfumeProducts = Array.isArray(perfumes)
+      ? perfumes.map((item) => mapPerfumeResponseToProduct(item)).filter(Boolean)
+      : [];
+    const vapeProducts = Array.isArray(vapes)
+      ? vapes.map((item) => mapVapeResponseToProduct(item)).filter(Boolean)
+      : [];
+
+    products = [...perfumeProducts, ...vapeProducts];
+    renderProductsTable();
+    populateProductOptions();
+    renderPromotionsTable();
+  } catch (error) {
+    console.error('❌ Error cargando productos desde la API', error);
+    showToast('No se pudieron cargar los productos desde el servidor.');
+  }
+}
+
+function updateFlavorCache(flavors) {
+  flavorCache.clear();
+  flavors.forEach((flavor) => {
+    const normalized = normalizeFlavorName(flavor?.nombre);
+    if (normalized && typeof flavor.id !== 'undefined') {
+      flavorCache.set(normalized, { id: flavor.id, name: flavor.nombre });
+    }
+  });
+}
+
+function normalizeFlavorName(name) {
+  return typeof name === 'string' ? name.trim().toLowerCase() : '';
+}
+
+function mapPerfumeResponseToProduct(perfume) {
+  if (!perfume) return null;
+  return {
+    id: perfume.id ?? null,
+    type: perfume.decant ? 'decant' : 'perfume',
+    name: perfume.nombre || '',
+    brand: perfume.marca || '',
+    description: perfume.descripcion || '',
+    volume: typeof perfume.ml === 'number' ? perfume.ml : 0,
+    gender: perfume.genero || '',
+    stock: typeof perfume.stock === 'number' ? perfume.stock : 0,
+    notes: perfume.notasPrincipales || '',
+    family: perfume.fragancia || '',
+    piramide: {
+      salida: perfume.salida || '',
+      corazon: perfume.corazon || '',
+      fondo: perfume.fondo || ''
+    },
+    inspired: perfume.inspiracion || '',
+    price: typeof perfume.precio === 'number' ? perfume.precio : 0,
+    decant: Boolean(perfume.decant)
+  };
+}
+
+function mapVapeResponseToProduct(vape, fallback = {}) {
+  if (!vape) return null;
+  const flavorNames = Array.isArray(vape.sabores)
+    ? vape.sabores
+    : (vape.sabores ? Array.from(vape.sabores) : []);
+  let flavors = mapFlavorNamesToProductFlavors(flavorNames, fallback.flavors || []);
+  if (!flavors.length && Array.isArray(fallback.flavors)) {
+    flavors = fallback.flavors;
+  }
+  return {
+    id: vape.id ?? fallback.id ?? null,
+    type: 'vape',
+    name: vape.nombre || fallback.name || '',
+    brand: vape.marca || fallback.brand || '',
+    description: vape.descripcion || fallback.description || '',
+    puffs: typeof vape.pitadas === 'number' ? vape.pitadas : fallback.puffs ?? null,
+    modes: vape.modos || fallback.modes || '',
+    flavors,
+    price: typeof vape.precio === 'number' ? vape.precio : fallback.price ?? 0,
+    stock: typeof vape.stock === 'number' ? vape.stock : (fallback.stock ?? 0)
+  };
+}
+
+function mapFlavorNamesToProductFlavors(names, fallbackFlavors = []) {
+  if (!Array.isArray(names)) {
+    return fallbackFlavors.map((flavor) => ({
+      id: flavor.id ?? null,
+      name: flavor.name || '',
+      stock: flavor.stock ?? null
+    }));
+  }
+
+  return names.map((name) => {
+    const normalized = normalizeFlavorName(name);
+    const cached = normalized ? flavorCache.get(normalized) : null;
+    const fallback = fallbackFlavors.find(
+      (flavor) => normalizeFlavorName(flavor.name) === normalized
+    );
+    return {
+      id: cached?.id ?? fallback?.id ?? null,
+      name: name || fallback?.name || '',
+      stock: fallback?.stock ?? null
+    };
+  });
+}
+
+function toPerfumeRequest(product) {
+  return {
+    nombre: product.name,
+    precio: product.price,
+    descripcion: product.description,
+    marca: product.brand,
+    stock: product.stock,
+    volumen: product.volume ? `${product.volume}` : null,
+    genero: product.gender,
+    notasPrincipales: product.notes,
+    salida: product.piramide?.salida,
+    corazon: product.piramide?.corazon,
+    fondo: product.piramide?.fondo,
+    inspiracion: product.inspired,
+    decant: Boolean(product.decant),
+    fragancia: product.family,
+    ml: Number.isFinite(product.volume) ? Number(product.volume) : null
+  };
+}
+
+function toVapeRequest(product, flavorIds) {
+  return {
+    nombre: product.name,
+    precio: product.price,
+    descripcion: product.description,
+    marca: product.brand,
+    stock: product.stock,
+    pitadas: product.puffs,
+    modos: product.modes,
+    saboresIds: Array.isArray(flavorIds) && flavorIds.length ? flavorIds : []
+  };
+}
+
+async function createProduct(productData) {
+  if (!window.apiClient) {
+    throw new Error('Cliente API no disponible.');
+  }
+
+  if (productData.type === 'vape') {
+    const flavorIds = await resolveFlavorIds(productData.flavors);
+    const response = await window.apiClient.createVape(toVapeRequest(productData, flavorIds));
+    const mapped = mapVapeResponseToProduct(response, productData);
+    if (!mapped) {
+      throw new Error('No se pudo crear el vape.');
+    }
+    return mapped;
+  }
+
+  const response = await window.apiClient.createPerfume(toPerfumeRequest(productData));
+  const mapped = mapPerfumeResponseToProduct(response);
+  if (!mapped) {
+    throw new Error('No se pudo crear el perfume.');
+  }
+  return mapped;
+}
+
+async function updateProduct(id, productData) {
+  if (!window.apiClient) {
+    throw new Error('Cliente API no disponible.');
+  }
+
+  if (productData.type === 'vape') {
+    const flavorIds = await resolveFlavorIds(productData.flavors);
+    const response = await window.apiClient.updateVape(id, toVapeRequest(productData, flavorIds));
+    const mapped = mapVapeResponseToProduct(response, { ...productData, id: Number(id) });
+    if (!mapped) {
+      throw new Error('No se pudo actualizar el vape.');
+    }
+    return mapped;
+  }
+
+  const response = await window.apiClient.updatePerfume(id, toPerfumeRequest(productData));
+  const mapped = mapPerfumeResponseToProduct(response);
+  if (!mapped) {
+    throw new Error('No se pudo actualizar el perfume.');
+  }
+  return mapped;
+}
+
+async function deleteProduct(product) {
+  if (!window.apiClient) {
+    throw new Error('Cliente API no disponible.');
+  }
+
+  if (product.type === 'vape') {
+    await window.apiClient.deleteVape(product.id);
+  } else {
+    await window.apiClient.deletePerfume(product.id);
+  }
+}
+
+async function resolveFlavorIds(flavors = []) {
+  if (!Array.isArray(flavors) || !flavors.length) {
+    return [];
+  }
+
+  if (!window.apiClient) {
+    throw new Error('Cliente API no disponible.');
+  }
+
+  const ids = [];
+
+  for (const flavor of flavors) {
+    const normalized = normalizeFlavorName(flavor?.name);
+    if (!normalized) {
+      continue;
+    }
+
+    let cached = Number.isFinite(flavor?.id) ? { id: flavor.id, name: flavor.name } : flavorCache.get(normalized);
+
+    if (!cached) {
+      try {
+        const created = await window.apiClient.createFlavor({ nombre: flavor.name });
+        if (created?.id) {
+          cached = { id: created.id, name: created.nombre || flavor.name };
+          flavorCache.set(normalized, cached);
+        }
+      } catch (error) {
+        console.error(`❌ No se pudo registrar el sabor "${flavor.name}"`, error);
+        continue;
+      }
+    }
+
+    if (cached?.id) {
+      ids.push(cached.id);
+      flavor.id = cached.id;
+    }
+  }
+
+  return [...new Set(ids)];
 }
 
 function renderProductsTable() {
@@ -519,19 +712,26 @@ function renderProductsTable() {
   });
 
   dom.productsTableBody.querySelectorAll('.js-delete-product').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const productId = button.dataset.productId;
       const product = products.find((item) => String(item.id) === String(productId));
       if (!product) return;
       const shouldDelete = window.confirm(`¿Eliminar "${product.name}" de forma permanente?`);
-      if (shouldDelete) {
+      if (!shouldDelete) {
+        return;
+      }
+      try {
+        await deleteProduct(product);
         const index = products.findIndex((item) => String(item.id) === String(productId));
         if (index !== -1) {
           products.splice(index, 1);
-          renderProductsTable();
-          populateProductOptions();
-          showToast('Producto eliminado (simulación).');
         }
+        renderProductsTable();
+        populateProductOptions();
+        showToast('Producto eliminado correctamente.');
+      } catch (error) {
+        console.error(error);
+        showToast(error?.message || 'No se pudo eliminar el producto.');
       }
     });
   });
