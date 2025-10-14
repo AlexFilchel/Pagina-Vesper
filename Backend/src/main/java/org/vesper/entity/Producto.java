@@ -11,6 +11,7 @@ import java.util.List;
 @Table(name = "productos",
         uniqueConstraints = @UniqueConstraint(columnNames = {"nombre", "DTYPE"}))
 @Inheritance(strategy = InheritanceType.JOINED)
+@MappedSuperclass
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

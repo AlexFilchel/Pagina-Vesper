@@ -15,21 +15,32 @@ public class DetalleVenta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relación con la venta
     @ManyToOne
     @JoinColumn(name = "venta_id", nullable = false)
     private Venta venta;
 
-    // Relación con el producto comprado
+    // 🔹 Relación opcional con Perfume
     @ManyToOne
-    @JoinColumn(name = "producto_id", nullable = false)
-    private Producto producto;
+    @JoinColumn(name = "perfume_id")
+    private Perfume perfume;
+
+    // 🔹 Relación opcional con Vape
+    @ManyToOne
+    @JoinColumn(name = "vape_id")
+    private Vape vape;
 
     private Integer cantidad;
-
-    // Precio histórico del producto en ese momento
     private Double precioUnitario;
-
-    // subtotal = cantidad * precioUnitario
     private Double subtotal;
+
+    // 🔹 Método auxiliar para obtener el producto sin importar el tipo
+    public String getNombreProducto() {
+        if (perfume != null) return perfume.getNombre();
+        if (vape != null) return vape.getNombre();
+        return "Producto desconocido";
+    }
+
+    public Double calcularSubtotal() {
+        return cantidad != null && precioUnitario != null ? cantidad * precioUnitario : 0.0;
+    }
 }

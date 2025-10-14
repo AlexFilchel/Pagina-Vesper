@@ -41,9 +41,9 @@ public class SecurityConfig {
                 .cors(withDefaults()) //por defecto spring busca el bean corsConfigurationSource
                 .authorizeHttpRequests( auth ->
                         auth
-                            .requestMatchers("**/api/public").permitAll()
-                            .requestMatchers("**/api/admin/**").hasAuthority("ADMIN")
-                            .requestMatchers("**/api/user/**").hasAuthority("USER")
+                                .requestMatchers("/api/public/**").permitAll()
+                                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                                .requestMatchers("/api/user/**").hasAuthority("USER")
                             .anyRequest().authenticated()
         )
                 .oauth2ResourceServer(oauth2ResourceServer ->
@@ -85,7 +85,7 @@ public class SecurityConfig {
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter(){
         JwtGrantedAuthoritiesConverter converter = new JwtGrantedAuthoritiesConverter();
-        converter.setAuthoritiesClaimName("https://verper/api/roles");
+        converter.setAuthoritiesClaimName("https://vesper.com/roles");
         converter.setAuthorityPrefix("");
 
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
