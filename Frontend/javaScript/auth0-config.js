@@ -64,6 +64,7 @@
 
     if (isAuth) {
       const user = await auth0Client.getUser();
+      await registerUserIfNeeded(user);
 
       const username =
         user.nickname || user.username || user.given_name || user.name || "Usuario";
@@ -86,6 +87,27 @@
           authorizationParams: { redirect_uri: REDIRECT_URI }
         });
       };
+    }
+  }
+
+  async function registerUserIfNeeded(user) {
+    if (!user || !user.sub) return;
+    const storageKey = `vesper:user-registered:${user.sub}`;
+    if (localStorage.getItem(storageKey) === 'true') {
+      return;
+    }
+
+    if (!window.apiClient || typeof window.apiClient.registerCurrentUser !== 'function') {
+      console.warn('⚠️ Cliente de API no disponible para registrar usuario.');
+      return;
+    }
+
+    try {
+      await window.apiClient.registerCurrentUser();
+      localStorage.setItem(storageKey, 'true');
+      console.log('✅ Usuario sincronizado con la base de datos');
+    } catch (error) {
+      console.error('❌ Error registrando usuario en la API:', error);
     }
   }
 })();

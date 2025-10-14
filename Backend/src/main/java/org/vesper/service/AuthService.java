@@ -26,13 +26,13 @@ public class AuthService {
         }
 
         Usuario nuevo = Usuario.builder()
-                .auth0Id(auth0Id)
-                .email(email != null ? email : "sin_email@vesper.com")
-                .nombre(nombre != null ? nombre : (nickname != null ? nickname : "Pendiente"))
-                .apellido("Pendiente")
-                .telefono(0)
-                .dni(0)
-                .build();
+            .auth0Id(auth0Id)
+            .email(email != null ? email : "sin_email@vesper.com")
+            .nombre(nombre != null ? nombre : (nickname != null ? nickname : null))
+            .apellido(null)
+            .telefono(null)
+            .dni(null)
+            .build();
 
         usuarioRepository.save(nuevo);
         return toResponse(nuevo);
