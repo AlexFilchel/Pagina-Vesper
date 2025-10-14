@@ -4,10 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-@Entity
-@Table(name = "productos",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"nombre", "DTYPE"}))
-@Inheritance(strategy = InheritanceType.JOINED)
+@MappedSuperclass
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

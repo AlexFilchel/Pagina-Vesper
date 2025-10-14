@@ -26,13 +26,15 @@
         domain: "vesperarg.us.auth0.com",
         clientId: "pYeprEq6ZK2yUBxV6agbfDIiExVkU0xD",
         authorizationParams: {
-          redirect_uri: REDIRECT_URI
+          redirect_uri: REDIRECT_URI,
+          audience: "https://verper/api"
         },
         // 🔒 Mantener sesión activa
         useRefreshTokens: true,
         cacheLocation: "localstorage"
       });
 
+      window.auth0Client = auth0Client;
       console.log("✅ Auth0 inicializado correctamente");
 
       // Manejar callback si vuelve de login

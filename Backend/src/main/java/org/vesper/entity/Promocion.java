@@ -17,9 +17,16 @@ public class Promocion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "producto_id")
-    private Producto producto;
+     // 🔹 Relación opcional con Perfume
+    @ManyToOne
+    @JoinColumn(name = "perfume_id")
+    private Perfume perfume;
+
+    // 🔹 Relación opcional con Vape
+    @ManyToOne
+    @JoinColumn(name = "vape_id")
+    private Vape vape;
+
 
     private String descripcion;
 
