@@ -225,6 +225,14 @@
   background: rgba(0, 74, 173, 0.05);
 }
 
+.admin-table .table-empty {
+  text-align: center;
+  padding: 24px 12px;
+  color: #6b7280;
+  font-weight: 500;
+  background: #f9fafb;
+}
+
 .column-actions {
   width: 180px;
   text-align: right;
