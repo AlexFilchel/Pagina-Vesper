@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import org.vesper.dto.UserResponse;
 import org.vesper.dto.UserRequest;
 import org.vesper.service.AuthService;
-
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 
 import java.util.Map;
