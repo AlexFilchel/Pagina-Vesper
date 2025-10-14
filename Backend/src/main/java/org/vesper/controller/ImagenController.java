@@ -46,14 +46,14 @@ public class ImagenController {
      * @return lista de {@link ImagenResponse} correspondiente a las imágenes almacenadas.
      */
     @PostMapping("/admin/imagenes/producto/{productoId}")
-    public ResponseEntity<List<ImagenResponse>> uploadImages(@PathVariable Long productoId,
+    public ResponseEntity<List<ImagenResponse>> subirImagenes(@PathVariable Long productoId,
                                                              @RequestParam("files") List<MultipartFile> files) {
         Producto producto = productoRepository.findById(productoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
 
         List<ImagenResponse> responses = new ArrayList<>();
         for (MultipartFile file : files) {
-            Map<String, String> uploadResult = cloudinaryService.uploadFile(file);
+            Map<String, String> uploadResult = cloudinaryService.subirImagen(file);
             Imagen imagen = new Imagen();
             imagen.setUrl(uploadResult.get("url"));
             imagen.setPublicId(uploadResult.get("public_id"));
@@ -75,7 +75,7 @@ public class ImagenController {
      * @return lista de {@link ImagenResponse} con los datos relevantes para el frontend.
      */
     @GetMapping("/admin/imagenes/producto/{productoId}")
-    public ResponseEntity<List<ImagenResponse>> getImagesByProducto(@PathVariable Long productoId) {
+    public ResponseEntity<List<ImagenResponse>> obtenerImagenPorProducto(@PathVariable Long productoId) {
         if (!productoRepository.existsById(productoId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado");
         }
@@ -96,11 +96,11 @@ public class ImagenController {
      * @return mensaje de confirmación en formato JSON.
      */
     @DeleteMapping("/admin/imagenes/{id}")
-    public ResponseEntity<Map<String, String>> deleteImage(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> borrarImagen(@PathVariable Long id) {
         Imagen imagen = imagenRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Imagen no encontrada"));
 
-        cloudinaryService.deleteFile(imagen.getPublicId());
+        cloudinaryService.borrarImagen(imagen.getPublicId());
         Producto producto = imagen.getProducto();
         if (producto != null) {
             producto.getImagenes().removeIf(img -> img.getId().equals(id));
