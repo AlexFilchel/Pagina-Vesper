@@ -49,6 +49,11 @@ public class Perfume extends Producto {
     private Double ml; // Mililitros exactos (ej: 100.0, 50.0)
 
     @Builder.Default
-    @OneToMany(mappedBy = "perfume", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "perfume_imagenes",
+            joinColumns = @JoinColumn(name = "perfume_id"),
+            inverseJoinColumns = @JoinColumn(name = "imagen_id")
+    )
     private List<Imagen> imagenes = new ArrayList<>();
 }

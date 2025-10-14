@@ -29,6 +29,11 @@ public class Vape extends Producto {
     private Set<Sabor> sabores = new HashSet<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "vape", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "vape_imagenes",
+            joinColumns = @JoinColumn(name = "vape_id"),
+            inverseJoinColumns = @JoinColumn(name = "imagen_id")
+    )
     private List<Imagen> imagenes = new ArrayList<>();
 }

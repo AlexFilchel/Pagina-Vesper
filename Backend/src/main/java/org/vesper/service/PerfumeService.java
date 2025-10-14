@@ -10,7 +10,7 @@ import org.vesper.entity.Imagen;
 import org.vesper.entity.Perfume;
 import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
-import org.vesper.repo.ImagenRepository;
+
 import org.vesper.repo.PerfumeRepository;
 
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class PerfumeService {
 
     private final PerfumeRepository perfumeRepository;
-    private final ImagenRepository imagenRepository;
+
     private final CloudinaryService cloudinaryService;
 
     // =========================================================
@@ -51,13 +51,28 @@ public class PerfumeService {
     /**
      * Crea un nuevo perfume (solo admins).
      */
-    public PerfumeResponse crearPerfume(PerfumeRequest request) {
+    public PerfumeResponse crearPerfume(PerfumeRequest request, List<MultipartFile> files) {
         // Validar duplicado por nombre
         if (perfumeRepository.existsByNombre(request.getNombre())) {
             throw new AlreadyExistsException("Ya existe un perfume con el nombre: " + request.getNombre());
         }
 
         Perfume perfume = toEntity(request);
+
+        if (files != null && !files.isEmpty()) {
+            List<Imagen> imagenes = new ArrayList<>();
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) continue;
+
+                Map<String, String> uploadResult = cloudinaryService.subirImagen(file);
+                Imagen imagen = new Imagen();
+                imagen.setUrl(uploadResult.get("url"));
+                imagen.setPublicId(uploadResult.get("public_id"));
+                imagenes.add(imagen);
+            }
+            perfume.setImagenes(imagenes);
+        }
+
         Perfume guardado = perfumeRepository.save(perfume);
         return toResponse(guardado);
     }
@@ -99,27 +114,7 @@ public class PerfumeService {
         perfumeRepository.deleteById(id);
     }
 
-    /**
-     * Sube una o varias imágenes, las asocia a un perfume y las guarda.
-     */
-    public List<ImagenResponse> agregarImagenesAPerfume(Long perfumeId, List<MultipartFile> files) {
-        Perfume perfume = perfumeRepository.findById(perfumeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfume no encontrado con id: " + perfumeId));
 
-        List<ImagenResponse> responses = new ArrayList<>();
-        for (MultipartFile file : files) {
-            Map<String, String> uploadResult = cloudinaryService.subirImagen(file);
-            Imagen imagen = new Imagen();
-            imagen.setUrl(uploadResult.get("url"));
-            imagen.setPublicId(uploadResult.get("public_id"));
-            imagen.setPerfume(perfume);
-
-            Imagen savedImagen = imagenRepository.save(imagen);
-            responses.add(new ImagenResponse(savedImagen.getId(), savedImagen.getUrl()));
-        }
-
-        return responses;
-    }
 
     // =========================================================
     // MÉTODOS DE BÚSQUEDA

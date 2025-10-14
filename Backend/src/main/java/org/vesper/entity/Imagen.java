@@ -33,16 +33,4 @@ public class Imagen {
      * Identificador interno de Cloudinary utilizado para eliminar o actualizar la imagen.
      */
     private String publicId;
-
-    /**
-     * Producto al que pertenece la imagen. La relación es muchos-a-uno porque un producto puede
-     * tener múltiples imágenes asociadas.
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "perfume_id")
-    private Perfume perfume;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vape_id")
-    private Vape vape;
 }

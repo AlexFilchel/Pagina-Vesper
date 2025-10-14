@@ -13,7 +13,7 @@ import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.repo.SaborRepository;
 import org.vesper.repo.VapeRepository;
-import org.vesper.repo.ImagenRepository;
+
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -32,7 +32,7 @@ public class VapeService {
 
     private final VapeRepository vapeRepository;
     private final SaborRepository saborRepository;
-    private final ImagenRepository imagenRepository;
+
     private final CloudinaryService cloudinaryService;
 
     // =========================================================
@@ -60,12 +60,27 @@ public class VapeService {
     /**
      * Crea un nuevo vape.
      */
-    public VapeResponse crearVape(VapeRequest request) {
+    public VapeResponse crearVape(VapeRequest request, List<MultipartFile> files) {
         if (vapeRepository.existsByNombre(request.getNombre())) {
             throw new AlreadyExistsException("Ya existe un vape con el nombre: " + request.getNombre());
         }
 
         Vape vape = toEntity(request);
+
+        if (files != null && !files.isEmpty()) {
+            List<Imagen> imagenes = new ArrayList<>();
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) continue;
+
+                Map<String, String> uploadResult = cloudinaryService.subirImagen(file);
+                Imagen imagen = new Imagen();
+                imagen.setUrl(uploadResult.get("url"));
+                imagen.setPublicId(uploadResult.get("public_id"));
+                imagenes.add(imagen);
+            }
+            vape.setImagenes(imagenes);
+        }
+
         Vape guardado = vapeRepository.save(vape);
         return toResponse(guardado);
     }
@@ -104,27 +119,7 @@ public class VapeService {
         vapeRepository.deleteById(id);
     }
 
-    /**
-     * Sube una o varias imágenes, las asocia a un vape y las guarda.
-     */
-    public List<ImagenResponse> agregarImagenesAVape(Long vapeId, List<MultipartFile> files) {
-        Vape vape = vapeRepository.findById(vapeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Vape no encontrado con id: " + vapeId));
 
-        List<ImagenResponse> responses = new ArrayList<>();
-        for (MultipartFile file : files) {
-            Map<String, String> uploadResult = cloudinaryService.subirImagen(file);
-            Imagen imagen = new Imagen();
-            imagen.setUrl(uploadResult.get("url"));
-            imagen.setPublicId(uploadResult.get("public_id"));
-            imagen.setVape(vape);
-
-            Imagen savedImagen = imagenRepository.save(imagen);
-            responses.add(new ImagenResponse(savedImagen.getId(), savedImagen.getUrl()));
-        }
-
-        return responses;
-    }
 
     // =========================================================
     // MÉTODOS DE BÚSQUEDA

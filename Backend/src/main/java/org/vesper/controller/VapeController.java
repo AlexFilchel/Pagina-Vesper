@@ -97,9 +97,11 @@ public class VapeController {
     /**
      * Crea un nuevo vape (solo administradores).
      */
-    @PostMapping("/admin/vapes")
-    public ResponseEntity<VapeResponse> crearVape(@Valid @RequestBody VapeRequest request) {
-        return ResponseEntity.ok(vapeService.crearVape(request));
+    @PostMapping(value = "/admin/vapes", consumes = {"multipart/form-data"})
+    public ResponseEntity<VapeResponse> crearVape(
+            @RequestPart("producto") @Valid VapeRequest request,
+            @RequestPart("files") List<MultipartFile> files) {
+        return ResponseEntity.ok(vapeService.crearVape(request, files));
     }
 
     /**
@@ -121,13 +123,5 @@ public class VapeController {
         return ResponseEntity.ok(Map.of("message", "Vape eliminado correctamente"));
     }
 
-    /**
-     * Sube una o varias imágenes y las asocia a un vape existente (solo para administradores).
-     */
-    @PostMapping("/admin/vapes/{id}/imagenes")
-    public ResponseEntity<List<ImagenResponse>> agregarImagenesVape(
-            @PathVariable Long id,
-            @RequestParam("files") List<MultipartFile> files) {
-        return ResponseEntity.ok(vapeService.agregarImagenesAVape(id, files));
-    }
+
 }
