@@ -1,10 +1,11 @@
 package org.vesper.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Entidad que representa un perfume.
@@ -46,4 +47,13 @@ public class Perfume extends Producto {
     private String fragancia; // Nombre comercial de la fragancia
 
     private Double ml; // Mililitros exactos (ej: 100.0, 50.0)
+
+    @Builder.Default
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "perfume_imagenes",
+            joinColumns = @JoinColumn(name = "perfume_id"),
+            inverseJoinColumns = @JoinColumn(name = "imagen_id")
+    )
+    private List<Imagen> imagenes = new ArrayList<>();
 }

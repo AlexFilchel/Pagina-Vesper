@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.PerfumeRequest;
 import org.vesper.dto.PerfumeResponse;
 import org.vesper.service.PerfumeService;
@@ -86,9 +88,11 @@ public class PerfumeController {
     /**
      * Crea un nuevo perfume (solo para administradores).
      */
-    @PostMapping("/admin/perfumes")
-    public ResponseEntity<PerfumeResponse> crearPerfume(@Valid @RequestBody PerfumeRequest request) {
-        return ResponseEntity.ok(perfumeService.crearPerfume(request));
+    @PostMapping(value = "/admin/perfumes", consumes = {"multipart/form-data"})
+    public ResponseEntity<PerfumeResponse> crearPerfume(
+            @RequestPart("producto") @Valid PerfumeRequest request,
+            @RequestPart("files") List<MultipartFile> files) {
+        return ResponseEntity.ok(perfumeService.crearPerfume(request, files));
     }
 
     /**
@@ -109,4 +113,6 @@ public class PerfumeController {
         perfumeService.eliminarPerfume(id);
         return ResponseEntity.ok(Map.of("message", "Perfume eliminado correctamente"));
     }
+
+
 }

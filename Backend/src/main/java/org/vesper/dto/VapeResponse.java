@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -17,11 +18,11 @@ public class VapeResponse {
     private String nombre;
     private Double precio;
     private String descripcion;
-    private String imagen;
 
     private Integer pitadas;
     private String modos;
 
     // Nombres o descripciones de los sabores asociados
     private Set<String> sabores;
+    private List<ImagenResponse> imagenes;
 }

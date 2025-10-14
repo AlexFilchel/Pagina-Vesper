@@ -2,14 +2,20 @@ package org.vesper.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.PerfumeRequest;
 import org.vesper.dto.PerfumeResponse;
+import org.vesper.entity.Imagen;
 import org.vesper.entity.Perfume;
 import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
+
 import org.vesper.repo.PerfumeRepository;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,6 +23,8 @@ import java.util.stream.Collectors;
 public class PerfumeService {
 
     private final PerfumeRepository perfumeRepository;
+
+    private final CloudinaryService cloudinaryService;
 
     // =========================================================
     // MÉTODOS PÚBLICOS
@@ -43,13 +51,28 @@ public class PerfumeService {
     /**
      * Crea un nuevo perfume (solo admins).
      */
-    public PerfumeResponse crearPerfume(PerfumeRequest request) {
+    public PerfumeResponse crearPerfume(PerfumeRequest request, List<MultipartFile> files) {
         // Validar duplicado por nombre
         if (perfumeRepository.existsByNombre(request.getNombre())) {
             throw new AlreadyExistsException("Ya existe un perfume con el nombre: " + request.getNombre());
         }
 
         Perfume perfume = toEntity(request);
+
+        if (files != null && !files.isEmpty()) {
+            List<Imagen> imagenes = new ArrayList<>();
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) continue;
+
+                Map<String, String> uploadResult = cloudinaryService.subirImagen(file);
+                Imagen imagen = new Imagen();
+                imagen.setUrl(uploadResult.get("url"));
+                imagen.setPublicId(uploadResult.get("public_id"));
+                imagenes.add(imagen);
+            }
+            perfume.setImagenes(imagenes);
+        }
+
         Perfume guardado = perfumeRepository.save(perfume);
         return toResponse(guardado);
     }
@@ -91,6 +114,8 @@ public class PerfumeService {
         perfumeRepository.deleteById(id);
     }
 
+
+
     // =========================================================
     // MÉTODOS DE BÚSQUEDA
     // =========================================================
@@ -117,6 +142,10 @@ public class PerfumeService {
     // =========================================================
 
     private PerfumeResponse toResponse(Perfume perfume) {
+        List<ImagenResponse> imagenResponses = perfume.getImagenes().stream()
+                .map(imagen -> new ImagenResponse(imagen.getId(), imagen.getUrl()))
+                .collect(Collectors.toList());
+
         return new PerfumeResponse(
                 perfume.getId(),
                 perfume.getNombre(),
@@ -133,7 +162,8 @@ public class PerfumeService {
                 perfume.getFragancia(),
                 perfume.getMl(),
                 perfume.getMarca(),
-                perfume.getStock()
+                perfume.getStock(),
+                imagenResponses
         );
     }
 

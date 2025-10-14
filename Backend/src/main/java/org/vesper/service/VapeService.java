@@ -2,15 +2,23 @@ package org.vesper.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.VapeRequest;
 import org.vesper.dto.VapeResponse;
+import org.vesper.entity.Imagen;
 import org.vesper.entity.Sabor;
 import org.vesper.entity.Vape;
 import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.repo.SaborRepository;
 import org.vesper.repo.VapeRepository;
+
+
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,6 +32,8 @@ public class VapeService {
 
     private final VapeRepository vapeRepository;
     private final SaborRepository saborRepository;
+
+    private final CloudinaryService cloudinaryService;
 
     // =========================================================
     // MÉTODOS CRUD
@@ -50,31 +60,29 @@ public class VapeService {
     /**
      * Crea un nuevo vape.
      */
-    /**
- * Crea un nuevo vape.
- */
-public VapeResponse crearVape(VapeRequest request) {
-    if (vapeRepository.existsByNombre(request.getNombre())) {
-        throw new AlreadyExistsException("Ya existe un vape con el nombre: " + request.getNombre());
-    }
+    public VapeResponse crearVape(VapeRequest request, List<MultipartFile> files) {
+        if (vapeRepository.existsByNombre(request.getNombre())) {
+            throw new AlreadyExistsException("Ya existe un vape con el nombre: " + request.getNombre());
+        }
 
-    Vape vape = new Vape();
-    vape.setNombre(request.getNombre());
-    vape.setPrecio(request.getPrecio());
-    vape.setDescripcion(request.getDescripcion());
-    vape.setMarca(request.getMarca());
-    vape.setStock(request.getStock() != null ? request.getStock() : 0);
-    vape.setPitadas(request.getPitadas());
-    vape.setModos(request.getModos());
+        Vape vape = toEntity(request);
 
-    // ✅ Procesar sabores
-    if (request.getSabores() != null && !request.getSabores().isEmpty()) {
-        Set<Sabor> sabores = request.getSabores().stream()
-                .map(nombre -> saborRepository.findByNombreIgnoreCase(nombre)
-                        .orElseGet(() -> saborRepository.save(Sabor.builder().nombre(nombre).build())))
-                .collect(Collectors.toSet());
+        if (files != null && !files.isEmpty()) {
+            List<Imagen> imagenes = new ArrayList<>();
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) continue;
 
-        vape.setSabores(sabores);
+                Map<String, String> uploadResult = cloudinaryService.subirImagen(file);
+                Imagen imagen = new Imagen();
+                imagen.setUrl(uploadResult.get("url"));
+                imagen.setPublicId(uploadResult.get("public_id"));
+                imagenes.add(imagen);
+            }
+            vape.setImagenes(imagenes);
+        }
+
+        Vape guardado = vapeRepository.save(vape);
+        return toResponse(guardado);
     }
 
     Vape guardado = vapeRepository.save(vape);
@@ -121,6 +129,8 @@ public VapeResponse crearVape(VapeRequest request) {
         }
         vapeRepository.deleteById(id);
     }
+
+
 
     // =========================================================
     // MÉTODOS DE BÚSQUEDA
@@ -171,15 +181,19 @@ public VapeResponse crearVape(VapeRequest request) {
                 .map(Sabor::getNombre)
                 .collect(Collectors.toSet());
 
+        List<ImagenResponse> imagenResponses = vape.getImagenes().stream()
+                .map(imagen -> new ImagenResponse(imagen.getId(), imagen.getUrl()))
+                .collect(Collectors.toList());
+
         return new VapeResponse(
                 vape.getId(),
                 vape.getNombre(),
                 vape.getPrecio(),
                 vape.getDescripcion(),
-                null,
                 vape.getPitadas(),
                 vape.getModos(),
-                sabores
+                sabores,
+                imagenResponses
         );
     }
 }

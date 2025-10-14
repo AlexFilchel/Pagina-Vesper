@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.VapeRequest;
 import org.vesper.dto.VapeResponse;
 import org.vesper.service.VapeService;
@@ -95,9 +97,11 @@ public class VapeController {
     /**
      * Crea un nuevo vape (solo administradores).
      */
-    @PostMapping("/admin/vapes")
-    public ResponseEntity<VapeResponse> crearVape(@Valid @RequestBody VapeRequest request) {
-        return ResponseEntity.ok(vapeService.crearVape(request));
+    @PostMapping(value = "/admin/vapes", consumes = {"multipart/form-data"})
+    public ResponseEntity<VapeResponse> crearVape(
+            @RequestPart("producto") @Valid VapeRequest request,
+            @RequestPart("files") List<MultipartFile> files) {
+        return ResponseEntity.ok(vapeService.crearVape(request, files));
     }
 
     /**
@@ -118,4 +122,6 @@ public class VapeController {
         vapeService.eliminarVape(id);
         return ResponseEntity.ok(Map.of("message", "Vape eliminado correctamente"));
     }
+
+
 }

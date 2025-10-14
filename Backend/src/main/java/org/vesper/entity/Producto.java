@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @MappedSuperclass
 @Data
 @NoArgsConstructor
@@ -27,7 +30,4 @@ public class Producto {
 
     private Integer stock;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "imagen_id")
-    private Imagen imagen;
 }

@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -19,10 +20,11 @@ public class Venta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relación con el usuario que compró
-    @ManyToOne
-    @JoinColumn(name = "usuario_id", nullable = false)
-    private Usuario usuario;
+    @Column(name = "usuario_auth0_id", nullable = false)
+    private String usuarioAuth0Id;
+
+    @Column(name = "usuario_email", nullable = false)
+    private String usuarioEmail;
 
     @Builder.Default
     private LocalDateTime fecha = LocalDateTime.now();
@@ -31,5 +33,6 @@ public class Venta {
 
     // Relación con los detalles de la venta
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<DetalleVenta> detalles;
+    @Builder.Default
+    private List<DetalleVenta> detalles = new ArrayList<>();
 }
