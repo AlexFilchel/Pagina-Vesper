@@ -9,10 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DomicilioResponse {
     private Long id;
-    private String nombre;
-    private String apellido;
-    private String telefono;
-    private String dni;
     private String calle;
     private String numero;
     private String piso;

@@ -36,20 +36,25 @@ public class DomicilioController {
      */
     @GetMapping("/user/domicilios")
     public ResponseEntity<List<DomicilioResponse>> listarDomiciliosUsuario(Authentication authentication) {
-        String auth0Id = ((Jwt) authentication.getPrincipal()).getClaimAsString("sub");
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        String auth0Id = jwt.getClaimAsString("sub");
         return ResponseEntity.ok(domicilioService.listarPorAuth0Id(auth0Id));
     }
 
     /**
      * Crea un nuevo domicilio para el usuario autenticado.
+     * Si el usuario no existe, se crea automáticamente con datos temporales.
      */
     @PostMapping("/user/domicilios")
     public ResponseEntity<DomicilioResponse> crearDomicilioUsuario(
             Authentication authentication,
             @Valid @RequestBody DomicilioRequest request) {
 
-        String auth0Id = ((Jwt) authentication.getPrincipal()).getClaimAsString("sub");
-        DomicilioResponse response = domicilioService.agregarDomicilioPorAuth0Id(auth0Id, request);
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        String auth0Id = jwt.getClaimAsString("sub");
+        String email = jwt.getClaimAsString("email"); // 👈 extrae email del token si está disponible
+
+        DomicilioResponse response = domicilioService.agregarDomicilioPorAuth0Id(auth0Id, email, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -62,7 +67,9 @@ public class DomicilioController {
             @PathVariable Long domicilioId,
             @Valid @RequestBody DomicilioRequest request) {
 
-        String auth0Id = ((Jwt) authentication.getPrincipal()).getClaimAsString("sub");
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        String auth0Id = jwt.getClaimAsString("sub");
+
         return ResponseEntity.ok(domicilioService.actualizarDomicilioPorAuth0Id(auth0Id, domicilioId, request));
     }
 
@@ -74,7 +81,9 @@ public class DomicilioController {
             Authentication authentication,
             @PathVariable Long domicilioId) {
 
-        String auth0Id = ((Jwt) authentication.getPrincipal()).getClaimAsString("sub");
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        String auth0Id = jwt.getClaimAsString("sub");
+
         domicilioService.eliminarDomicilioPorAuth0Id(auth0Id, domicilioId);
         return ResponseEntity.ok(Map.of("message", "Domicilio eliminado correctamente"));
     }

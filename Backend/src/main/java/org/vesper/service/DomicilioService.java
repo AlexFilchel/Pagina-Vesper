@@ -38,9 +38,23 @@ public class DomicilioService {
 
     /**
      * Agrega un nuevo domicilio al usuario autenticado.
+     * (Versión simple, sin email. Mantiene compatibilidad con controladores antiguos)
      */
     public DomicilioResponse agregarDomicilioPorAuth0Id(String auth0Id, DomicilioRequest request) {
         Usuario usuario = obtenerUsuarioPorAuth0Id(auth0Id);
+        Domicilio domicilio = new Domicilio();
+        applyRequest(domicilio, request);
+        domicilio.setUsuario(usuario);
+        Domicilio guardado = domicilioRepository.save(domicilio);
+        return toResponse(guardado);
+    }
+
+    /**
+     * Agrega un nuevo domicilio y crea el usuario automáticamente si no existe.
+     * (Versión mejorada con soporte de email extraído del JWT)
+     */
+    public DomicilioResponse agregarDomicilioPorAuth0Id(String auth0Id, String email, DomicilioRequest request) {
+        Usuario usuario = obtenerUsuarioPorAuth0Id(auth0Id, email);
         Domicilio domicilio = new Domicilio();
         applyRequest(domicilio, request);
         domicilio.setUsuario(usuario);
@@ -96,10 +110,6 @@ public class DomicilioService {
     // =========================================================
 
     private void applyRequest(Domicilio domicilio, DomicilioRequest request) {
-        domicilio.setNombre(request.getNombre());
-        domicilio.setApellido(request.getApellido());
-        domicilio.setTelefono(request.getTelefono());
-        domicilio.setDni(request.getDni());
         domicilio.setCalle(request.getCalle());
         domicilio.setNumero(request.getNumero());
         domicilio.setPiso(request.getPiso());
@@ -115,10 +125,6 @@ public class DomicilioService {
     private DomicilioResponse toResponse(Domicilio domicilio) {
         return new DomicilioResponse(
                 domicilio.getId(),
-                domicilio.getNombre(),
-                domicilio.getApellido(),
-                domicilio.getTelefono(),
-                domicilio.getDni(),
                 domicilio.getCalle(),
                 domicilio.getNumero(),
                 domicilio.getPiso(),
@@ -132,11 +138,34 @@ public class DomicilioService {
         );
     }
 
+    /**
+     * Obtiene un usuario existente o lanza excepción si no existe.
+     */
     private Usuario obtenerUsuarioPorAuth0Id(String auth0Id) {
         return usuarioRepository.findByAuth0Id(auth0Id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con Auth0 ID: " + auth0Id));
     }
 
+    /**
+     * Obtiene un usuario existente o lo crea automáticamente con datos mínimos.
+     */
+    private Usuario obtenerUsuarioPorAuth0Id(String auth0Id, String email) {
+        return usuarioRepository.findByAuth0Id(auth0Id)
+                .orElseGet(() -> usuarioRepository.save(
+                        Usuario.builder()
+                                .auth0Id(auth0Id)
+                                .email(email != null ? email : "sin_email@vesper.com")
+                                .nombre("Pendiente")
+                                .apellido("Pendiente")
+                                .telefono(0)
+                                .dni(0)
+                                .build()
+                ));
+    }
+
+    /**
+     * Valida que el domicilio pertenezca al usuario autenticado.
+     */
     private Domicilio obtenerDomicilioParaUsuario(Usuario usuario, Long domicilioId) {
         Domicilio domicilio = domicilioRepository.findById(domicilioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Domicilio no encontrado con id: " + domicilioId));
