@@ -11,12 +11,4 @@ import java.util.List;
  */
 @Repository
 public interface ImagenRepository extends JpaRepository<Imagen, Long> {
-
-    /**
-     * Obtiene todas las imágenes asociadas a un producto.
-     *
-     * @param productoId identificador del producto del que se desean obtener las imágenes.
-     * @return lista de imágenes pertenecientes al producto proporcionado.
-     */
-    List<Imagen> findByProductoId(Long productoId);
 }

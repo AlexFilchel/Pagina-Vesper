@@ -2,14 +2,20 @@ package org.vesper.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.PerfumeRequest;
 import org.vesper.dto.PerfumeResponse;
+import org.vesper.entity.Imagen;
 import org.vesper.entity.Perfume;
 import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
+import org.vesper.repo.ImagenRepository;
 import org.vesper.repo.PerfumeRepository;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,6 +23,8 @@ import java.util.stream.Collectors;
 public class PerfumeService {
 
     private final PerfumeRepository perfumeRepository;
+    private final ImagenRepository imagenRepository;
+    private final CloudinaryService cloudinaryService;
 
     // =========================================================
     // MÉTODOS PÚBLICOS
@@ -91,6 +99,28 @@ public class PerfumeService {
         perfumeRepository.deleteById(id);
     }
 
+    /**
+     * Sube una o varias imágenes, las asocia a un perfume y las guarda.
+     */
+    public List<ImagenResponse> agregarImagenesAPerfume(Long perfumeId, List<MultipartFile> files) {
+        Perfume perfume = perfumeRepository.findById(perfumeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Perfume no encontrado con id: " + perfumeId));
+
+        List<ImagenResponse> responses = new ArrayList<>();
+        for (MultipartFile file : files) {
+            Map<String, String> uploadResult = cloudinaryService.subirImagen(file);
+            Imagen imagen = new Imagen();
+            imagen.setUrl(uploadResult.get("url"));
+            imagen.setPublicId(uploadResult.get("public_id"));
+            imagen.setPerfume(perfume);
+
+            Imagen savedImagen = imagenRepository.save(imagen);
+            responses.add(new ImagenResponse(savedImagen.getId(), savedImagen.getUrl()));
+        }
+
+        return responses;
+    }
+
     // =========================================================
     // MÉTODOS DE BÚSQUEDA
     // =========================================================
@@ -117,6 +147,10 @@ public class PerfumeService {
     // =========================================================
 
     private PerfumeResponse toResponse(Perfume perfume) {
+        List<ImagenResponse> imagenResponses = perfume.getImagenes().stream()
+                .map(imagen -> new ImagenResponse(imagen.getId(), imagen.getUrl()))
+                .collect(Collectors.toList());
+
         return new PerfumeResponse(
                 perfume.getId(),
                 perfume.getNombre(),
@@ -133,7 +167,8 @@ public class PerfumeService {
                 perfume.getFragancia(),
                 perfume.getMl(),
                 perfume.getMarca(),
-                perfume.getStock()
+                perfume.getStock(),
+                imagenResponses
         );
     }
 

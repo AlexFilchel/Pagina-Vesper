@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.VapeRequest;
 import org.vesper.dto.VapeResponse;
 import org.vesper.service.VapeService;
@@ -117,5 +119,15 @@ public class VapeController {
     public ResponseEntity<Map<String, String>> eliminarVape(@PathVariable Long id) {
         vapeService.eliminarVape(id);
         return ResponseEntity.ok(Map.of("message", "Vape eliminado correctamente"));
+    }
+
+    /**
+     * Sube una o varias imágenes y las asocia a un vape existente (solo para administradores).
+     */
+    @PostMapping("/admin/vapes/{id}/imagenes")
+    public ResponseEntity<List<ImagenResponse>> agregarImagenesVape(
+            @PathVariable Long id,
+            @RequestParam("files") List<MultipartFile> files) {
+        return ResponseEntity.ok(vapeService.agregarImagenesAVape(id, files));
     }
 }

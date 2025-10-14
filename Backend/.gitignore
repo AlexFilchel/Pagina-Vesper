@@ -35,3 +35,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### H2 Database ###
+# Ignore all content in the data directory
+data/*
+# but re-include the .gitkeep file so the directory is tracked
+!data/.gitkeep

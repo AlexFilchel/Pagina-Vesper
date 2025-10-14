@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * DTO de respuesta para representar perfumes en el API.
  */
@@ -31,5 +33,6 @@ public class PerfumeResponse {
     private Double ml;
     private String marca;
     private Integer stock;
+    private List<ImagenResponse> imagenes;
 
 }

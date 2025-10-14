@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.PerfumeRequest;
 import org.vesper.dto.PerfumeResponse;
 import org.vesper.service.PerfumeService;
@@ -108,5 +110,15 @@ public class PerfumeController {
     public ResponseEntity<Map<String, String>> eliminarPerfume(@PathVariable Long id) {
         perfumeService.eliminarPerfume(id);
         return ResponseEntity.ok(Map.of("message", "Perfume eliminado correctamente"));
+    }
+
+    /**
+     * Sube una o varias imágenes y las asocia a un perfume existente (solo para administradores).
+     */
+    @PostMapping("/admin/perfumes/{id}/imagenes")
+    public ResponseEntity<List<ImagenResponse>> agregarImagenesPerfume(
+            @PathVariable Long id,
+            @RequestParam("files") List<MultipartFile> files) {
+        return ResponseEntity.ok(perfumeService.agregarImagenesAPerfume(id, files));
     }
 }

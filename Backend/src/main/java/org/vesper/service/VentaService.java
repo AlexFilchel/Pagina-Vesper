@@ -10,12 +10,15 @@ import org.vesper.dto.DetalleVentaResponse;
 import org.vesper.dto.VentaRequest;
 import org.vesper.dto.VentaResponse;
 import org.vesper.entity.DetalleVenta;
+import org.vesper.entity.Perfume;
 import org.vesper.entity.Producto;
+import org.vesper.entity.Vape;
 import org.vesper.entity.Venta;
 import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.exception.UnauthorizedException;
-import org.vesper.repo.ProductoRepository;
+import org.vesper.repo.PerfumeRepository;
+import org.vesper.repo.VapeRepository;
 import org.vesper.repo.VentaRepository;
 
 import java.util.ArrayList;
@@ -28,7 +31,8 @@ import java.util.stream.Collectors;
 public class VentaService {
 
     private final VentaRepository ventaRepository;
-    private final ProductoRepository productoRepository;
+    private final PerfumeRepository perfumeRepository;
+    private final VapeRepository vapeRepository;
 
     @Transactional
     public VentaResponse registrarVenta(VentaRequest request, Jwt jwt) {
@@ -44,12 +48,16 @@ public class VentaService {
         double total = 0.0;
 
         for (DetalleVentaRequest detalleRequest : request.getDetalles()) {
-            Producto producto = productoRepository.findById(detalleRequest.getProductoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
+            // Buscar el producto en ambos repositorios
+            Producto producto = perfumeRepository.findById(detalleRequest.getProductoId())
+                    .<Producto>map(p -> p) // Cast Optional<Perfume> to Optional<Producto>
+                    .orElseGet(() -> vapeRepository.findById(detalleRequest.getProductoId())
+                            .<Producto>map(v -> v) // Cast Optional<Vape> to Optional<Producto>
+                            .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + detalleRequest.getProductoId())));
 
             Integer cantidadSolicitada = detalleRequest.getCantidad();
             if (producto.getStock() == null || producto.getStock() < cantidadSolicitada) {
-                throw new AlreadyExistsException("Stock insuficiente");
+                throw new AlreadyExistsException("Stock insuficiente para el producto: " + producto.getNombre());
             }
 
             producto.setStock(producto.getStock() - cantidadSolicitada);
@@ -57,12 +65,18 @@ public class VentaService {
             Double precioUnitario = producto.getPrecio();
             double subtotal = precioUnitario * cantidadSolicitada;
 
-            DetalleVenta detalleVenta = DetalleVenta.builder()
-                    .producto(producto)
+            DetalleVenta.DetalleVentaBuilder detalleBuilder = DetalleVenta.builder()
                     .cantidad(cantidadSolicitada)
                     .precioUnitario(precioUnitario)
-                    .subtotal(subtotal)
-                    .build();
+                    .subtotal(subtotal);
+
+            if (producto instanceof Perfume) {
+                detalleBuilder.perfume((Perfume) producto);
+            } else if (producto instanceof Vape) {
+                detalleBuilder.vape((Vape) producto);
+            }
+
+            DetalleVenta detalleVenta = detalleBuilder.build();
             detalleVenta.setVenta(venta);
 
             detalles.add(detalleVenta);
@@ -126,7 +140,7 @@ public class VentaService {
 
     private DetalleVentaResponse toDetalleResponse(DetalleVenta detalle) {
         return DetalleVentaResponse.builder()
-                .nombreProducto(detalle.getProducto().getNombre())
+                .nombreProducto(detalle.getNombreProducto())
                 .cantidad(detalle.getCantidad())
                 .precio(detalle.getPrecioUnitario())
                 .subtotal(detalle.getSubtotal())

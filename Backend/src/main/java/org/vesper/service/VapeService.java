@@ -2,16 +2,23 @@ package org.vesper.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.VapeRequest;
 import org.vesper.dto.VapeResponse;
+import org.vesper.entity.Imagen;
 import org.vesper.entity.Sabor;
 import org.vesper.entity.Vape;
 import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.repo.SaborRepository;
 import org.vesper.repo.VapeRepository;
+import org.vesper.repo.ImagenRepository;
+
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -25,6 +32,8 @@ public class VapeService {
 
     private final VapeRepository vapeRepository;
     private final SaborRepository saborRepository;
+    private final ImagenRepository imagenRepository;
+    private final CloudinaryService cloudinaryService;
 
     // =========================================================
     // MÉTODOS CRUD
@@ -95,6 +104,28 @@ public class VapeService {
         vapeRepository.deleteById(id);
     }
 
+    /**
+     * Sube una o varias imágenes, las asocia a un vape y las guarda.
+     */
+    public List<ImagenResponse> agregarImagenesAVape(Long vapeId, List<MultipartFile> files) {
+        Vape vape = vapeRepository.findById(vapeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vape no encontrado con id: " + vapeId));
+
+        List<ImagenResponse> responses = new ArrayList<>();
+        for (MultipartFile file : files) {
+            Map<String, String> uploadResult = cloudinaryService.subirImagen(file);
+            Imagen imagen = new Imagen();
+            imagen.setUrl(uploadResult.get("url"));
+            imagen.setPublicId(uploadResult.get("public_id"));
+            imagen.setVape(vape);
+
+            Imagen savedImagen = imagenRepository.save(imagen);
+            responses.add(new ImagenResponse(savedImagen.getId(), savedImagen.getUrl()));
+        }
+
+        return responses;
+    }
+
     // =========================================================
     // MÉTODOS DE BÚSQUEDA
     // =========================================================
@@ -144,15 +175,19 @@ public class VapeService {
                 .map(Sabor::getNombre)
                 .collect(Collectors.toSet());
 
+        List<ImagenResponse> imagenResponses = vape.getImagenes().stream()
+                .map(imagen -> new ImagenResponse(imagen.getId(), imagen.getUrl()))
+                .collect(Collectors.toList());
+
         return new VapeResponse(
                 vape.getId(),
                 vape.getNombre(),
                 vape.getPrecio(),
                 vape.getDescripcion(),
-                null,
                 vape.getPitadas(),
                 vape.getModos(),
-                sabores
+                sabores,
+                imagenResponses
         );
     }
 
