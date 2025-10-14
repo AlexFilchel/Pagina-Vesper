@@ -4,85 +4,16 @@ const currencyFormatter = new Intl.NumberFormat('es-AR', {
   maximumFractionDigits: 0
 });
 
-const products = [
-  {
-    id: 1,
-    type: 'perfume',
-    name: 'Aventus',
-    brand: 'Creed',
-    description: 'Fragancia icónica con notas frescas y amaderadas pensada para destacar en cada ocasión.',
-    volume: 100,
-    gender: 'Masculino',
-    notes: 'Piña, grosella negra, bergamota',
-    family: 'Chipre Frutal',
-    piramide: {
-      salida: 'Piña, grosella negra, bergamota',
-      corazon: 'Jazmín, rosa, abedul',
-      fondo: 'Musgo de roble, vainilla, ámbar gris'
-    },
-    inspired: 'Éxito y liderazgo',
-    imagesCount: 3,
-    stock: 8,
-    price: 320000
-  },
-  {
-    id: 2,
-    type: 'decant',
-    name: 'Good Girl Decant',
-    brand: 'Carolina Herrera',
-    description: 'Decant 10 ml de uno de los perfumes más vendidos: dulce, floral y sofisticado.',
-    volume: 10,
-    gender: 'Femenino',
-    notes: 'Café, almendra, jazmín',
-    family: 'Oriental Floral',
-    piramide: {
-      salida: 'Café, almendra, limón',
-      corazon: 'Jazmín sambac, nardos',
-      fondo: 'Cacao, vainilla, tonka'
-    },
-    inspired: 'Good Girl',
-    imagesCount: 2,
-    stock: 22,
-    price: 14500
-  },
-  {
-    id: 3,
-    type: 'vape',
-    name: 'Nebula 5K',
-    brand: 'Nebula Labs',
-    description: 'Vape recargable con modos inteligentes y batería de larga duración.',
-    puffs: 5000,
-    modes: 'Smart, Boost, Eco',
-    flavors: [
-      { name: 'Frutilla Ice', stock: 12 },
-      { name: 'Menta Polar', stock: 18 },
-      { name: 'Mango Tropical', stock: 15 }
-    ],
-    price: 58000,
-    stock: 45
-  }
-];
+const API_BASE_URL = '/api';
+const ADMIN_API = `${API_BASE_URL}/admin`;
+const PUBLIC_API = `${API_BASE_URL}/public`;
+const nameCollator = new Intl.Collator('es', { sensitivity: 'base' });
+const catalogueChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('vesper-catalogue') : null;
+const flavorCatalog = new Map();
 
-const promotions = [
-  {
-    id: 1,
-    productId: 1,
-    description: '10% off en Aventus hasta agotar stock.',
-    discount: 10,
-    startDate: '2024-04-01',
-    endDate: '2024-04-30',
-    active: true
-  },
-  {
-    id: 2,
-    productId: 3,
-    description: 'Bundle de lanzamiento Nebula 5K con envío gratis.',
-    discount: 15,
-    startDate: '2024-05-15',
-    endDate: '2024-06-30',
-    active: false
-  }
-];
+let products = [];
+
+let promotions = [];
 
 const dom = {
   accordionHeaders: document.querySelectorAll('.accordion-header'),
@@ -116,36 +47,37 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPromotionsTable();
   setTodayAsDefault(dom.addPromotionForm?.querySelector('#promotionStart'));
   setupModalTriggers();
+  initializeAdminPanel();
 
-  dom.addProductForm?.addEventListener('submit', (event) => {
+  dom.addProductForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!dom.addProductForm.checkValidity()) {
       dom.addProductForm.reportValidity();
       return;
     }
-
-    const type = dom.addProductForm.productType.value;
-    if (type === '') {
-      dom.addProductForm.productType.focus();
-      return;
-    }
-
     if (!validateProductForm(dom.addProductForm)) {
       return;
     }
 
-    const newProduct = collectProductData(dom.addProductForm);
-    newProduct.id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now();
-    products.push(newProduct);
+    const productData = collectProductData(dom.addProductForm);
+    if (!productData) {
+      return;
+    }
 
-    renderProductsTable();
-    populateProductOptions();
-    dom.addProductForm.reset();
-    addProductHelpers?.reset?.();
-    showToast('Producto agregado correctamente (simulación).');
+    try {
+      const createdProduct = await createProduct(productData);
+      upsertProduct(createdProduct);
+      populateProductOptions();
+      dom.addProductForm.reset();
+      addProductHelpers?.reset?.();
+      showToast('Producto agregado correctamente.');
+      broadcastCatalogueUpdate();
+    } catch (error) {
+      handleActionError(error, 'No pudimos agregar el producto.');
+    }
   });
 
-  dom.editProductForm?.addEventListener('submit', (event) => {
+  dom.editProductForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!dom.editProductForm.checkValidity()) {
       dom.editProductForm.reportValidity();
@@ -155,20 +87,33 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const editedProduct = collectProductData(dom.editProductForm);
     const productId = dom.editProductForm.dataset.productId;
-    const index = products.findIndex((item) => String(item.id) === String(productId));
-    if (index !== -1) {
-      editedProduct.id = products[index].id;
-      products[index] = editedProduct;
-      renderProductsTable();
+    const originalType = dom.editProductForm.dataset.originalType;
+    const productData = collectProductData(dom.editProductForm);
+    if (!productData) {
+      return;
+    }
+
+    if (originalType && productData.type !== originalType) {
+      showToast('No es posible cambiar el tipo del producto desde esta pantalla.', { variant: 'error' });
+      dom.editProductForm.productType.value = originalType;
+      dom.editProductForm.productType.dispatchEvent(new Event('change', { bubbles: true }));
+      return;
+    }
+
+    try {
+      const updatedProduct = await updateProduct(productId, productData);
+      upsertProduct(updatedProduct);
       populateProductOptions();
       closeModal(dom.productModal);
-      showToast('Producto actualizado (simulación).');
+      showToast('Producto actualizado correctamente.');
+      broadcastCatalogueUpdate();
+    } catch (error) {
+      handleActionError(error, 'No pudimos actualizar el producto.');
     }
   });
 
-  dom.addPromotionForm?.addEventListener('submit', (event) => {
+  dom.addPromotionForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!dom.addPromotionForm.checkValidity()) {
       dom.addPromotionForm.reportValidity();
@@ -178,16 +123,20 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const promotion = collectPromotionData(dom.addPromotionForm);
-    promotion.id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now();
-    promotions.push(promotion);
-    renderPromotionsTable();
-    dom.addPromotionForm.reset();
-    setTodayAsDefault(dom.addPromotionForm.querySelector('#promotionStart'));
-    showToast('Promoción agregada (simulación).');
+    const promotionPayload = collectPromotionData(dom.addPromotionForm);
+
+    try {
+      const createdPromotion = await createPromotion(promotionPayload);
+      upsertPromotion(createdPromotion);
+      dom.addPromotionForm.reset();
+      setTodayAsDefault(dom.addPromotionForm.querySelector('#promotionStart'));
+      showToast('Promoción agregada correctamente.');
+    } catch (error) {
+      handleActionError(error, 'No pudimos agregar la promoción.');
+    }
   });
 
-  dom.editPromotionForm?.addEventListener('submit', (event) => {
+  dom.editPromotionForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!dom.editPromotionForm.checkValidity()) {
       dom.editPromotionForm.reportValidity();
@@ -197,15 +146,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const promotion = collectPromotionData(dom.editPromotionForm);
+    const promotionPayload = collectPromotionData(dom.editPromotionForm);
     const promotionId = dom.editPromotionForm.dataset.promotionId;
-    const index = promotions.findIndex((item) => String(item.id) === String(promotionId));
-    if (index !== -1) {
-      promotion.id = promotions[index].id;
-      promotions[index] = promotion;
-      renderPromotionsTable();
+
+    try {
+      const updatedPromotion = await updatePromotion(promotionId, promotionPayload);
+      upsertPromotion(updatedPromotion);
       closeModal(dom.promotionModal);
-      showToast('Promoción actualizada (simulación).');
+      showToast('Promoción actualizada correctamente.');
+    } catch (error) {
+      handleActionError(error, 'No pudimos actualizar la promoción.');
     }
   });
 });
@@ -327,12 +277,14 @@ function setupProductForm(form) {
         const vapePuffs = form.querySelector('input[name="vapePuffs"]');
         const vapeModes = form.querySelector('input[name="vapeModes"]');
         const vapePrice = form.querySelector('input[name="vapePrice"]');
+        const vapeStock = form.querySelector('input[name="vapeStock"]');
         if (vapeName) vapeName.value = product.name || '';
         if (vapeBrand) vapeBrand.value = product.brand || '';
         if (vapeDescription) vapeDescription.value = product.description || '';
         if (vapePuffs) vapePuffs.value = product.puffs ?? '';
         if (vapeModes) vapeModes.value = product.modes || '';
         if (vapePrice) vapePrice.value = product.price ?? '';
+        if (vapeStock) vapeStock.value = product.stock ?? '';
         const flavors = product.flavors || [];
         if (flavorSelect) {
           flavorSelect.value = String(flavors.length);
@@ -415,58 +367,78 @@ function validateProductForm(form) {
 }
 
 function collectProductData(form) {
-  const type = form.productType.value;
+  if (!form) return null;
+  const type = form.productType?.value;
+  if (!type) {
+    showToast('Seleccioná un tipo de producto.', { variant: 'error' });
+    return null;
+  }
+
   if (type === 'vape') {
     const flavorSelect = form.querySelector('select[name="vapeFlavorCount"]');
-    const flavorCount = Number(flavorSelect?.value || 0);
+    const flavorCount = Number.parseInt(flavorSelect?.value ?? '0', 10) || 0;
     const flavors = [];
     for (let i = 1; i <= flavorCount; i += 1) {
       const nameField = form.querySelector(`[name="flavorName${i}"]`);
       const stockField = form.querySelector(`[name="flavorStock${i}"]`);
-      flavors.push({
-        name: nameField?.value || '',
-        stock: Number(stockField?.value || 0)
-      });
+      const flavorName = cleanText(nameField?.value);
+      const flavorStock = toInteger(stockField?.value) ?? 0;
+      flavors.push({ name: flavorName, stock: flavorStock });
     }
-    const totalStock = flavors.reduce((acc, flavor) => acc + (Number.isFinite(flavor.stock) ? flavor.stock : 0), 0);
+
+    const totalStock = toInteger(form.vapeStock?.value) ?? 0;
+
     return {
-      type,
-      name: form.vapeName?.value || '',
-      brand: form.vapeBrand?.value || '',
-      description: form.vapeDescription?.value || '',
-      puffs: Number(form.vapePuffs?.value || 0),
-      modes: form.vapeModes?.value || '',
+      type: 'vape',
+      request: {
+        nombre: cleanText(form.vapeName?.value),
+        marca: cleanText(form.vapeBrand?.value),
+        descripcion: cleanText(form.vapeDescription?.value),
+        precio: toNumber(form.vapePrice?.value) ?? 0,
+        stock: totalStock,
+        pitadas: toInteger(form.vapePuffs?.value),
+        modos: cleanText(form.vapeModes?.value)
+      },
       flavors,
-      price: Number(form.vapePrice?.value || 0),
       stock: totalStock
     };
   }
 
+  const volumeValue = toNumber(form.volume?.value);
+
   return {
     type,
-    name: form.name?.value || '',
-    brand: form.brand?.value || '',
-    description: form.description?.value || '',
-    volume: Number(form.volume?.value || 0),
-    gender: form.gender?.value || '',
-    stock: Number(form.stock?.value || 0),
-    notes: form.notes?.value || '',
-    family: form.family?.value || '',
-    piramide: {
-      salida: form.piramideSalida?.value || '',
-      corazon: form.piramideCorazon?.value || '',
-      fondo: form.piramideFondo?.value || ''
-    },
-    inspired: form.inspired?.value || '',
-    price: Number(form.price?.value || 0)
+    request: {
+      nombre: cleanText(form.name?.value),
+      marca: cleanText(form.brand?.value),
+      descripcion: cleanText(form.description?.value),
+      precio: toNumber(form.price?.value) ?? 0,
+      stock: toInteger(form.stock?.value) ?? 0,
+      volumen: volumeValue != null ? `${volumeValue} ml` : cleanText(form.volume?.value),
+      ml: volumeValue,
+      genero: cleanText(form.gender?.value),
+      notasPrincipales: cleanText(form.notes?.value),
+      salida: cleanText(form.piramideSalida?.value),
+      corazon: cleanText(form.piramideCorazon?.value),
+      fondo: cleanText(form.piramideFondo?.value),
+      inspiracion: cleanText(form.inspired?.value),
+      fragancia: cleanText(form.family?.value),
+      decant: type === 'decant'
+    }
   };
 }
 
 function renderProductsTable() {
   if (!dom.productsTableBody) return;
   dom.productsTableBody.innerHTML = '';
+  if (!products.length) {
+    renderEmptyStateRow(dom.productsTableBody, 'Todavía no cargaste productos.', 6);
+    return;
+  }
+
   products.forEach((product) => {
     const row = document.createElement('tr');
+    row.dataset.productId = String(product.id);
     const nameCell = document.createElement('td');
     nameCell.textContent = product.name ?? '';
     row.appendChild(nameCell);
@@ -480,7 +452,8 @@ function renderProductsTable() {
     row.appendChild(typeCell);
 
     const priceCell = document.createElement('td');
-    priceCell.textContent = currencyFormatter.format(product.price || 0);
+    const priceValue = Number.isFinite(product.price) ? product.price : 0;
+    priceCell.textContent = currencyFormatter.format(priceValue);
     row.appendChild(priceCell);
 
     const stockCell = document.createElement('td');
@@ -519,19 +492,24 @@ function renderProductsTable() {
   });
 
   dom.productsTableBody.querySelectorAll('.js-delete-product').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const productId = button.dataset.productId;
       const product = products.find((item) => String(item.id) === String(productId));
       if (!product) return;
       const shouldDelete = window.confirm(`¿Eliminar "${product.name}" de forma permanente?`);
-      if (shouldDelete) {
-        const index = products.findIndex((item) => String(item.id) === String(productId));
-        if (index !== -1) {
-          products.splice(index, 1);
-          renderProductsTable();
-          populateProductOptions();
-          showToast('Producto eliminado (simulación).');
-        }
+      if (!shouldDelete) {
+        return;
+      }
+
+      try {
+        await deleteProduct(product);
+        products = products.filter((item) => String(item.id) !== String(productId));
+        renderProductsTable();
+        populateProductOptions();
+        showToast('Producto eliminado correctamente.');
+        broadcastCatalogueUpdate();
+      } catch (error) {
+        handleActionError(error, 'No pudimos eliminar el producto.');
       }
     });
   });
@@ -547,13 +525,19 @@ function formatProductType(type) {
 function renderPromotionsTable() {
   if (!dom.promotionsTableBody) return;
   dom.promotionsTableBody.innerHTML = '';
+  if (!promotions.length) {
+    renderEmptyStateRow(dom.promotionsTableBody, 'Aún no creaste promociones.', 7);
+    return;
+  }
+
   promotions.forEach((promotion) => {
-    const product = products.find((item) => String(item.id) === String(promotion.productId));
     const statusClass = promotion.active ? 'status-badge is-active' : 'status-badge is-inactive';
     const statusLabel = promotion.active ? 'ACTIVA' : 'INACTIVA';
     const row = document.createElement('tr');
+    row.dataset.promotionId = String(promotion.id);
+
     const productCell = document.createElement('td');
-    productCell.textContent = product?.name ?? 'Producto eliminado';
+    productCell.textContent = promotion.productName || 'Producto eliminado';
     row.appendChild(productCell);
 
     const descriptionCell = document.createElement('td');
@@ -561,7 +545,8 @@ function renderPromotionsTable() {
     row.appendChild(descriptionCell);
 
     const discountCell = document.createElement('td');
-    discountCell.textContent = `${promotion.discount}%`;
+    const discountValue = Number.isFinite(promotion.discount) ? promotion.discount : 0;
+    discountCell.textContent = `${discountValue}%`;
     row.appendChild(discountCell);
 
     const startCell = document.createElement('td');
@@ -616,29 +601,38 @@ function renderPromotionsTable() {
   });
 
   dom.promotionsTableBody.querySelectorAll('.js-toggle-promotion').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const promotionId = button.dataset.promotionId;
       const promotion = promotions.find((item) => String(item.id) === String(promotionId));
       if (!promotion) return;
-      promotion.active = !promotion.active;
-      renderPromotionsTable();
-      showToast(`Promoción ${promotion.active ? 'activada' : 'desactivada'} (simulación).`);
+
+      try {
+        const updatedPromotion = await togglePromotion(promotion);
+        upsertPromotion(updatedPromotion);
+        showToast(`Promoción ${updatedPromotion.active ? 'activada' : 'desactivada'} correctamente.`);
+      } catch (error) {
+        handleActionError(error, 'No pudimos actualizar el estado de la promoción.');
+      }
     });
   });
 
   dom.promotionsTableBody.querySelectorAll('.js-delete-promotion').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const promotionId = button.dataset.promotionId;
       const promotion = promotions.find((item) => String(item.id) === String(promotionId));
       if (!promotion) return;
       const shouldDelete = window.confirm('¿Eliminar esta promoción?');
-      if (shouldDelete) {
-        const index = promotions.findIndex((item) => String(item.id) === String(promotionId));
-        if (index !== -1) {
-          promotions.splice(index, 1);
-          renderPromotionsTable();
-          showToast('Promoción eliminada (simulación).');
-        }
+      if (!shouldDelete) {
+        return;
+      }
+
+      try {
+        await deletePromotion(promotion);
+        promotions = promotions.filter((item) => String(item.id) !== String(promotionId));
+        renderPromotionsTable();
+        showToast('Promoción eliminada correctamente.');
+      } catch (error) {
+        handleActionError(error, 'No pudimos eliminar la promoción.');
       }
     });
   });
@@ -674,13 +668,14 @@ function populateProductOptions() {
 }
 
 function collectPromotionData(form) {
+  if (!form) return null;
   return {
-    productId: form.promotionProduct.value,
-    description: form.promotionDescription.value,
-    discount: Number(form.promotionDiscount.value || 0),
-    startDate: form.promotionStart.value,
-    endDate: form.promotionEnd.value,
-    active: form.promotionActive.checked
+    productoId: toInteger(form.promotionProduct?.value),
+    descripcion: cleanText(form.promotionDescription?.value),
+    descuento: toNumber(form.promotionDiscount?.value) ?? 0,
+    fechaInicio: form.promotionStart?.value || null,
+    fechaFin: form.promotionEnd?.value || null,
+    activo: Boolean(form.promotionActive?.checked)
   };
 }
 
@@ -692,6 +687,7 @@ function openProductModal(productId) {
   }
   editProductHelpers?.fill(product);
   dom.editProductForm.dataset.productId = product.id;
+  dom.editProductForm.dataset.originalType = product.type;
   openModal(dom.productModal);
 }
 
@@ -793,20 +789,526 @@ function enhanceSearchableSelect(select) {
   });
 }
 
-function showToast(message) {
+async function initializeAdminPanel() {
+  try {
+    await waitForAuth0Ready();
+    const isAuthenticated = await ensureAuthenticated();
+    if (!isAuthenticated) {
+      showToast('Necesitás iniciar sesión para acceder al panel administrativo.', {
+        variant: 'error',
+        duration: 4500
+      });
+      return;
+    }
+
+    await refreshFlavors();
+    await refreshProducts();
+    await refreshPromotions();
+  } catch (error) {
+    handleActionError(error, 'No pudimos cargar la información inicial.');
+  }
+}
+
+async function waitForAuth0Ready() {
+  if (typeof window.getAuth0Client === 'function') {
+    return window.getAuth0Client();
+  }
+
+  return new Promise((resolve, reject) => {
+    const onReady = (event) => {
+      cleanup();
+      resolve(event.detail?.client);
+    };
+    const onError = (event) => {
+      cleanup();
+      reject(event.detail?.error || new Error('No se pudo inicializar Auth0'));
+    };
+    const cleanup = () => {
+      window.removeEventListener('auth0-ready', onReady);
+      window.removeEventListener('auth0-error', onError);
+    };
+
+    window.addEventListener('auth0-ready', onReady, { once: true });
+    window.addEventListener('auth0-error', onError, { once: true });
+  });
+}
+
+async function ensureAuthenticated() {
+  try {
+    const client = await waitForAuth0Ready();
+    if (!client) {
+      return false;
+    }
+    return client.isAuthenticated();
+  } catch (error) {
+    console.error('No se pudo verificar la sesión de Auth0', error);
+    return false;
+  }
+}
+
+async function getAccessToken() {
+  if (typeof window.getAuth0Token !== 'function') {
+    throw new Error('Auth0 no está disponible');
+  }
+  return window.getAuth0Token();
+}
+
+async function refreshProducts() {
+  try {
+    const [perfumesResponse, vapesResponse] = await Promise.all([
+      apiRequest(`${ADMIN_API}/perfumes`, { requiresAuth: true }),
+      apiRequest(`${ADMIN_API}/vapes`, { requiresAuth: true })
+    ]);
+
+    const normalized = [];
+
+    if (Array.isArray(perfumesResponse)) {
+      perfumesResponse.forEach((perfume) => {
+        const normalizedPerfume = normalizePerfume(perfume);
+        if (normalizedPerfume) {
+          normalized.push(normalizedPerfume);
+        }
+      });
+    }
+
+    if (Array.isArray(vapesResponse)) {
+      vapesResponse.forEach((vape) => {
+        const normalizedVape = normalizeVape(vape);
+        if (normalizedVape) {
+          normalized.push(normalizedVape);
+        }
+      });
+    }
+
+    products = normalized.sort((a, b) => nameCollator.compare(a.name || '', b.name || ''));
+    renderProductsTable();
+    populateProductOptions();
+  } catch (error) {
+    handleActionError(error, 'No pudimos obtener los productos.');
+  }
+}
+
+async function refreshPromotions() {
+  try {
+    const response = await apiRequest(`${ADMIN_API}/promociones`, { requiresAuth: true });
+    if (Array.isArray(response)) {
+      promotions = response
+        .map((promotion) => normalizePromotion(promotion))
+        .filter(Boolean)
+        .sort((a, b) => {
+          const dateComparison = (a.startDate || '').localeCompare(b.startDate || '');
+          if (dateComparison !== 0) {
+            return dateComparison;
+          }
+          return nameCollator.compare(a.productName || '', b.productName || '');
+        });
+    } else {
+      promotions = [];
+    }
+    renderPromotionsTable();
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      promotions = [];
+      renderPromotionsTable();
+      return;
+    }
+    handleActionError(error, 'No pudimos obtener las promociones.');
+  }
+}
+
+async function refreshFlavors() {
+  try {
+    const response = await apiRequest(`${PUBLIC_API}/sabores`);
+    flavorCatalog.clear();
+    if (Array.isArray(response)) {
+      response.forEach((flavor) => {
+        if (flavor?.nombre && flavor?.id != null) {
+          flavorCatalog.set(flavor.nombre.toLowerCase(), {
+            id: flavor.id,
+            nombre: flavor.nombre
+          });
+        }
+      });
+    }
+  } catch (error) {
+    console.warn('No se pudieron cargar los sabores disponibles', error);
+  }
+}
+
+function upsertProduct(product) {
+  if (!product) return;
+  const index = products.findIndex((item) => String(item.id) === String(product.id));
+  if (index !== -1) {
+    products[index] = product;
+  } else {
+    products.push(product);
+  }
+  products.sort((a, b) => nameCollator.compare(a.name || '', b.name || ''));
+  renderProductsTable();
+}
+
+function upsertPromotion(promotion) {
+  if (!promotion) return;
+  const index = promotions.findIndex((item) => String(item.id) === String(promotion.id));
+  if (index !== -1) {
+    promotions[index] = promotion;
+  } else {
+    promotions.push(promotion);
+  }
+  promotions.sort((a, b) => {
+    const dateComparison = (a.startDate || '').localeCompare(b.startDate || '');
+    if (dateComparison !== 0) {
+      return dateComparison;
+    }
+    return nameCollator.compare(a.productName || '', b.productName || '');
+  });
+  renderPromotionsTable();
+}
+
+function normalizePerfume(perfume) {
+  if (!perfume) return null;
+  const mlValue = toNumber(perfume.ml ?? perfume.ML);
+  const volumeLabel = perfume.volumen || (mlValue != null ? `${mlValue} ml` : '');
+
+  return {
+    id: perfume.id,
+    type: perfume.decant ? 'decant' : 'perfume',
+    name: cleanText(perfume.nombre) || 'Sin nombre',
+    brand: cleanText(perfume.marca),
+    description: perfume.descripcion ?? '',
+    volume: mlValue,
+    volumeLabel,
+    gender: cleanText(perfume.genero),
+    notes: cleanText(perfume.notasPrincipales),
+    family: cleanText(perfume.fragancia),
+    piramide: {
+      salida: cleanText(perfume.salida),
+      corazon: cleanText(perfume.corazon),
+      fondo: cleanText(perfume.fondo)
+    },
+    inspired: cleanText(perfume.inspiracion),
+    price: toNumber(perfume.precio) ?? 0,
+    stock: toInteger(perfume.stock) ?? 0,
+    apiResource: 'perfumes'
+  };
+}
+
+function normalizeVape(vape) {
+  if (!vape) return null;
+  const flavors = [];
+  if (Array.isArray(vape.sabores) || (typeof vape.sabores === 'object' && vape.sabores !== null)) {
+    const flavorList = Array.isArray(vape.sabores) ? vape.sabores : Array.from(vape.sabores);
+    flavorList.forEach((flavor) => {
+      const flavorName = typeof flavor === 'string' ? flavor : flavor?.nombre;
+      if (!flavorName) return;
+      const catalogEntry = flavorCatalog.get(flavorName.toLowerCase());
+      flavors.push({
+        name: flavorName,
+        id: catalogEntry?.id ?? null,
+        stock: null
+      });
+    });
+  }
+
+  return {
+    id: vape.id,
+    type: 'vape',
+    name: cleanText(vape.nombre) || 'Sin nombre',
+    brand: cleanText(vape.marca),
+    description: vape.descripcion ?? '',
+    puffs: toInteger(vape.pitadas),
+    modes: cleanText(vape.modos),
+    flavors,
+    price: toNumber(vape.precio) ?? 0,
+    stock: toInteger(vape.stock) ?? 0,
+    apiResource: 'vapes'
+  };
+}
+
+function normalizePromotion(promotion) {
+  if (!promotion) return null;
+  const product = promotion.producto || promotion.product;
+  const productId = product?.id ?? promotion.productId ?? promotion.productoId ?? null;
+  const productName = product?.nombre || promotion.productName || '';
+
+  return {
+    id: promotion.id,
+    productId,
+    productName,
+    description: promotion.descripcion ?? promotion.description ?? '',
+    discount: toNumber(promotion.descuento ?? promotion.discount) ?? 0,
+    startDate: promotion.fechaInicio ?? promotion.startDate ?? '',
+    endDate: promotion.fechaFin ?? promotion.endDate ?? '',
+    active: Boolean(promotion.activo ?? promotion.active)
+  };
+}
+
+async function createProduct(productData) {
+  if (!productData) return null;
+
+  if (productData.type === 'vape') {
+    const flavorIds = await ensureFlavorIds(productData.flavors);
+    const payload = {
+      ...productData.request,
+      saboresIds: flavorIds
+    };
+    const response = await apiRequest(`${ADMIN_API}/vapes`, {
+      method: 'POST',
+      body: payload,
+      requiresAuth: true
+    });
+    return normalizeVape(response);
+  }
+
+  const payload = {
+    ...productData.request,
+    decant: productData.request.decant ?? false
+  };
+
+  const response = await apiRequest(`${ADMIN_API}/perfumes`, {
+    method: 'POST',
+    body: payload,
+    requiresAuth: true
+  });
+  return normalizePerfume(response);
+}
+
+async function updateProduct(productId, productData) {
+  if (!productId || !productData) return null;
+
+  if (productData.type === 'vape') {
+    const flavorIds = await ensureFlavorIds(productData.flavors);
+    const payload = {
+      ...productData.request,
+      saboresIds: flavorIds
+    };
+    const response = await apiRequest(`${ADMIN_API}/vapes/${productId}`, {
+      method: 'PUT',
+      body: payload,
+      requiresAuth: true
+    });
+    return normalizeVape(response);
+  }
+
+  const payload = {
+    ...productData.request,
+    decant: productData.request.decant ?? false
+  };
+
+  const response = await apiRequest(`${ADMIN_API}/perfumes/${productId}`, {
+    method: 'PUT',
+    body: payload,
+    requiresAuth: true
+  });
+  return normalizePerfume(response);
+}
+
+async function deleteProduct(product) {
+  if (!product) return;
+  const resource = product.type === 'vape' ? 'vapes' : 'perfumes';
+  await apiRequest(`${ADMIN_API}/${resource}/${product.id}`, {
+    method: 'DELETE',
+    requiresAuth: true
+  });
+}
+
+async function createPromotion(payload) {
+  if (!payload) return null;
+  const response = await apiRequest(`${ADMIN_API}/promociones`, {
+    method: 'POST',
+    body: payload,
+    requiresAuth: true
+  });
+  return normalizePromotion(response);
+}
+
+async function updatePromotion(promotionId, payload) {
+  if (!promotionId || !payload) return null;
+  const response = await apiRequest(`${ADMIN_API}/promociones/${promotionId}`, {
+    method: 'PUT',
+    body: payload,
+    requiresAuth: true
+  });
+  return normalizePromotion(response);
+}
+
+async function togglePromotion(promotion) {
+  const payload = {
+    productoId: promotion.productId,
+    descripcion: promotion.description,
+    descuento: promotion.discount,
+    fechaInicio: promotion.startDate,
+    fechaFin: promotion.endDate,
+    activo: !promotion.active
+  };
+  return updatePromotion(promotion.id, payload);
+}
+
+async function deletePromotion(promotion) {
+  if (!promotion) return;
+  await apiRequest(`${ADMIN_API}/promociones/${promotion.id}`, {
+    method: 'DELETE',
+    requiresAuth: true
+  });
+}
+
+async function ensureFlavorIds(flavors = []) {
+  const ids = [];
+  for (const flavor of flavors) {
+    const name = cleanText(flavor?.name);
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (flavorCatalog.has(key)) {
+      ids.push(flavorCatalog.get(key).id);
+      continue;
+    }
+
+    try {
+      const response = await apiRequest(`${ADMIN_API}/sabores`, {
+        method: 'POST',
+        body: { nombre: name },
+        requiresAuth: true
+      });
+      if (response?.id != null && response?.nombre) {
+        flavorCatalog.set(response.nombre.toLowerCase(), {
+          id: response.id,
+          nombre: response.nombre
+        });
+        ids.push(response.id);
+      }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new Error(`No se pudo crear el sabor "${name}".`);
+    }
+  }
+  return ids;
+}
+
+function broadcastCatalogueUpdate() {
+  if (!catalogueChannel) return;
+  try {
+    catalogueChannel.postMessage({ type: 'catalogue-updated', timestamp: Date.now() });
+  } catch (error) {
+    console.warn('No se pudo notificar la actualización del catálogo', error);
+  }
+}
+
+function handleActionError(error, fallbackMessage) {
+  if (error instanceof ApiError) {
+    if (error.status === 401 || error.status === 403) {
+      showToast('No tenés permisos para realizar esta acción.', { variant: 'error', duration: 4200 });
+      return;
+    }
+    const message = error.message || fallbackMessage;
+    showToast(message, { variant: 'error' });
+    return;
+  }
+
+  console.error(fallbackMessage, error);
+  showToast(fallbackMessage, { variant: 'error' });
+}
+
+async function apiRequest(url, { method = 'GET', body, requiresAuth = false } = {}) {
+  const headers = { Accept: 'application/json' };
+  let payload;
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+    payload = JSON.stringify(body);
+  }
+
+  if (requiresAuth) {
+    const token = await getAccessToken();
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, { method, headers, body: payload });
+  const contentType = response.headers.get('content-type') || '';
+  let data = null;
+
+  if (response.status !== 204) {
+    if (contentType.includes('application/json')) {
+      data = await response.json().catch(() => null);
+    } else {
+      data = await response.text();
+    }
+  }
+
+  if (!response.ok) {
+    const message = typeof data === 'object' && data !== null
+      ? data.message || data.error || (Array.isArray(data.errors) ? data.errors[0] : null)
+      : null;
+    throw new ApiError(message || `Error ${response.status}`, {
+      status: response.status,
+      body: data
+    });
+  }
+
+  return data;
+}
+
+class ApiError extends Error {
+  constructor(message, { status, body } = {}) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.body = body;
+  }
+}
+
+function renderEmptyStateRow(target, message, columns = 6) {
+  const row = document.createElement('tr');
+  row.className = 'empty-state-row';
+  const cell = document.createElement('td');
+  cell.colSpan = columns;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'empty-state';
+  const icon = document.createElement('span');
+  icon.className = 'material-symbols-outlined';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = 'inventory_2';
+  const text = document.createElement('p');
+  text.textContent = message;
+  wrapper.append(icon, text);
+  cell.appendChild(wrapper);
+  row.appendChild(cell);
+  target.appendChild(row);
+}
+
+function cleanText(value) {
+  if (typeof value !== 'string') return '';
+  return value.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function toNumber(value) {
+  if (value == null || value === '') return null;
+  const normalized = String(value).replace(',', '.');
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toInteger(value) {
+  if (value == null || value === '') return null;
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function showToast(message, options = {}) {
   const container = document.querySelector('.cart-toast-layer');
   if (!container) return;
+  const { variant = 'success', duration = 3200 } = options;
   const toast = document.createElement('div');
-  toast.className = 'admin-toast';
+  toast.className = `admin-toast admin-toast--${variant}`;
   toast.textContent = message;
   container.appendChild(toast);
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     toast.classList.add('is-visible');
-  }, 50);
+  });
   setTimeout(() => {
     toast.classList.remove('is-visible');
     setTimeout(() => toast.remove(), 250);
-  }, 3200);
+  }, duration);
 }
 
 (function initToastStyles() {
@@ -819,7 +1321,6 @@ function showToast(message) {
       position: fixed;
       bottom: 24px;
       right: 24px;
-      background: rgba(0, 74, 173, 0.95);
       color: #fff;
       padding: 14px 22px;
       border-radius: 14px;
@@ -828,6 +1329,16 @@ function showToast(message) {
       transform: translateY(12px);
       transition: opacity 0.25s ease, transform 0.25s ease;
       z-index: 5000;
+      background: rgba(0, 74, 173, 0.92);
+    }
+    .admin-toast--success {
+      background: rgba(16, 185, 129, 0.95);
+    }
+    .admin-toast--error {
+      background: rgba(220, 53, 69, 0.95);
+    }
+    .admin-toast--info {
+      background: rgba(59, 130, 246, 0.95);
     }
     .admin-toast.is-visible {
       opacity: 1;
