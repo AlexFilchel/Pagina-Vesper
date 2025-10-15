@@ -64,7 +64,7 @@
     const fetchOptions = { method, headers: requestHeaders };
 
     if (body instanceof FormData) {
-      requestHeaders.delete('Content-Type'); // ✅ elimina el header si venía heredado
+      requestHeaders.delete('Content-Type'); 
       fetchOptions.body = body;
     } else if (body !== undefined && body !== null) {
       requestHeaders.set('Content-Type', 'application/json');
