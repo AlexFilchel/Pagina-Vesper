@@ -93,6 +93,47 @@ public class VapeService {
         return toResponse(actualizado);
     }
 
+    public VapeResponse actualizarVape(Long id, VapeRequest request, List<MultipartFile> files) {
+    Vape existente = vapeRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Vape no encontrado con id: " + id));
+
+    existente.setNombre(request.getNombre());
+    existente.setPrecio(request.getPrecio());
+    existente.setDescripcion(request.getDescripcion());
+    existente.setMarca(request.getMarca());
+    existente.setStock(request.getStock() != null ? request.getStock() : existente.getStock());
+    existente.setPitadas(request.getPitadas());
+    existente.setModos(request.getModos());
+
+    // 🔹 Actualizar sabores
+    if (request.getSabores() != null) {
+        Set<Sabor> nuevosSabores = request.getSabores().stream()
+                .filter(Objects::nonNull)
+                .map(nombre -> saborRepository.findByNombreIgnoreCase(nombre)
+                        .orElseGet(() -> saborRepository.save(Sabor.builder().nombre(nombre).build())))
+                .collect(Collectors.toSet());
+        existente.setSabores(nuevosSabores);
+    }
+
+    // 🔹 Si se suben nuevas imágenes, reemplazarlas
+    if (files != null && !files.isEmpty()) {
+        List<Imagen> nuevasImagenes = new ArrayList<>();
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) continue;
+            Map<String, String> uploadResult = cloudinaryService.subirImagen(file);
+            Imagen imagen = new Imagen();
+            imagen.setUrl(uploadResult.get("url"));
+            imagen.setPublicId(uploadResult.get("public_id"));
+            nuevasImagenes.add(imagen);
+        }
+        existente.setImagenes(nuevasImagenes);
+    }
+
+    Vape actualizado = vapeRepository.save(existente);
+    return toResponse(actualizado);
+}
+
+
     public void eliminarVape(Long id) {
         if (!vapeRepository.existsById(id)) {
             throw new ResourceNotFoundException("Vape no encontrado con id: " + id);

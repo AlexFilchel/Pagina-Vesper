@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         );
 
         // Adjuntar imágenes (opcional)
-        const fileInput = dom.addProductForm.querySelector('input[type="file"]');
+        const fileInput = dom.addProductForm.querySelector('#vapeImages');
         if (fileInput && fileInput.files.length > 0) {
           for (const file of fileInput.files) formData.append("files", file);
         }
@@ -112,10 +112,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         const mapped = mapVapeResponse(created, newProduct);
         upsertProduct(mapped);
       } else {
-        // Perfumes y Decants siguen igual
-        const created = await client.createPerfume(toPerfumeRequest(newProduct));
-        const mapped = mapPerfumeResponse(created, newProduct);
-        upsertProduct(mapped);
+ const producto = toPerfumeRequest(newProduct);
+
+const formData = new FormData();
+formData.append(
+  "producto",
+  new Blob([JSON.stringify(producto)], { type: "application/json" })
+);
+
+// ✅ Selecciona dinámicamente el input correcto
+let fileInput;
+if (newProduct.type === 'vape') {
+  fileInput = dom.addProductForm.querySelector('#vapeImages');
+} else {
+  fileInput = dom.addProductForm.querySelector('#productImages');
+}
+
+if (fileInput && fileInput.files.length > 0) {
+  for (const file of fileInput.files) {
+    formData.append("files", file);
+  }
+}
+
+const created = await client.request("/admin/perfumes", {
+  method: "POST",
+  body: formData,
+  authenticated: true
+});
+
+const mapped = mapPerfumeResponse(created, newProduct);
+upsertProduct(mapped);
+
       }
 
       renderProductsTable();
@@ -713,7 +740,9 @@ function renderProductsTable() {
     editButton.type = 'button';
     editButton.className = 'btn btn--ghost js-edit-product';
     editButton.dataset.productId = String(product.id);
+    editButton.dataset.productType = product.type; // 🔹 AGREGAR ESTO
     editButton.textContent = 'Modificar';
+
 
     const deleteButton = document.createElement('button');
     deleteButton.type = 'button';
@@ -732,7 +761,8 @@ function renderProductsTable() {
   dom.productsTableBody.querySelectorAll('.js-edit-product').forEach((button) => {
     button.addEventListener('click', () => {
       const productId = button.dataset.productId;
-      openProductModal(productId);
+      const productType = button.dataset.productType;
+      openProductModal(productId, productType);
     });
   });
 
@@ -818,8 +848,9 @@ function renderPromotionsTable() {
 
     const editButton = document.createElement('button');
     editButton.type = 'button';
-    editButton.className = 'btn btn--ghost js-edit-promotion';
-    editButton.dataset.promotionId = String(promotion.id);
+    editButton.className = 'btn btn--ghost js-edit-product';
+    editButton.dataset.productId = String(product.id);
+    editButton.dataset.productType = product.type; 
     editButton.textContent = 'Modificar';
 
     const toggleButton = document.createElement('button');
@@ -916,8 +947,11 @@ function collectPromotionData(form) {
   };
 }
 
-function openProductModal(productId) {
-  const product = products.find((item) => String(item.id) === String(productId));
+function openProductModal(productId, productType) {
+  const product = products.find(
+    (item) => String(item.id) === String(productId) && item.type === productType
+  ); // 🔹 ahora busca por id + tipo
+
   if (!product) return;
   if (!editProductHelpers) {
     editProductHelpers = setupProductForm(dom.editProductForm);
@@ -925,6 +959,7 @@ function openProductModal(productId) {
   editProductHelpers?.fill(product);
   dom.editProductForm.dataset.productId = product.id;
   dom.editProductForm.dataset.productType = product.type;
+
   const typeSelect = dom.editProductForm?.querySelector('select[name="productType"]');
   if (typeSelect) {
     typeSelect.value = product.type;
@@ -932,6 +967,7 @@ function openProductModal(productId) {
   }
   openModal(dom.productModal);
 }
+
 
 function openPromotionModal(promotionId) {
   const promotion = promotions.find((item) => String(item.id) === String(promotionId));

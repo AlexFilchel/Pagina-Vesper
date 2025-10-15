@@ -106,12 +106,15 @@ public class VapeController {
     /**
      * Actualiza un vape existente (solo administradores).
      */
-    @PutMapping("/admin/vapes/{id}")
+    @PutMapping(value = "/admin/vapes/{id}", consumes = {"multipart/form-data"})
     public ResponseEntity<VapeResponse> actualizarVape(
-            @PathVariable Long id,
-            @Valid @RequestBody VapeRequest request) {
-        return ResponseEntity.ok(vapeService.actualizarVape(id, request));
+        @PathVariable Long id,
+        @RequestPart("producto") @Valid VapeRequest request,
+        @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+
+    return ResponseEntity.ok(vapeService.actualizarVape(id, request, files));
     }
+
 
     /**
      * Elimina un vape (solo administradores).
