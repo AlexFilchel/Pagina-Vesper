@@ -50,6 +50,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   renderPromotionsTable();
 
+  // ============================
+  // 📦 CREAR PRODUCTO
+  // ============================
   dom.addProductForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!dom.addProductForm.checkValidity()) {
@@ -72,11 +75,44 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!client) throw new Error('Cliente de API no disponible.');
 
       const newProduct = collectProductData(dom.addProductForm);
+
       if (newProduct.type === 'vape') {
-        const created = await client.createVape(toVapeRequest(newProduct));
+        // ✅ Construir el objeto completo del producto
+        const producto = {
+          nombre: newProduct.name,
+          marca: newProduct.brand,
+          descripcion: newProduct.description,
+          precio: newProduct.price,
+          stock: newProduct.stock,
+          pitadas: newProduct.puffs,
+          modos: newProduct.modes,
+          sabores: newProduct.flavors.map(f => f.name)
+        };
+
+        // ✅ Crear el FormData correctamente
+        const formData = new FormData();
+        formData.append(
+          "producto",
+          new Blob([JSON.stringify(producto)], { type: "application/json" })
+        );
+
+        // Adjuntar imágenes (opcional)
+        const fileInput = dom.addProductForm.querySelector('input[type="file"]');
+        if (fileInput && fileInput.files.length > 0) {
+          for (const file of fileInput.files) formData.append("files", file);
+        }
+
+        // Enviar al backend
+        const created = await client.request("/admin/vapes", {
+          method: "POST",
+          body: formData,
+          authenticated: true
+        });
+
         const mapped = mapVapeResponse(created, newProduct);
         upsertProduct(mapped);
       } else {
+        // Perfumes y Decants siguen igual
         const created = await client.createPerfume(toPerfumeRequest(newProduct));
         const mapped = mapPerfumeResponse(created, newProduct);
         upsertProduct(mapped);
@@ -94,15 +130,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // ============================
+  // 🧩 EDITAR PRODUCTO
+  // ============================
   dom.editProductForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!dom.editProductForm.checkValidity()) {
       dom.editProductForm.reportValidity();
       return;
     }
-    if (!validateProductForm(dom.editProductForm)) {
-      return;
-    }
+    if (!validateProductForm(dom.editProductForm)) return;
 
     const productId = dom.editProductForm.dataset.productId;
     const originalType = dom.editProductForm.dataset.productType || dom.editProductForm.productType?.value;
@@ -119,7 +156,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       editedProduct.type = originalType;
 
       if (originalType === 'vape') {
-        const updated = await client.updateVape(productId, toVapeRequest(editedProduct));
+        // ✅ También usamos FormData al editar
+        const producto = {
+          nombre: editedProduct.name,
+          marca: editedProduct.brand,
+          descripcion: editedProduct.description,
+          precio: editedProduct.price,
+          stock: editedProduct.stock,
+          pitadas: editedProduct.puffs,
+          modos: editedProduct.modes,
+          sabores: editedProduct.flavors.map(f => f.name)
+        };
+
+        const formData = new FormData();
+        formData.append(
+          "producto",
+          new Blob([JSON.stringify(producto)], { type: "application/json" })
+        );
+
+        const fileInput = dom.editProductForm.querySelector('input[type="file"]');
+        if (fileInput && fileInput.files.length > 0) {
+          for (const file of fileInput.files) formData.append("files", file);
+        }
+
+        const updated = await client.request(`/admin/vapes/${productId}`, {
+          method: "PUT",
+          body: formData,
+          authenticated: true
+        });
+
         const mapped = mapVapeResponse(updated, editedProduct);
         upsertProduct(mapped);
       } else {
@@ -143,6 +208,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // ============================
+  // 🎟️ PROMOCIONES
+  // ============================
   dom.addPromotionForm?.addEventListener('submit', (event) => {
     event.preventDefault();
     if (!dom.addPromotionForm.checkValidity()) {
@@ -184,6 +252,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+
 
 function setupAccordions() {
   dom.accordionHeaders.forEach((header) => {
