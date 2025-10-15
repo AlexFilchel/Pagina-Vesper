@@ -321,7 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.entries(mapping).forEach(([key, value]) => {
       const field = profileFields[key];
       if (!field) return;
-      field.value = typeof value === "string" ? value : "";
+      field.value = value != null ? String(value) : "";
     });
   }
 

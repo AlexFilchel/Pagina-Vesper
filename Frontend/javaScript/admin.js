@@ -690,7 +690,7 @@ function toVapeRequest(product) {
     stock: product.stock,
     pitadas: product.puffs,
     modos: product.modes,
-    sabores // ✅ nuevo campo que el backend espera
+    sabores 
   };
 }
 
@@ -740,7 +740,7 @@ function renderProductsTable() {
     editButton.type = 'button';
     editButton.className = 'btn btn--ghost js-edit-product';
     editButton.dataset.productId = String(product.id);
-    editButton.dataset.productType = product.type; // 🔹 AGREGAR ESTO
+    editButton.dataset.productType = product.type; 
     editButton.textContent = 'Modificar';
 
 

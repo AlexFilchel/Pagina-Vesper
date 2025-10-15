@@ -8,6 +8,8 @@ import org.vesper.entity.Usuario;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.repo.UsuarioRepository;
 
+import jakarta.transaction.Transactional;
+
 import java.util.Optional;
 
 @Service
@@ -19,6 +21,7 @@ public class AuthService {
     /**
      * Registra al usuario autenticado en la base de datos si aún no existe.
      */
+    @Transactional
     public UserResponse registrarUsuario(String auth0Id, String email, String nombre, String nickname) {
         Optional<Usuario> existente = usuarioRepository.findByAuth0Id(auth0Id);
         if (existente.isPresent()) {
@@ -56,10 +59,13 @@ public class AuthService {
                 usuario.getId(),
                 usuario.getNombre(),
                 usuario.getApellido(),
-                usuario.getEmail()
+                usuario.getEmail(),
+                usuario.getDni(),
+                usuario.getTelefono()
         );
     }
 
+    @Transactional
     public UserResponse actualizarPerfil(String auth0Id, UserRequest request) {
         Usuario usuario = usuarioRepository.findByAuth0Id(auth0Id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con Auth0 ID: " + auth0Id));
