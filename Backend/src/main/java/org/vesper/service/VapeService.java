@@ -14,6 +14,8 @@ import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.repo.SaborRepository;
 import org.vesper.repo.VapeRepository;
 
+import jakarta.transaction.Transactional;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,6 +44,7 @@ public class VapeService {
         return toResponse(vape);
     }
 
+    @Transactional
     public VapeResponse crearVape(VapeRequest request, List<MultipartFile> files) {
         if (vapeRepository.existsByNombre(request.getNombre())) {
             throw new AlreadyExistsException("Ya existe un vape con el nombre: " + request.getNombre());
@@ -67,6 +70,7 @@ public class VapeService {
         return toResponse(guardado);
     }
 
+    @Transactional
     public VapeResponse actualizarVape(Long id, VapeRequest request) {
         Vape existente = vapeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vape no encontrado con id: " + id));
@@ -93,6 +97,7 @@ public class VapeService {
         return toResponse(actualizado);
     }
 
+    @Transactional
     public VapeResponse actualizarVape(Long id, VapeRequest request, List<MultipartFile> files) {
     Vape existente = vapeRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Vape no encontrado con id: " + id));
@@ -134,6 +139,7 @@ public class VapeService {
 }
 
 
+    @Transactional
     public void eliminarVape(Long id) {
         if (!vapeRepository.existsById(id)) {
             throw new ResourceNotFoundException("Vape no encontrado con id: " + id);
