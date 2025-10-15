@@ -49,20 +49,15 @@
         <span class="material-symbols-outlined">search</span>
       </button>
 
-      <!-- Menú desplegable Mi cuenta -->
-      <div class="site-header__action site-header__action--has-dropdown">
-  <button class="site-header__action-btn" type="button">
-    <span class="site-header__action-icon">
-      <span class="material-symbols-outlined">person_outline</span>
-    </span>
-    <span class="site-header__action-label">Mi cuenta</span>
-  </button>
-  <div class="site-header__dropdown">
-    <ul class="site-header__dropdown-list">
-      <li><a href="#" id="btn-login" class="login-link">Iniciar sesión</a></li>
-    </ul>
-  </div>
-</div>
+      <!-- Acción Mi cuenta -->
+      <div class="site-header__action site-header__action--account">
+        <button class="site-header__action-btn" type="button" id="account-button" aria-haspopup="false" aria-expanded="false">
+          <span class="site-header__action-icon">
+            <span class="material-symbols-outlined">person_outline</span>
+          </span>
+          <span class="site-header__action-label">Mi cuenta</span>
+        </button>
+      </div>
 
 
       <a href="#" class="site-header__action" id="link-carrito" aria-haspopup="dialog">
@@ -337,6 +332,57 @@
   </div>
 
   <div class="cart-toast-layer" aria-live="polite" aria-atomic="true"></div>
+
+  <div id="profile-modal" class="profile-modal" aria-hidden="true">
+    <div class="profile-modal__overlay" data-profile-close></div>
+    <div class="profile-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title" tabindex="-1">
+      <button type="button" class="profile-modal__close" data-profile-close aria-label="Cerrar">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="profile-modal__header">
+        <h2 id="profile-modal-title">Mi Perfil</h2>
+        <p class="profile-modal__subtitle">Gestioná tus datos personales</p>
+      </header>
+      <div class="profile-modal__body">
+        <div id="profile-loading" class="profile-modal__loading" aria-live="polite">Cargando tus datos...</div>
+        <form id="profile-form" class="profile-modal__form" novalidate>
+          <div class="profile-modal__field-group">
+            <label for="profile-username">Username</label>
+            <input type="text" id="profile-username" name="username" data-static="true" disabled>
+          </div>
+          <div class="profile-modal__field-grid">
+            <div class="profile-modal__field-group">
+              <label for="profile-first-name">Nombre</label>
+              <input type="text" id="profile-first-name" name="firstName" autocomplete="given-name" required>
+            </div>
+            <div class="profile-modal__field-group">
+              <label for="profile-last-name">Apellido</label>
+              <input type="text" id="profile-last-name" name="lastName" autocomplete="family-name" required>
+            </div>
+          </div>
+          <div class="profile-modal__field-group">
+            <label for="profile-email">Email</label>
+            <input type="email" id="profile-email" name="email" data-static="true" disabled>
+          </div>
+          <div class="profile-modal__field-grid">
+            <div class="profile-modal__field-group">
+              <label for="profile-dni">DNI</label>
+              <input type="text" id="profile-dni" name="dni" inputmode="numeric" autocomplete="off" required>
+            </div>
+            <div class="profile-modal__field-group">
+              <label for="profile-phone">Teléfono</label>
+              <input type="tel" id="profile-phone" name="phone" autocomplete="tel" required>
+            </div>
+          </div>
+        </form>
+        <p id="profile-feedback" class="profile-modal__feedback" role="alert" hidden></p>
+      </div>
+      <footer class="profile-modal__footer">
+        <button type="submit" form="profile-form" class="btn btn--primary" id="profile-submit">Actualizar Datos</button>
+        <button type="button" class="btn btn--secondary" id="profile-logout">Cerrar sesión</button>
+      </footer>
+    </div>
+  </div>
 
   <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script defer src="javaScript/api.js"></script>

@@ -51,10 +51,10 @@
   }
 
   async function setupUI() {
-    const loginBtn = document.getElementById("btn-login");
-    const accountLabel = document.querySelector(".site-header__action-label");
+    const accountButton = document.getElementById("account-button");
+    const accountLabel = accountButton?.querySelector(".site-header__action-label");
 
-    if (!loginBtn || !accountLabel) {
+    if (!accountButton || !accountLabel) {
       console.warn("⚠️ Elementos no encontrados en esta página");
       return;
     }
@@ -70,19 +70,25 @@
         user.nickname || user.username || user.given_name || user.name || "Usuario";
 
       accountLabel.textContent = username;
-
-      loginBtn.textContent = "Cerrar sesión";
-      loginBtn.onclick = (e) => {
-        e.preventDefault();
-        auth0Client.logout({
-          logoutParams: { returnTo: window.location.origin + "/Frontend/index.html" }
-        });
+      accountButton.setAttribute("aria-haspopup", "dialog");
+      accountButton.setAttribute("aria-expanded", "false");
+      accountButton.classList.add("is-authenticated");
+      accountButton.onclick = (event) => {
+        event.preventDefault();
+        const modalController = window.profileModalController;
+        if (modalController && typeof modalController.open === "function") {
+          modalController.open();
+        } else {
+          console.warn("⚠️ Modal de perfil no disponible en esta vista.");
+        }
       };
     } else {
       accountLabel.textContent = "Mi cuenta";
-      loginBtn.textContent = "Iniciar sesión";
-      loginBtn.onclick = (e) => {
-        e.preventDefault();
+      accountButton.setAttribute("aria-haspopup", "false");
+      accountButton.setAttribute("aria-expanded", "false");
+      accountButton.classList.remove("is-authenticated");
+      accountButton.onclick = (event) => {
+        event.preventDefault();
         auth0Client.loginWithRedirect({
           authorizationParams: { redirect_uri: REDIRECT_URI }
         });

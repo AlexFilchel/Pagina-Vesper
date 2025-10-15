@@ -148,6 +148,12 @@
     },
     async registerCurrentUser() {
       return withAuthenticatedRequest('/user/registrar', 'POST');
+    },
+    async getUserProfile() {
+      return withAuthenticatedRequest('/user/perfil', 'GET');
+    },
+    async updateUserProfile(payload) {
+      return withAuthenticatedRequest('/user/perfil', 'PUT', payload);
     }
   };
 

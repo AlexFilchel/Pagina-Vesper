@@ -16,6 +16,10 @@ body {
   line-height: 1.5;
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 /* Contenedor global centrado */
 .container {
   max-width: 1300px;
@@ -145,6 +149,15 @@ body {
   gap: 35px;
 }
 
+.site-header__action--account {
+  display: inline-flex;
+  align-items: center;
+}
+
+.site-header__action--account .site-header__action-btn {
+  padding: 4px 0;
+}
+
 .site-header__action {
   display: inline-flex;
   align-items: center;
@@ -176,11 +189,6 @@ body {
   display: none;
 }
 
-/* Dropdown en Mi cuenta */
-.site-header__action--has-dropdown {
-  position: relative;
-}
-
 .site-header__action-btn {
   background: none;
   border: none;
@@ -197,51 +205,6 @@ body {
 .site-header__action-btn:hover,
 .site-header__action-btn:focus-visible {
   color: #004aad;
-}
-
-.site-header__dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: auto;
-  left: 0;
-  transform: translateX(-50%) translateY(10px);
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-  padding: 12px 16px;
-  min-width: 200px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  transform: translateY(10px);
-  z-index: 20;
-}
-
-.site-header__action--has-dropdown.is-open .site-header__dropdown {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0);
-}
-
-.site-header__dropdown-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.site-header__dropdown-list a {
-  text-decoration: none;
-  color: #1b1b1b;
-  font-size: 0.95rem;
-  transition: color 0.3s ease;
-}
-
-.site-header__dropdown-list a:hover {
-  color: #004aad;
-  text-decoration: underline;
 }
 
 .site-header__bottom-inner,
@@ -506,12 +469,12 @@ body {
     padding: 0;
   }
 
-  .site-header__action--has-dropdown,
+  .site-header__action--account,
   #link-carrito {
     display: inline-flex;
   }
 
-  .site-header__action--has-dropdown .site-header__action-label,
+  .site-header__action--account .site-header__action-label,
   #link-carrito .site-header__action-label {
     display: none;
   }
@@ -1089,6 +1052,267 @@ body {
 
 .modal-content p a:hover {
   text-decoration: underline;
+}
+
+.profile-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 6vw, 48px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 5000;
+}
+
+.profile-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 14, 28, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.profile-modal.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.profile-modal__dialog {
+  position: relative;
+  width: min(100%, 560px);
+  max-height: min(92vh, 720px);
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  padding: clamp(20px, 5vw, 36px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(16px) scale(0.97);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.profile-modal__dialog:focus-visible {
+  outline: 2px solid rgba(0, 74, 173, 0.35);
+  outline-offset: 4px;
+}
+
+.profile-modal.is-visible .profile-modal__dialog {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.profile-modal__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  border: none;
+  background: rgba(243, 246, 255, 0.85);
+  color: #111827;
+  border-radius: 999px;
+  padding: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.profile-modal__close:hover,
+.profile-modal__close:focus-visible {
+  background: rgba(226, 232, 255, 0.95);
+  transform: scale(1.05);
+}
+
+.profile-modal__close:focus-visible {
+  outline: 2px solid rgba(0, 74, 173, 0.35);
+  outline-offset: 2px;
+}
+
+.profile-modal__header h2 {
+  font-size: clamp(1.35rem, 2.5vw, 1.6rem);
+  font-weight: 700;
+  color: #101828;
+  margin-bottom: 6px;
+}
+
+.profile-modal__subtitle {
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.profile-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.profile-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-modal__form.is-disabled {
+  opacity: 0.6;
+}
+
+.profile-modal__field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-modal__field-group label {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.profile-modal__field-group input {
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+.profile-modal__field-group input:focus {
+  border-color: #004aad;
+  box-shadow: 0 0 0 3px rgba(0, 74, 173, 0.15);
+  outline: none;
+}
+
+.profile-modal__field-group input[disabled] {
+  background: #f8fafc;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.profile-modal__field-group input.is-invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.profile-modal__field-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-modal__loading {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: #004aad;
+  font-weight: 500;
+}
+
+.profile-modal.is-loading .profile-modal__loading {
+  display: inline-flex;
+}
+
+.profile-modal__feedback {
+  font-size: 0.9rem;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #1d4ed8;
+  margin: 0;
+}
+
+.profile-modal__feedback--error {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.profile-modal__feedback--success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.profile-modal__feedback[hidden] {
+  display: none;
+}
+
+.profile-modal__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-modal__footer .btn {
+  width: 100%;
+}
+
+.btn.btn--secondary,
+.btn--secondary {
+  background: transparent;
+  color: #004aad;
+  border: 1px solid #004aad;
+  padding: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.btn.btn--secondary:hover,
+.btn--secondary:hover {
+  background: rgba(0, 74, 173, 0.08);
+  transform: translateY(-1px);
+}
+
+.btn.btn--secondary:focus-visible,
+.btn--secondary:focus-visible {
+  outline: 2px solid rgba(0, 74, 173, 0.35);
+  outline-offset: 2px;
+}
+
+.profile-modal__footer .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 640px) {
+  .profile-modal__dialog {
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .profile-modal__field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-modal__footer {
+    gap: 10px;
+  }
+}
+
+@media (min-width: 640px) {
+  .profile-modal__footer {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .profile-modal__footer .btn {
+    width: auto;
+    min-width: 180px;
+  }
+
+  .profile-modal__footer .btn:first-child {
+    order: 2;
+  }
 }
 
 /* Labels dentro del modal */
@@ -1904,11 +2128,11 @@ body.is-cart-open {
     order: 2;
   }
 
-  .site-header__action--has-dropdown {
+  .site-header__action--account {
     order: 3; /* tercero la cuenta */
   }
 
-  .site-header__action--has-dropdown .site-header__action-label {
+  .site-header__action--account .site-header__action-label {
     display: none;
   }
 
@@ -1982,34 +2206,8 @@ body.is-cart-open {
     font-size: 18px;
   }
 
-  .site-header__action--has-dropdown .site-header__dropdown {
-    position: fixed;
-    top: var(--mobile-account-top, 72px);
-    right: 16px;
-    left: auto;
-    max-width: calc(100% - 32px);
-    transform: translateY(-12px);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
-    border-radius: 14px;
-    padding: 16px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease, transform 0.25s ease;
-    z-index: 3500;
-  }
-
-  .site-header__action--has-dropdown.is-open .site-header__dropdown {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
-  }
-
-  .site-header__action--has-dropdown .site-header__dropdown-list {
-    gap: 14px;
-  }
-
-  .site-header__action--has-dropdown .site-header__dropdown-list a {
-    font-size: 1rem;
+  .site-header__action--account .site-header__action-btn {
+    padding: 0;
   }
 }
 
