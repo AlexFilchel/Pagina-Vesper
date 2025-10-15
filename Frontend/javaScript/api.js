@@ -64,13 +64,13 @@
     const fetchOptions = { method, headers: requestHeaders };
 
     if (body instanceof FormData) {
+      requestHeaders.delete('Content-Type'); // ✅ elimina el header si venía heredado
       fetchOptions.body = body;
     } else if (body !== undefined && body !== null) {
-      if (!requestHeaders.has('Content-Type')) {
-        requestHeaders.set('Content-Type', 'application/json');
-      }
+      requestHeaders.set('Content-Type', 'application/json');
       fetchOptions.body = JSON.stringify(body);
     }
+
 
     if (authenticated) {
       try {
@@ -148,6 +148,12 @@
     },
     async registerCurrentUser() {
       return withAuthenticatedRequest('/user/registrar', 'POST');
+    },
+    async getUserProfile() {
+      return withAuthenticatedRequest('/user/perfil', 'GET');
+    },
+    async updateUserProfile(payload) {
+      return withAuthenticatedRequest('/user/perfil', 'PUT', payload);
     }
   };
 

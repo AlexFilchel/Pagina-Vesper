@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.PerfumeRequest;
 import org.vesper.dto.PerfumeResponse;
 import org.vesper.service.PerfumeService;

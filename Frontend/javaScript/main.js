@@ -39,8 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const mobileSearchOverlay = document.querySelector(".mobile-search-overlay");
   const mobileSearchInput = mobileSearchOverlay?.querySelector("input");
   const overlaySearchButton = mobileSearchOverlay?.querySelector("button");
-  const accountDropdown = document.querySelector(".site-header__action--has-dropdown");
-  const accountBtn = accountDropdown?.querySelector(".site-header__action-btn");
+  const accountButton = document.getElementById("account-button");
   const searchIconMaterial = searchToggle ? searchToggle.querySelector(".material-symbols-outlined") : null;
   const searchIconFontAwesome = searchToggle ? searchToggle.querySelector(".fa-solid") : null;
 
@@ -72,14 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const headerRect = siteHeader?.getBoundingClientRect();
     if (headerRect) {
       mobileSearchOverlay.style.setProperty("--mobile-search-top", `${Math.max(headerRect.bottom, 0)}px`);
-    }
-  }
-
-  function updateAccountMenuPosition() {
-    if (!accountDropdown) return;
-    const headerRect = siteHeader?.getBoundingClientRect();
-    if (headerRect) {
-      accountDropdown.style.setProperty("--mobile-account-top", `${Math.max(headerRect.bottom, 0)}px`);
     }
   }
 
@@ -129,22 +120,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function closeAccountDropdown() {
-    if (!accountDropdown) return;
-    accountDropdown.classList.remove("is-open");
-  }
-
   const handleResize = () => {
     if (window.innerWidth >= 768) {
       closeSearch();
       closeMenu();
-      closeAccountDropdown();
     } else {
       if (mobileSearchOverlay?.classList.contains("is-visible")) {
         updateSearchOverlayPosition();
-      }
-      if (accountDropdown?.classList.contains("is-open")) {
-        updateAccountMenuPosition();
       }
     }
   };
@@ -154,7 +136,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const willOpen = !mainNav.classList.contains("is-open");
       if (willOpen) {
         closeSearch();
-        closeAccountDropdown();
       }
       mainNav.classList.toggle("is-open", willOpen);
       siteHeader?.classList.toggle("is-menu-open", willOpen);
@@ -189,7 +170,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (willOpen) {
         closeMenu();
-        closeAccountDropdown();
         openSearch();
       } else {
         closeSearch();
@@ -197,34 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (accountBtn && accountDropdown) {
-    accountBtn.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const willOpen = !accountDropdown.classList.contains("is-open");
-      if (willOpen) {
-        closeMenu();
-        closeSearch();
-        updateAccountMenuPosition();
-      }
-      accountDropdown.classList.toggle("is-open", willOpen);
-    });
-  }
-
-  if (accountDropdown) {
-    accountDropdown.querySelectorAll("a").forEach(link => {
-      link.addEventListener("click", () => {
-        closeAccountDropdown();
-      });
-    });
-  }
-
   document.addEventListener("click", (event) => {
-    if (accountDropdown && !accountDropdown.contains(event.target)) {
-      closeAccountDropdown();
-    }
-
     if (mobileSearchOverlay?.classList.contains("is-visible")) {
       const clickedInsideSearch = mobileSearchOverlay.contains(event.target);
       const clickedToggle = searchToggle?.contains(event.target) ?? false;
@@ -237,7 +190,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       closeSearch();
-      closeAccountDropdown();
       if (window.innerWidth < 768) {
         closeMenu();
       }
@@ -250,10 +202,366 @@ document.addEventListener("DOMContentLoaded", () => {
     if (mobileSearchOverlay?.classList.contains("is-visible")) {
       updateSearchOverlayPosition();
     }
-    if (accountDropdown?.classList.contains("is-open")) {
-      updateAccountMenuPosition();
-    }
   }, { passive: true });
+
+  /* ===========================
+     🔹 Modal de perfil de usuario
+  =========================== */
+  const profileModal = document.getElementById("profile-modal");
+  const profileDialog = profileModal?.querySelector(".profile-modal__dialog");
+  const profileForm = document.getElementById("profile-form");
+  const profileLoading = document.getElementById("profile-loading");
+  const profileFeedback = document.getElementById("profile-feedback");
+  const profileSubmitBtn = document.getElementById("profile-submit");
+  const profileLogoutBtn = document.getElementById("profile-logout");
+  const profileFields = {
+    username: document.getElementById("profile-username"),
+    firstName: document.getElementById("profile-first-name"),
+    lastName: document.getElementById("profile-last-name"),
+    email: document.getElementById("profile-email"),
+    dni: document.getElementById("profile-dni"),
+    phone: document.getElementById("profile-phone")
+  };
+
+  const profileState = {
+    isOpen: false,
+    isLoading: false,
+    data: null,
+    lastFocusedElement: null,
+    feedbackTimeout: null,
+    loadingPromise: null
+  };
+
+  const focusableSelector = "a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex='-1'])";
+
+  if (profileLoading) {
+    profileLoading.hidden = true;
+  }
+
+  function clearProfileFeedback() {
+    if (!profileFeedback) return;
+    if (profileState.feedbackTimeout) {
+      window.clearTimeout(profileState.feedbackTimeout);
+      profileState.feedbackTimeout = null;
+    }
+    profileFeedback.textContent = "";
+    profileFeedback.className = "profile-modal__feedback";
+    profileFeedback.hidden = true;
+  }
+
+  function setProfileFeedback(message, type = "info") {
+    if (!profileFeedback) return;
+    if (profileState.feedbackTimeout) {
+      window.clearTimeout(profileState.feedbackTimeout);
+      profileState.feedbackTimeout = null;
+    }
+
+    profileFeedback.hidden = false;
+    profileFeedback.textContent = message;
+    profileFeedback.className = "profile-modal__feedback";
+    if (type === "error") {
+      profileFeedback.classList.add("profile-modal__feedback--error");
+    } else if (type === "success") {
+      profileFeedback.classList.add("profile-modal__feedback--success");
+      profileState.feedbackTimeout = window.setTimeout(() => {
+        clearProfileFeedback();
+      }, 4000);
+    }
+  }
+
+  function toggleEditableFieldsDisabled(disabled) {
+    Object.values(profileFields).forEach((field) => {
+      if (!field) return;
+      if (field.dataset.static === "true") return;
+      field.disabled = disabled;
+    });
+  }
+
+  function setProfileLoading(isLoading, options = {}) {
+    const { disableLogout = false } = options;
+    if (!profileModal) return;
+    profileModal.classList.toggle("is-loading", isLoading);
+    if (profileForm) {
+      profileForm.classList.toggle("is-disabled", isLoading);
+      if (isLoading) {
+        profileForm.setAttribute("aria-busy", "true");
+      } else {
+        profileForm.removeAttribute("aria-busy");
+      }
+    }
+    toggleEditableFieldsDisabled(isLoading);
+    if (profileSubmitBtn) {
+      profileSubmitBtn.disabled = isLoading;
+    }
+    if (profileLogoutBtn) {
+      profileLogoutBtn.disabled = disableLogout && isLoading;
+    }
+    if (profileLoading) {
+      profileLoading.hidden = !isLoading;
+    }
+  }
+
+  function resetProfileValidation() {
+    Object.values(profileFields).forEach((field) => {
+      field?.classList.remove("is-invalid");
+    });
+  }
+
+  function fillProfileForm(data = {}) {
+    if (!profileForm) return;
+    const mapping = {
+      username: data.username || data.userName || "",
+      firstName: data.nombre || data.firstName || "",
+      lastName: data.apellido || data.lastName || "",
+      email: data.email || "",
+      dni: data.dni || data.documento || "",
+      phone: data.telefono || data.phone || ""
+    };
+
+    Object.entries(mapping).forEach(([key, value]) => {
+      const field = profileFields[key];
+      if (!field) return;
+      field.value = typeof value === "string" ? value : "";
+    });
+  }
+
+  function handleProfileFocusTrap(event) {
+    if (!profileState.isOpen || event.key !== "Tab" || !profileDialog) return;
+    const focusable = Array.from(profileDialog.querySelectorAll(focusableSelector))
+      .filter((el) => !(el instanceof HTMLElement && el.hasAttribute("hidden")) && !el.closest("[hidden]") && el.offsetParent !== null);
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus({ preventScroll: true });
+    } else if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus({ preventScroll: true });
+    }
+  }
+
+  function handleProfileKeydown(event) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeProfileModal();
+      return;
+    }
+    handleProfileFocusTrap(event);
+  }
+
+  async function fetchProfileData(force = false) {
+    if (!profileModal) return null;
+    if (profileState.isLoading && profileState.loadingPromise) {
+      return profileState.loadingPromise;
+    }
+    if (!force && profileState.data) {
+      fillProfileForm(profileState.data);
+      return profileState.data;
+    }
+
+    if (!window.apiClient || typeof window.apiClient.getUserProfile !== "function") {
+      setProfileFeedback("No se pudo cargar la información del perfil.", "error");
+      return null;
+    }
+
+    profileState.isLoading = true;
+    setProfileLoading(true);
+    clearProfileFeedback();
+    resetProfileValidation();
+
+    const loading = window.apiClient.getUserProfile()
+      .then((data) => {
+        profileState.data = data || null;
+        if (data) {
+          fillProfileForm(data);
+        } else {
+          setProfileFeedback("No se encontraron datos de perfil para mostrar.", "error");
+        }
+        return data;
+      })
+      .catch((error) => {
+        console.error("❌ Error cargando perfil:", error);
+        const message = error?.message || "No se pudo cargar tu perfil.";
+        setProfileFeedback(message, "error");
+        throw error;
+      })
+      .finally(() => {
+        profileState.isLoading = false;
+        profileState.loadingPromise = null;
+        setProfileLoading(false);
+      });
+
+    profileState.loadingPromise = loading;
+    return loading;
+  }
+
+  function openProfileModal() {
+    if (!profileModal || profileState.isOpen) return;
+    closeMenu();
+    closeSearch();
+    profileState.lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    profileState.isOpen = true;
+    profileModal.classList.add("is-visible");
+    profileModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+    if (accountButton) {
+      accountButton.setAttribute("aria-expanded", "true");
+    }
+    clearProfileFeedback();
+    resetProfileValidation();
+    window.requestAnimationFrame(() => {
+      profileDialog?.focus({ preventScroll: true });
+    });
+    document.addEventListener("keydown", handleProfileKeydown);
+    fetchProfileData(true).catch(() => {
+      /* handled in fetchProfileData */
+    });
+  }
+
+  function closeProfileModal() {
+    if (!profileModal || !profileState.isOpen) return;
+    profileState.isOpen = false;
+    profileModal.classList.remove("is-visible");
+    profileModal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+    if (accountButton) {
+      accountButton.setAttribute("aria-expanded", "false");
+    }
+    document.removeEventListener("keydown", handleProfileKeydown);
+    clearProfileFeedback();
+    window.requestAnimationFrame(() => {
+      profileState.lastFocusedElement?.focus?.({ preventScroll: true });
+      profileState.lastFocusedElement = null;
+    });
+  }
+
+  if (profileModal) {
+    profileModal.querySelectorAll("[data-profile-close]").forEach((element) => {
+      element.addEventListener("click", (event) => {
+        event.preventDefault();
+        closeProfileModal();
+      });
+    });
+  }
+
+  if (profileForm) {
+    profileForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!profileForm) return;
+      resetProfileValidation();
+      const { valid, message } = validateProfileForm();
+      if (!valid) {
+        setProfileFeedback(message, "error");
+        return;
+      }
+
+      if (!window.apiClient || typeof window.apiClient.updateUserProfile !== "function") {
+        setProfileFeedback("Servicio de actualización de perfil no disponible.", "error");
+        return;
+      }
+
+      const payload = {
+        username: profileFields.username?.value?.trim() || undefined,
+        nombre: profileFields.firstName?.value?.trim() || "",
+        apellido: profileFields.lastName?.value?.trim() || "",
+        email: profileFields.email?.value?.trim() || "",
+        dni: profileFields.dni?.value?.trim() || "",
+        telefono: profileFields.phone?.value?.trim() || ""
+      };
+
+      try {
+        profileState.isLoading = true;
+        setProfileLoading(true, { disableLogout: true });
+        await window.apiClient.updateUserProfile(payload);
+        profileState.data = { ...(profileState.data ?? {}), ...payload };
+        setProfileFeedback("Tus datos se actualizaron correctamente.", "success");
+      } catch (error) {
+        console.error("❌ Error actualizando perfil:", error);
+        const messageError = error?.message || "No se pudo actualizar tu perfil.";
+        setProfileFeedback(messageError, "error");
+      } finally {
+        profileState.isLoading = false;
+        setProfileLoading(false);
+      }
+    });
+
+    profileForm.querySelectorAll("input").forEach((input) => {
+      input.addEventListener("input", () => {
+        input.classList.remove("is-invalid");
+        if (profileFeedback && profileFeedback.classList.contains("profile-modal__feedback--error")) {
+          clearProfileFeedback();
+        }
+      });
+    });
+  }
+
+  function validateProfileForm() {
+    const requiredFields = [
+      { field: profileFields.firstName, name: "Nombre" },
+      { field: profileFields.lastName, name: "Apellido" },
+      { field: profileFields.dni, name: "DNI" },
+      { field: profileFields.phone, name: "Teléfono" }
+    ];
+
+    let message = "";
+
+    requiredFields.forEach(({ field, name }) => {
+      if (!field) return;
+      if (!field.value.trim()) {
+        field.classList.add("is-invalid");
+        if (!message) {
+          message = `El campo ${name} es obligatorio.`;
+        }
+      }
+    });
+
+    const dniValue = profileFields.dni?.value?.trim() ?? "";
+    if (dniValue) {
+      const numericDni = dniValue.replace(/[^0-9]/g, "");
+      if (numericDni.length < 6) {
+        profileFields.dni?.classList.add("is-invalid");
+        message = message || "Ingresá un DNI válido (mínimo 6 números).";
+      }
+    }
+
+    const phoneValue = profileFields.phone?.value?.trim() ?? "";
+    if (phoneValue) {
+      const numericPhone = phoneValue.replace(/[^0-9]/g, "");
+      if (numericPhone.length < 6) {
+        profileFields.phone?.classList.add("is-invalid");
+        message = message || "Ingresá un teléfono válido.";
+      }
+    }
+
+    return { valid: message === "", message: message || "" };
+  }
+
+  if (profileLogoutBtn) {
+    profileLogoutBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      closeProfileModal();
+      const client = window.auth0Client;
+      if (client && typeof client.logout === "function") {
+        client.logout({
+          logoutParams: { returnTo: window.location.origin + "/Frontend/index.html" }
+        });
+      } else {
+        window.location.href = window.location.origin + "/Frontend/index.html";
+      }
+    });
+  }
+
+  if (profileModal) {
+    profileModal.setAttribute("aria-hidden", "true");
+  }
+
+  window.profileModalController = {
+    open: openProfileModal,
+    close: closeProfileModal,
+    refresh: (force = true) => fetchProfileData(force)
+  };
 
   window.addEventListener("resize", handleResize);
   handleResize();
