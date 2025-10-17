@@ -18,5 +18,6 @@ public class VentaResponse {
     private LocalDateTime fecha;
     private Double total;
     private String usuarioEmail;
+    private String estado;
     private List<DetalleVentaResponse> detalles;
 }

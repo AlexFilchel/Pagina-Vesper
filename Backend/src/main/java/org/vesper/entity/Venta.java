@@ -16,6 +16,13 @@ import java.util.List;
 @SuperBuilder
 public class Venta {
 
+    /**
+     * Estados posibles de una venta.
+     */
+    public enum EstadoVenta {
+        PENDIENTE, COMPLETADA, CANCELADA
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
