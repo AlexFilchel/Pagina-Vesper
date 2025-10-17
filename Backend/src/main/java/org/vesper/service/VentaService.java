@@ -114,7 +114,12 @@ public class VentaService {
         for (DetalleVentaRequest detalleRequest : request.getDetalles()) {
             Producto producto = findProductoById(detalleRequest.getProductoId());
 
-            // Nota: No descontamos stock aquí, se hará cuando el pago sea aprobado.
+            // ❗ Nueva validación: verificar stock antes de crear la venta pendiente.
+            if (producto.getStock() == null || producto.getStock() < detalleRequest.getCantidad()) {
+                throw new AlreadyExistsException("Stock insuficiente para el producto: " + producto.getNombre());
+            }
+
+            // Nota: El stock se descuenta solo cuando el pago es aprobado.
             Integer cantidad = detalleRequest.getCantidad();
             Double precioUnitario = producto.getPrecio();
             double subtotal = precioUnitario * cantidad;

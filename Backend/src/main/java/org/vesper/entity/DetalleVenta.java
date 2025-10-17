@@ -40,6 +40,12 @@ public class DetalleVenta {
         return "Producto desconocido";
     }
 
+    public Long getProductoId() {
+        if (perfume != null) return perfume.getId();
+        if (vape != null) return vape.getId();
+        return null;
+    }
+
     public Double calcularSubtotal() {
         return cantidad != null && precioUnitario != null ? cantidad * precioUnitario : 0.0;
     }
