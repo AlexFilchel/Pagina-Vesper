@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Checkout de prueba Mercado Pago</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root { font-family: system-ui, sans-serif; background: #f4f6fb; color: #1f2933; }
+    main { max-width: 480px; margin: 4rem auto; background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 14px 40px rgba(31,41,51,0.12); }
+    h1 { margin-bottom: 1.5rem; font-size: 1.6rem; }
+    label { display: block; font-weight: 600; margin-top: 1rem; }
+    input, textarea { width: 100%; margin-top: .35rem; padding: .85rem 1rem; border: 1px solid #c7d2e2; border-radius: 10px; font-size: 1rem; }
+    textarea { resize: vertical; min-height: 90px; }
+    button { margin-top: 1.5rem; width: 100%; border: none; border-radius: 10px; padding: .95rem; font-size: 1.05rem; font-weight: 600; background: #00a650; color: #fff; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+    button:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0,166,80,.25); }
+    .mensaje { margin-top: 1.2rem; padding: .9rem 1rem; border-radius: 10px; font-size: .95rem; }
+    .mensaje.error { background: #ffeaea; color: #c23b3b; border: 1px solid #f5c2c7; }
+    .mensaje.exito { background: #e8f7f0; color: #0d6832; border: 1px solid #b6e0c2; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Generar pago de prueba</h1>
+    <form id="checkout-form">
+      <label for="titulo">Título</label>
+      <input id="titulo" name="titulo" value="Producto de prueba" required>
+
+      <label for="descripcion">Descripción</label>
+      <textarea id="descripcion" name="descripcion" required>Descripción de prueba</textarea>
+
+      <label for="cantidad">Cantidad</label>
+      <input id="cantidad" name="cantidad" type="number" min="1" value="1" required>
+
+      <label for="precio">Precio (ARS)</label>
+      <input id="precio" name="precio" type="number" min="1" step="0.01" value="1500" required>
+
+      <button type="submit">Crear preferencia y pagar</button>
+    </form>
+    <div id="mensaje" class="mensaje" hidden></div>
+  </main>
+
+  <script src="mp_conexion.js"></script>
+</body>
+</html>

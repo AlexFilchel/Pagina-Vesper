@@ -43,6 +43,7 @@ public interface PerfumeRepository extends JpaRepository<Perfume, Long> {
            "(:genero IS NULL OR p.genero = :genero) AND " +
            "(:precioMin IS NULL OR p.precio >= :precioMin) AND " +
            "(:precioMax IS NULL OR p.precio <= :precioMax) AND " +
+           "(:notasPrincipales IS NULL OR p.notasPrincipales = :notasPrincipales) AND " +
            "(:marca IS NULL OR p.marca = :marca)")
     List<Perfume> buscarPerfumesAvanzado(
             @Param("nombre") String nombre,

@@ -117,6 +117,8 @@ public class GlobalExceptionHandler {
             return HttpStatus.UNAUTHORIZED;
         } else if (ex instanceof UnauthorizedException) {
             return HttpStatus.FORBIDDEN;
+        } else if (ex instanceof MercadoPagoIntegrationException) {
+            return HttpStatus.BAD_GATEWAY;
         } else {
             return HttpStatus.BAD_REQUEST;
         }
