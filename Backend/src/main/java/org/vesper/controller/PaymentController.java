@@ -39,11 +39,12 @@ public class PaymentController {
      * @param jwt El token JWT del usuario autenticado, inyectado por Spring Security.
      * @return Un DTO con el ID de la preferencia y la URL de pago (init_point).
      */
-    @PostMapping("/user/payments/create-order")
-    public ResponseEntity<PreferenciaResponseDTO> createOrderAndPreference(
+    @PostMapping("/user/payments/crearOrden")
+    public ResponseEntity<PreferenciaResponseDTO> crearOrdenYPreferencia(
             @Valid @RequestBody VentaRequest ventaRequest,
             @AuthenticationPrincipal Jwt jwt) {
-        PreferenciaResponseDTO response = paymentService.createOrderAndPreference(ventaRequest, jwt);
+        System.out.println("Se invocó /create-order correctamente");
+        PreferenciaResponseDTO response = paymentService.crearOrdenYPrefencia(ventaRequest, jwt);
         return ResponseEntity.ok(response);
     }
 
@@ -69,18 +70,18 @@ public class PaymentController {
     public String pagoExitoso(@RequestParam Map<String, String> params) {
         // Aquí deberías redirigir a una página de éxito en tu frontend.
         // Ejemplo: return "redirect:https://tufrontend.com/pago/exitoso?payment_id=" + params.get("payment_id");
-        return "✅ Pago aprobado! Datos: " + params;
+        return "Pago aprobado! Datos: " + params;
     }
 
     @GetMapping("/public/payments/failure")
     public String pagoFallido(@RequestParam Map<String, String> params) {
         // Redirigir a página de fallo en el frontend.
-        return "❌ Pago fallido. Datos: " + params;
+        return "Pago fallido. Datos: " + params;
     }
 
     @GetMapping("/public/payments/pending")
     public String pagoPendiente(@RequestParam Map<String, String> params) {
         // Redirigir a página de pago pendiente en el frontend.
-        return "⏳ Pago pendiente. Datos: " + params;
+        return "Pago pendiente. Datos: " + params;
     }
 }

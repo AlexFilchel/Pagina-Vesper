@@ -46,7 +46,7 @@ public class PaymentService {
      * @return Un DTO con el ID de la venta y la URL de pago.
      */
     @Transactional
-    public PreferenciaResponseDTO createOrderAndPreference(VentaRequest ventaRequest, Jwt jwt) {
+    public PreferenciaResponseDTO crearOrdenYPrefencia(VentaRequest ventaRequest, Jwt jwt) {
         // 1. Crear la Venta usando la lógica de VentaService
         Venta venta = ventaService.crearVentaPendiente(ventaRequest, jwt);
 
