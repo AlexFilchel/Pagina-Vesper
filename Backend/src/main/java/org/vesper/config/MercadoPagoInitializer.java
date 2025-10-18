@@ -13,7 +13,7 @@ public class MercadoPagoInitializer {
 
     private static final Logger logger = LoggerFactory.getLogger(MercadoPagoInitializer.class);
 
-    @Value("${MERCADOPAGO_ACCESS_TOKEN}")
+    @Value("${mercadopago.access-token}")
     private String accessToken;
 
     @PostConstruct
