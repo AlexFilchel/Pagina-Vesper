@@ -2,6 +2,8 @@ package org.vesper.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -18,6 +20,9 @@ import org.vesper.entity.Venta;
 import org.vesper.repo.RegistroPagoRepository;
 import org.vesper.repo.VentaRepository;
 import org.vesper.service.PaymentService;
+
+import com.mercadopago.client.payment.PaymentClient;
+import com.mercadopago.resources.payment.Payment;
 
 import java.util.List;
 import java.util.Map;
@@ -47,7 +52,61 @@ public class PaymentController {
         PreferenciaResponseDTO response = paymentService.crearOrdenYPrefencia(ventaRequest, jwt);
         return ResponseEntity.ok(response);
     }
+    
+    /**
+     * Endpoint público para recibir notificaciones de Webhook de Mercado Pago.
+     * Se encarga de procesar los cambios de estado de un pago y actualizar la venta correspondiente.
+     *
+     * @param payload El cuerpo de la notificación enviada por Mercado Pago.
+     * @return Una respuesta HTTP 200 si el procesamiento es exitoso, o 500 si falla.
+     */
+    @PostMapping("/public/payments/webhook")
+    public ResponseEntity<String> handleWebhook(@RequestBody Map<String, Object> payload) {
+        // El logger sería más apropiado aquí que System.out.println
+        try {
+            Long paymentId = Long.valueOf(((Map<String, Object>) payload.get("data")).get("id").toString());
 
+            PaymentClient paymentClient = new PaymentClient();
+            Payment payment = paymentClient.get(paymentId);
+
+            // Recuperar Venta desde external_reference
+            Long ventaId = Long.valueOf(payment.getExternalReference());
+            Venta venta = ventaRepository.findById(ventaId)
+                    .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
+
+            // Buscar si ya existe un registro (idempotencia)
+            RegistroPago registro = registroPagoRepository.findByMpPaymentId(String.valueOf(paymentId))
+                    .orElseGet(RegistroPago::new);
+
+            registro.setMpPaymentId(String.valueOf(paymentId));
+            registro.setStatus(payment.getStatus());
+            registro.setAmount(payment.getTransactionAmount().floatValue());
+            registro.setPaymentMethod(payment.getPaymentMethodId());
+
+            // ✅ Conversión de OffsetDateTime a LocalDateTime
+            if (payment.getDateApproved() != null) {
+                registro.setDateApproved(payment.getDateApproved().toLocalDateTime());
+            }
+
+            registro.setVenta(venta);
+
+            registroPagoRepository.save(registro);
+
+            // Actualizar estado de la venta
+            switch (payment.getStatus()) {
+                case "approved" -> venta.setEstado(Venta.EstadoVenta.COMPLETADA.toString()); // Usar el Enum para consistencia
+                case "in_process", "pending" -> venta.setEstado("PENDIENTE");
+                case "rejected" -> venta.setEstado("RECHAZADA");
+                default -> venta.setEstado("DESCONOCIDO");
+            }
+            ventaRepository.save(venta);
+
+            return ResponseEntity.ok("Webhook procesado correctamente");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error procesando webhook: " + e.getMessage());
+        }
+    }
     // =========================================================
     // 🔴 ENDPOINTS DE ADMIN (requieren rol ADMIN)
     // =========================================================
