@@ -1,11 +1,15 @@
 package org.vesper.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.TableGenerator;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @MappedSuperclass
 @Data
@@ -14,8 +18,16 @@ import java.util.List;
 @SuperBuilder
 public class Producto {
 
+    @TableGenerator(
+            name = "producto_id_generator",
+            table = "producto_id_sequence",
+            pkColumnName = "sequence_name",
+            valueColumnName = "next_val",
+            pkColumnValue = "producto",
+            allocationSize = 1
+    )
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.TABLE, generator = "producto_id_generator")
     private Long id;
 
     @Column(nullable = false)
