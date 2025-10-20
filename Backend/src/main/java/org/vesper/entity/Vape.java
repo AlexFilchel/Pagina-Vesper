@@ -19,14 +19,10 @@ import java.util.Set;
 public class Vape extends Producto {
     private Integer pitadas;
     private String modos;
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "vape_sabor",
-            joinColumns = @JoinColumn(name = "vape_id"),
-            inverseJoinColumns = @JoinColumn(name = "sabor_id")
-    )
+    @OneToMany(mappedBy = "vape", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
-    private Set<Sabor> sabores = new HashSet<>();
+    @ToString.Exclude
+    private Set<VapeSabor> vapeSabores = new HashSet<>();
 
     @Builder.Default
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -36,4 +32,20 @@ public class Vape extends Producto {
             inverseJoinColumns = @JoinColumn(name = "imagen_id")
     )
     private List<Imagen> imagenes = new ArrayList<>();
+
+    public void addVapeSabor(VapeSabor vapeSabor) {
+        if (vapeSabor == null) {
+            return;
+        }
+        vapeSabor.setVape(this);
+        this.vapeSabores.add(vapeSabor);
+    }
+
+    public void setVapeSabores(Set<VapeSabor> vapeSabores) {
+        this.vapeSabores.clear();
+        if (vapeSabores == null) {
+            return;
+        }
+        vapeSabores.forEach(this::addVapeSabor);
+    }
 }

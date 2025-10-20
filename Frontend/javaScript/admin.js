@@ -86,7 +86,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           stock: newProduct.stock,
           pitadas: newProduct.puffs,
           modos: newProduct.modes,
-          sabores: newProduct.flavors.map(f => f.name)
+          sabores: newProduct.flavors
+            .filter(f => typeof f.name === 'string' && f.name.trim().length > 0)
+            .map(f => ({
+              nombre: f.name.trim(),
+              stock: Number.isFinite(f.stock) ? f.stock : 0
+            }))
         };
 
         // ✅ Crear el FormData correctamente
@@ -192,7 +197,12 @@ upsertProduct(mapped);
           stock: editedProduct.stock,
           pitadas: editedProduct.puffs,
           modos: editedProduct.modes,
-          sabores: editedProduct.flavors.map(f => f.name)
+          sabores: editedProduct.flavors
+            .filter(f => typeof f.name === 'string' && f.name.trim().length > 0)
+            .map(f => ({
+              nombre: f.name.trim(),
+              stock: Number.isFinite(f.stock) ? f.stock : 0
+            }))
         };
 
         const formData = new FormData();
@@ -615,10 +625,21 @@ function mapPerfumeResponse(perfume, fallback = {}) {
 }
 
 function mapVapeResponse(vape, fallback = {}) {
-  const flavorsFromResponse = vape?.sabores ? Array.from(vape.sabores) : [];
-  const formattedFlavors = flavorsFromResponse.length
-    ? flavorsFromResponse.map((name) => ({ name, stock: null }))
+  const rawFlavors = Array.isArray(vape?.sabores)
+    ? vape.sabores
+    : (vape?.sabores ? Array.from(vape.sabores) : []);
+
+  const formattedFlavors = rawFlavors.length
+    ? rawFlavors.map((flavor) => ({
+        name: flavor?.nombre ?? flavor?.name ?? '',
+        stock: parseNumberValue(flavor?.stock)
+      }))
     : (fallback.flavors || []);
+
+  const computedStock = formattedFlavors.reduce((acc, flavor) => {
+    const stockValue = parseNumberValue(flavor?.stock);
+    return acc + (Number.isFinite(stockValue) ? stockValue : 0);
+  }, 0);
 
   return {
     id: vape?.id ?? fallback.id ?? String(Date.now()),
@@ -630,7 +651,7 @@ function mapVapeResponse(vape, fallback = {}) {
     modes: vape?.modos ?? fallback.modes ?? '',
     flavors: formattedFlavors,
     price: parseNumberValue(vape?.precio) ?? fallback.price ?? 0,
-    stock: parseNumberValue(vape?.stock) ?? fallback.stock ?? 0
+    stock: parseNumberValue(vape?.stock) ?? computedStock ?? fallback.stock ?? 0
   };
 }
 
@@ -677,9 +698,13 @@ function toPerfumeRequest(product) {
 }
 
 function toVapeRequest(product) {
-  // 🔹 Extrae los nombres de sabores del array product.flavors (que ya viene del form)
   const sabores = Array.isArray(product.flavors)
-    ? product.flavors.map(flavor => flavor.name.trim()).filter(Boolean)
+    ? product.flavors
+        .filter((flavor) => typeof flavor.name === 'string' && flavor.name.trim().length > 0)
+        .map((flavor) => ({
+          nombre: flavor.name.trim(),
+          stock: Number.isFinite(flavor.stock) ? flavor.stock : 0
+        }))
     : [];
 
   return {
@@ -690,7 +715,7 @@ function toVapeRequest(product) {
     stock: product.stock,
     pitadas: product.puffs,
     modos: product.modes,
-    sabores 
+    sabores
   };
 }
 

@@ -31,7 +31,7 @@ public interface VapeRepository extends JpaRepository<Vape, Long>{
     /**
      * Busca vapers que contengan un sabor específico.
      */
-    @Query("SELECT v FROM Vape v JOIN v.sabores s WHERE s.nombre = :saborNombre")
+    @Query("SELECT v FROM Vape v JOIN v.vapeSabores vs JOIN vs.sabor s WHERE s.nombre = :saborNombre")
     List<Vape> findBySaborNombre(@Param("saborNombre") String saborNombre);
     
     /**

@@ -1,6 +1,7 @@
 package org.vesper.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,6 +14,7 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class VapeResponse {
     private Long id;
     private String nombre;
@@ -22,7 +24,8 @@ public class VapeResponse {
     private Integer pitadas;
     private String modos;
 
-    // Nombres o descripciones de los sabores asociados
-    private Set<String> sabores;
+    private Integer stock;
+
+    private Set<VapeSaborResponse> sabores;
     private List<ImagenResponse> imagenes;
 }
