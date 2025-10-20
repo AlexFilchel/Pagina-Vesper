@@ -2,13 +2,17 @@ package org.vesper.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.VapeRequest;
 import org.vesper.dto.VapeResponse;
+import org.vesper.dto.VapeSaborRequest;
+import org.vesper.dto.VapeSaborResponse;
 import org.vesper.entity.Imagen;
 import org.vesper.entity.Sabor;
 import org.vesper.entity.Vape;
+import org.vesper.entity.VapeSabor;
 import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.repo.SaborRepository;
@@ -75,23 +79,7 @@ public class VapeService {
         Vape existente = vapeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vape no encontrado con id: " + id));
 
-        existente.setNombre(request.getNombre());
-        existente.setPrecio(request.getPrecio());
-        existente.setDescripcion(request.getDescripcion());
-        existente.setMarca(request.getMarca());
-        existente.setStock(request.getStock() != null ? request.getStock() : existente.getStock());
-        existente.setPitadas(request.getPitadas());
-        existente.setModos(request.getModos());
-
-        // Actualizar sabores por nombre (crea si no existe)
-        if (request.getSabores() != null) {
-            Set<Sabor> nuevosSabores = request.getSabores().stream()
-                    .filter(Objects::nonNull)
-                    .map(nombre -> saborRepository.findByNombreIgnoreCase(nombre)
-                            .orElseGet(() -> saborRepository.save(Sabor.builder().nombre(nombre).build())))
-                    .collect(Collectors.toSet());
-            existente.setSabores(nuevosSabores);
-        }
+        applyRequestToEntity(existente, request);
 
         Vape actualizado = vapeRepository.save(existente);
         return toResponse(actualizado);
@@ -99,44 +87,28 @@ public class VapeService {
 
     @Transactional
     public VapeResponse actualizarVape(Long id, VapeRequest request, List<MultipartFile> files) {
-    Vape existente = vapeRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Vape no encontrado con id: " + id));
+        Vape existente = vapeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vape no encontrado con id: " + id));
 
-    existente.setNombre(request.getNombre());
-    existente.setPrecio(request.getPrecio());
-    existente.setDescripcion(request.getDescripcion());
-    existente.setMarca(request.getMarca());
-    existente.setStock(request.getStock() != null ? request.getStock() : existente.getStock());
-    existente.setPitadas(request.getPitadas());
-    existente.setModos(request.getModos());
+        applyRequestToEntity(existente, request);
 
-    // 🔹 Actualizar sabores
-    if (request.getSabores() != null) {
-        Set<Sabor> nuevosSabores = request.getSabores().stream()
-                .filter(Objects::nonNull)
-                .map(nombre -> saborRepository.findByNombreIgnoreCase(nombre)
-                        .orElseGet(() -> saborRepository.save(Sabor.builder().nombre(nombre).build())))
-                .collect(Collectors.toSet());
-        existente.setSabores(nuevosSabores);
-    }
-
-    // 🔹 Si se suben nuevas imágenes, reemplazarlas
-    if (files != null && !files.isEmpty()) {
-        List<Imagen> nuevasImagenes = new ArrayList<>();
-        for (MultipartFile file : files) {
-            if (file == null || file.isEmpty()) continue;
-            Map<String, String> uploadResult = cloudinaryService.subirImagen(file);
-            Imagen imagen = new Imagen();
-            imagen.setUrl(uploadResult.get("url"));
-            imagen.setPublicId(uploadResult.get("public_id"));
-            nuevasImagenes.add(imagen);
+        // 🔹 Si se suben nuevas imágenes, reemplazarlas
+        if (files != null && !files.isEmpty()) {
+            List<Imagen> nuevasImagenes = new ArrayList<>();
+            for (MultipartFile file : files) {
+                if (file == null || file.isEmpty()) continue;
+                Map<String, String> uploadResult = cloudinaryService.subirImagen(file);
+                Imagen imagen = new Imagen();
+                imagen.setUrl(uploadResult.get("url"));
+                imagen.setPublicId(uploadResult.get("public_id"));
+                nuevasImagenes.add(imagen);
+            }
+            existente.setImagenes(nuevasImagenes);
         }
-        existente.setImagenes(nuevasImagenes);
-    }
 
-    Vape actualizado = vapeRepository.save(existente);
-    return toResponse(actualizado);
-}
+        Vape actualizado = vapeRepository.save(existente);
+        return toResponse(actualizado);
+    }
 
 
     @Transactional
@@ -186,33 +158,24 @@ public class VapeService {
     /** Mapea el DTO de entrada a entidad, resolviendo sabores por nombre. */
     private Vape toEntity(VapeRequest request) {
         // Resolver set de sabores (crea si no existe)
-        Set<Sabor> sabores = Optional.ofNullable(request.getSabores())
-                .orElseGet(Collections::emptySet)
-                .stream()
-                .filter(Objects::nonNull)
-                .map(nombre -> saborRepository.findByNombreIgnoreCase(nombre)
-                        .orElseGet(() -> saborRepository.save(Sabor.builder().nombre(nombre).build())))
-                .collect(Collectors.toSet());
-
         Vape vape = new Vape();
-        vape.setNombre(request.getNombre());
-        vape.setPrecio(request.getPrecio());
-        vape.setDescripcion(request.getDescripcion());
-        vape.setMarca(request.getMarca());
-        vape.setStock(request.getStock() != null ? request.getStock() : 0);
-        vape.setPitadas(request.getPitadas());
-        vape.setModos(request.getModos());
-        vape.setSabores(sabores);
         vape.setImagenes(new ArrayList<>()); // se completará si se suben archivos
+        applyRequestToEntity(vape, request);
         return vape;
     }
 
     private VapeResponse toResponse(Vape vape) {
-        Set<String> sabores = Optional.ofNullable(vape.getSabores())
+        Set<VapeSaborResponse> sabores = Optional.ofNullable(vape.getVapeSabores())
                 .orElseGet(Collections::emptySet)
                 .stream()
-                .map(Sabor::getNombre)
-                .collect(Collectors.toSet());
+                .map(this::toSaborResponse)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        int stockTotal = sabores.stream()
+                .map(VapeSaborResponse::getStock)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
 
         List<ImagenResponse> imagenResponses = Optional.ofNullable(vape.getImagenes())
                 .orElseGet(Collections::emptyList)
@@ -220,15 +183,66 @@ public class VapeService {
                 .map(imagen -> new ImagenResponse(imagen.getId(), imagen.getUrl()))
                 .collect(Collectors.toList());
 
-        return new VapeResponse(
-                vape.getId(),
-                vape.getNombre(),
-                vape.getPrecio(),
-                vape.getDescripcion(),
-                vape.getPitadas(),
-                vape.getModos(),
-                sabores,
-                imagenResponses
-        );
+        return VapeResponse.builder()
+                .id(vape.getId())
+                .nombre(vape.getNombre())
+                .precio(vape.getPrecio())
+                .descripcion(vape.getDescripcion())
+                .pitadas(vape.getPitadas())
+                .modos(vape.getModos())
+                .stock(stockTotal)
+                .sabores(sabores)
+                .imagenes(imagenResponses)
+                .build();
+    }
+
+    private void applyRequestToEntity(Vape vape, VapeRequest request) {
+        vape.setNombre(request.getNombre());
+        vape.setPrecio(request.getPrecio());
+        vape.setDescripcion(request.getDescripcion());
+        vape.setMarca(request.getMarca());
+        vape.setPitadas(request.getPitadas());
+        vape.setModos(request.getModos());
+
+        Set<VapeSabor> vapeSabores = buildVapeSabores(vape, request.getSabores());
+        vape.setVapeSabores(vapeSabores);
+
+        int totalStock = vapeSabores.stream()
+                .map(VapeSabor::getStock)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
+        vape.setStock(totalStock);
+    }
+
+    private Set<VapeSabor> buildVapeSabores(Vape vape, Set<VapeSaborRequest> saborRequests) {
+        if (saborRequests == null || saborRequests.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        return saborRequests.stream()
+                .filter(Objects::nonNull)
+                .filter(request -> StringUtils.hasText(request.getNombre()))
+                .map(request -> {
+                    Sabor sabor = saborRepository.findByNombreIgnoreCase(request.getNombre())
+                            .orElseGet(() -> saborRepository.save(Sabor.builder().nombre(request.getNombre()).build()));
+                    Integer stock = Optional.ofNullable(request.getStock()).orElse(0);
+                    return VapeSabor.builder()
+                            .vape(vape)
+                            .sabor(sabor)
+                            .stock(stock)
+                            .build();
+                })
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private VapeSaborResponse toSaborResponse(VapeSabor vapeSabor) {
+        Sabor sabor = vapeSabor.getSabor();
+        return VapeSaborResponse.builder()
+                .id(vapeSabor.getId())
+                .saborId(sabor != null ? sabor.getId() : null)
+                .nombre(sabor != null ? sabor.getNombre() : null)
+                .stock(vapeSabor.getStock())
+                .build();
     }
 }
