@@ -95,15 +95,15 @@
         </a>
         <div id="submenu-perfumes" class="main-nav__dropdown" role="menu">
           <ul class="main-nav__list">
-            <li><a href="productos.html" role="menuitem">Masculinos</a></li>
-            <li><a href="productos.html" role="menuitem">Femeninos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="FEMENINO">Femeninos</a></li>
           </ul>
         </div>
       </li>
 
       <!-- Vapes -->
       <li class="main-nav__item">
-        <a href="/productos?categoria=vapes" class="main-nav__link main-nav__link--direct">Vapes</a>
+        <a href="productos.html" class="main-nav__link main-nav__link--direct menu-filter-link" data-filter-type="vape">Vapes</a>
       </li>
 
       <!-- Decants -->
@@ -113,9 +113,9 @@
         </a>
         <div id="submenu-decants" class="main-nav__dropdown" role="menu">
           <ul class="main-nav__list">
-            <li><a href="productos.html" role="menuitem">Masculinos</a></li>
-            <li><a href="productos.html" role="menuitem">Femeninos</a></li>
-            <li><a href="productos.html" role="menuitem">Combos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="FEMENINO">Femeninos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-tag="combo">Combos</a></li>
           </ul>
         </div>
       </li>
@@ -277,11 +277,16 @@
 
 
     <!-- Productos Destacados -->
-    <section class="featured-products">
+    <section class="featured-products" aria-labelledby="featured-products-title">
       <div class="container">
-        <h2 class="section-title">Productos Destacados</h2>
-        <div id="product-list" class="product-list"></div>
-        <button class="btn btn--primary">Ver Todos los Productos</button>
+        <div class="featured-products__header">
+          <h2 id="featured-products-title" class="section-title">Productos destacados</h2>
+          <p class="featured-products__subtitle">Elegimos los lanzamientos más buscados para que disfrutes hasta 15% OFF pagando por transferencia.</p>
+        </div>
+        <div id="featured-products-grid" class="featured-products__grid" aria-live="polite" aria-busy="false"></div>
+        <div class="featured-products__footer">
+          <a class="btn btn--primary" href="productos.html">Ver todos los productos</a>
+        </div>
       </div>
     </section>
 

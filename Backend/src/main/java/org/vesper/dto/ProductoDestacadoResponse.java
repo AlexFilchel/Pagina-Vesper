@@ -6,27 +6,25 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.Set;
 
-/**
- * DTO de respuesta para representar vapers en el API.
- */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class VapeResponse {
+public class ProductoDestacadoResponse {
+
     private Long id;
+    private Long productoId;
+    private String tipo;
     private String nombre;
-    private Double precio;
-    private String descripcion;
-
-    private Integer pitadas;
-    private String modos;
-
     private String marca;
+    private String descripcion;
+    private Double precio;
+    private Double precioTransferencia;
+    private Double ml;
+    private String volumen;
+    private String genero;
+    private Integer pitadas;
     private Integer stock;
-
-    private Set<VapeSaborResponse> sabores;
     private List<ImagenResponse> imagenes;
 }

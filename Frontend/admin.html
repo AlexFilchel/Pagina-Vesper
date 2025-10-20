@@ -76,14 +76,14 @@
           </a>
           <div id="submenu-perfumes" class="main-nav__dropdown" role="menu">
             <ul class="main-nav__list">
-              <li><a href="productos.html" role="menuitem">Masculinos</a></li>
-              <li><a href="productos.html" role="menuitem">Femeninos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="FEMENINO">Femeninos</a></li>
             </ul>
           </div>
         </li>
 
         <li class="main-nav__item">
-          <a href="/productos?categoria=vapes" class="main-nav__link main-nav__link--direct">Vapes</a>
+        <a href="productos.html" class="main-nav__link main-nav__link--direct menu-filter-link" data-filter-type="vape">Vapes</a>
         </li>
 
         <li class="main-nav__item main-nav__item--has-dropdown">
@@ -92,9 +92,9 @@
           </a>
           <div id="submenu-decants" class="main-nav__dropdown" role="menu">
             <ul class="main-nav__list">
-              <li><a href="productos.html" role="menuitem">Masculinos</a></li>
-              <li><a href="productos.html" role="menuitem">Femeninos</a></li>
-              <li><a href="productos.html" role="menuitem">Combos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="FEMENINO">Femeninos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-tag="combo">Combos</a></li>
             </ul>
           </div>
         </li>
@@ -429,10 +429,44 @@
               <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
             </button>
             <div class="accordion-content" hidden>
-              <div class="empty-state">
-                <span class="material-symbols-outlined" aria-hidden="true">construction</span>
-                <p>Funcionalidad en desarrollo.</p>
-              </div>
+              <section class="featured-admin" aria-labelledby="featured-admin-title">
+                <header class="featured-admin__header">
+                  <div>
+                    <h3 id="featured-admin-title">Productos destacados</h3>
+                    <p>Seleccioná hasta ocho productos para la portada de la tienda. Evitá duplicados y mantené la selección siempre actualizada.</p>
+                  </div>
+                  <p id="featuredCounter" class="featured-admin__counter" aria-live="polite">0/8 destacados</p>
+                </header>
+
+                <div class="featured-admin__controls">
+                  <div class="form-field">
+                    <label for="featuredProductSelect">Agregar producto</label>
+                    <div class="featured-admin__control-group">
+                      <select id="featuredProductSelect" name="featuredProductSelect">
+                        <option value="" disabled selected>Seleccioná un producto disponible</option>
+                      </select>
+                      <button type="button" class="btn btn--primary" id="addFeaturedButton">Agregar</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="table-wrapper">
+                  <table class="admin-table" aria-describedby="featured-admin-title">
+                    <thead>
+                      <tr>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Marca</th>
+                        <th scope="col">Precio</th>
+                        <th scope="col">Tipo</th>
+                        <th scope="col">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody id="featuredProductsBody"></tbody>
+                  </table>
+                </div>
+
+                <p class="featured-admin__helper">Podés reorganizar los productos desde el backend en una actualización futura. Por ahora se muestran en el orden en que fueron agregados.</p>
+              </section>
             </div>
           </article>
         </div>

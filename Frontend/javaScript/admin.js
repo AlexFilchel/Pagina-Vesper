@@ -20,11 +20,16 @@ const dom = {
   promotionModal: document.getElementById('promotionModal'),
   promotionProductSelect: document.getElementById('promotionProduct'),
   editPromotionProductSelect: document.getElementById('editPromotionProduct'),
-  adminModals: document.querySelectorAll('.admin-modal')
+  adminModals: document.querySelectorAll('.admin-modal'),
+  featuredTableBody: document.getElementById('featuredProductsBody'),
+  featuredSelect: document.getElementById('featuredProductSelect'),
+  addFeaturedButton: document.getElementById('addFeaturedButton'),
+  featuredCounter: document.getElementById('featuredCounter')
 };
 
 let addProductHelpers;
 let editProductHelpers;
+let featuredProducts = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupAccordions();
@@ -42,13 +47,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await ensureApiClient();
     await loadProductsFromApi();
+    await loadFeaturedProducts();
   } catch (error) {
     console.error('Error inicializando la API del administrador:', error);
     showToast('No se pudieron cargar los productos del catálogo.');
     renderProductsTable();
+    renderFeaturedProducts('No se pudo obtener la lista de destacados.');
   }
 
   renderPromotionsTable();
+
+  dom.addFeaturedButton?.addEventListener('click', handleAddFeaturedProduct);
+
+  dom.featuredTableBody?.addEventListener('click', (event) => {
+    const target = event.target.closest('.btn-remove[data-featured-id]');
+    if (!target) return;
+    const destacadoId = Number.parseInt(target.dataset.featuredId, 10);
+    if (!Number.isFinite(destacadoId)) return;
+    removeFeaturedProduct(destacadoId);
+  });
 
   // ============================
   // 📦 CREAR PRODUCTO
@@ -117,37 +134,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         const mapped = mapVapeResponse(created, newProduct);
         upsertProduct(mapped);
       } else {
- const producto = toPerfumeRequest(newProduct);
+        const producto = toPerfumeRequest(newProduct);
 
-const formData = new FormData();
-formData.append(
-  "producto",
-  new Blob([JSON.stringify(producto)], { type: "application/json" })
-);
+        const formData = new FormData();
+        formData.append(
+          "producto",
+          new Blob([JSON.stringify(producto)], { type: "application/json" })
+        );
 
-// ✅ Selecciona dinámicamente el input correcto
-let fileInput;
-if (newProduct.type === 'vape') {
-  fileInput = dom.addProductForm.querySelector('#vapeImages');
-} else {
-  fileInput = dom.addProductForm.querySelector('#productImages');
-}
+        const fileInput = dom.addProductForm.querySelector('#productImages');
+        if (fileInput && fileInput.files.length > 0) {
+          for (const file of fileInput.files) {
+            formData.append("files", file);
+          }
+        }
 
-if (fileInput && fileInput.files.length > 0) {
-  for (const file of fileInput.files) {
-    formData.append("files", file);
-  }
-}
+        const created = await client.request("/admin/perfumes", {
+          method: "POST",
+          body: formData,
+          authenticated: true
+        });
 
-const created = await client.request("/admin/perfumes", {
-  method: "POST",
-  body: formData,
-  authenticated: true
-});
-
-const mapped = mapPerfumeResponse(created, newProduct);
-upsertProduct(mapped);
-
+        const mapped = mapPerfumeResponse(created, newProduct);
+        upsertProduct(mapped);
       }
 
       renderProductsTable();
@@ -598,6 +607,181 @@ async function loadProductsFromApi() {
   renderProductsTable();
   populateProductOptions();
   renderPromotionsTable();
+  refreshFeaturedSelectOptions();
+}
+
+async function loadFeaturedProducts() {
+  if (!dom.featuredTableBody) return;
+
+  try {
+    const client = await ensureApiClient();
+    if (!client || typeof client.fetchFeaturedAdmin !== 'function') {
+      throw new Error('Cliente de API no disponible.');
+    }
+
+    const response = await client.fetchFeaturedAdmin();
+    featuredProducts = Array.isArray(response) ? response : [];
+    renderFeaturedProducts();
+  } catch (error) {
+    console.error('Error al cargar los productos destacados:', error);
+    featuredProducts = [];
+    renderFeaturedProducts('No se pudieron cargar los productos destacados.');
+  }
+}
+
+function renderFeaturedProducts(errorMessage) {
+  if (!dom.featuredTableBody) return;
+
+  dom.featuredTableBody.innerHTML = '';
+  const total = featuredProducts.length;
+  if (dom.featuredCounter) {
+    dom.featuredCounter.textContent = `${total}/8 destacados`;
+  }
+
+  if (errorMessage) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 5;
+    cell.textContent = errorMessage;
+    row.appendChild(cell);
+    dom.featuredTableBody.appendChild(row);
+    refreshFeaturedSelectOptions();
+    return;
+  }
+
+  if (total === 0) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 5;
+    cell.textContent = 'Aún no hay productos destacados.';
+    row.appendChild(cell);
+    dom.featuredTableBody.appendChild(row);
+    refreshFeaturedSelectOptions();
+    return;
+  }
+
+  featuredProducts.forEach((item) => {
+    const row = document.createElement('tr');
+
+    const nameCell = document.createElement('td');
+    nameCell.textContent = item?.nombre ?? '';
+    row.appendChild(nameCell);
+
+    const brandCell = document.createElement('td');
+    brandCell.textContent = item?.marca ?? '';
+    row.appendChild(brandCell);
+
+    const priceCell = document.createElement('td');
+    priceCell.textContent = currencyFormatter.format(item?.precio ?? 0);
+    row.appendChild(priceCell);
+
+    const typeCell = document.createElement('td');
+    typeCell.textContent = formatProductType(String(item?.tipo ?? '').toLowerCase());
+    row.appendChild(typeCell);
+
+    const actionsCell = document.createElement('td');
+    actionsCell.classList.add('column-actions');
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'btn-remove';
+    deleteButton.dataset.featuredId = String(item?.id ?? '');
+    deleteButton.textContent = 'Eliminar';
+    actionsCell.appendChild(deleteButton);
+    row.appendChild(actionsCell);
+
+    dom.featuredTableBody.appendChild(row);
+  });
+
+  refreshFeaturedSelectOptions();
+}
+
+function refreshFeaturedSelectOptions() {
+  if (!dom.featuredSelect) return;
+
+  const currentValue = dom.featuredSelect.value;
+  dom.featuredSelect.innerHTML = '';
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  placeholder.textContent = 'Seleccioná un producto disponible';
+  dom.featuredSelect.appendChild(placeholder);
+
+  const destacadosIds = new Set(
+    featuredProducts.map((item) => String(item?.productoId ?? item?.id ?? ''))
+  );
+
+  const available = products
+    .filter((product) => !destacadosIds.has(String(product.id)))
+    .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+
+  available.forEach((product) => {
+    const option = document.createElement('option');
+    option.value = String(product.id);
+    const typeLabel = formatProductType(product.type);
+    let detail = '';
+    if (product.type === 'vape' && Number.isFinite(product.puffs)) {
+      detail = `${product.puffs} puffs`;
+    } else if (Number.isFinite(product.volume)) {
+      detail = `${product.volume} ml`;
+    }
+    const detailText = detail ? ` • ${detail}` : '';
+    option.textContent = `${product.brand} – ${product.name}${detailText} (${typeLabel})`;
+    dom.featuredSelect.appendChild(option);
+  });
+
+  if (available.some((product) => String(product.id) === currentValue)) {
+    dom.featuredSelect.value = currentValue;
+  }
+}
+
+async function handleAddFeaturedProduct() {
+  if (!dom.featuredSelect || !dom.addFeaturedButton) return;
+
+  const selectedValue = dom.featuredSelect.value;
+  const productoId = Number.parseInt(selectedValue, 10);
+  if (!Number.isFinite(productoId)) {
+    dom.featuredSelect.focus();
+    return;
+  }
+
+  dom.addFeaturedButton.disabled = true;
+
+  try {
+    const client = await ensureApiClient();
+    if (!client || typeof client.addFeaturedProduct !== 'function') {
+      throw new Error('Cliente de API no disponible.');
+    }
+
+    await client.addFeaturedProduct(productoId);
+    showToast('Producto agregado a destacados.');
+    await loadFeaturedProducts();
+  } catch (error) {
+    console.error('Error al agregar producto destacado:', error);
+    const message = error?.message || 'No se pudo agregar el producto a destacados.';
+    showToast(message);
+  } finally {
+    dom.addFeaturedButton.disabled = false;
+    dom.featuredSelect.value = '';
+  }
+}
+
+async function removeFeaturedProduct(destacadoId) {
+  try {
+    const client = await ensureApiClient();
+    if (!client || typeof client.removeFeaturedProduct !== 'function') {
+      throw new Error('Cliente de API no disponible.');
+    }
+
+    await client.removeFeaturedProduct(destacadoId);
+    showToast('Producto destacado eliminado.');
+    await loadFeaturedProducts();
+  } catch (error) {
+    console.error('Error al eliminar producto destacado:', error);
+    const message = error?.message || 'No se pudo eliminar el producto destacado.';
+    showToast(message);
+  }
 }
 
 function mapPerfumeResponse(perfume, fallback = {}) {
@@ -959,6 +1143,7 @@ function populateProductOptions() {
       }
     }
   });
+  refreshFeaturedSelectOptions();
 }
 
 function collectPromotionData(form) {

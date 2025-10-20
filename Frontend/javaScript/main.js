@@ -566,6 +566,10 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("resize", handleResize);
   handleResize();
 
+  setupHeaderSearch();
+  setupMenuFilters();
+  populateHeaderBrands();
+
   const currencyFormatter = new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",
@@ -574,6 +578,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const formatPrice = (value) => currencyFormatter.format(value);
+
+  const TRANSFER_DISCOUNT_RATE = 0.15;
+  const CART_STORAGE_KEY = "vesper.cart.v1";
+  const FALLBACK_IMAGE_URL = "img/logo_vesper.jpg";
 
   function parsePriceValue(value) {
     if (typeof value === "number") return value;
@@ -607,6 +615,360 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
+  }
+
+  function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function highlightElement(element, text, query) {
+    if (!element) return;
+    element.textContent = "";
+
+    const safeText = typeof text === "string" ? text : "";
+    const normalizedQuery = typeof query === "string" ? query.trim() : "";
+
+    if (!normalizedQuery) {
+      element.textContent = safeText;
+      return;
+    }
+
+    try {
+      const regex = new RegExp(escapeRegExp(normalizedQuery), "gi");
+      let lastIndex = 0;
+      let match;
+
+      while ((match = regex.exec(safeText)) !== null) {
+        if (match.index > lastIndex) {
+          element.appendChild(document.createTextNode(safeText.slice(lastIndex, match.index)));
+        }
+        const mark = document.createElement("mark");
+        mark.textContent = match[0];
+        element.appendChild(mark);
+        lastIndex = match.index + match[0].length;
+      }
+
+      if (lastIndex < safeText.length) {
+        element.appendChild(document.createTextNode(safeText.slice(lastIndex)));
+      }
+
+      if (!element.childNodes.length) {
+        element.textContent = safeText;
+      }
+    } catch (error) {
+      console.warn("No se pudo resaltar el texto de búsqueda:", error);
+      element.textContent = safeText;
+    }
+  }
+
+  function calculateTransferPrice(value) {
+    if (!Number.isFinite(value)) return value;
+    const discounted = value * (1 - TRANSFER_DISCOUNT_RATE);
+    return Math.round(discounted * 100) / 100;
+  }
+
+  const catalogCache = {
+    promise: null,
+    data: null
+  };
+
+  async function fetchCatalogData(force = false) {
+    if (!force && catalogCache.data) {
+      return catalogCache.data;
+    }
+
+    if (!catalogCache.promise || force) {
+      const loadData = async () => {
+        try {
+          const perfumesPromise = window.apiClient?.fetchPerfumes?.()
+            ?? fetch('http://localhost:8080/api/public/perfumes').then((res) => res.json());
+          const vapesPromise = window.apiClient?.fetchVapes?.()
+            ?? fetch('http://localhost:8080/api/public/vapes').then((res) => res.json());
+
+          const [perfumes, vapes] = await Promise.all([perfumesPromise, vapesPromise]);
+          const data = {
+            perfumes: Array.isArray(perfumes) ? perfumes : [],
+            vapes: Array.isArray(vapes) ? vapes : []
+          };
+          catalogCache.data = data;
+          return data;
+        } catch (error) {
+          catalogCache.data = { perfumes: [], vapes: [] };
+          throw error;
+        } finally {
+          catalogCache.promise = null;
+        }
+      };
+
+      catalogCache.promise = loadData();
+    }
+
+    if (catalogCache.data && !force) {
+      return catalogCache.data;
+    }
+
+    if (catalogCache.promise) {
+      return catalogCache.promise;
+    }
+
+    return { perfumes: [], vapes: [] };
+  }
+
+  function getPrimaryImage(imagenes) {
+    if (!Array.isArray(imagenes)) {
+      return FALLBACK_IMAGE_URL;
+    }
+    const candidate = imagenes.find((item) => typeof item?.url === "string" && item.url.trim().length > 0);
+    return candidate?.url ?? FALLBACK_IMAGE_URL;
+  }
+
+  function normalizePerfume(perfume) {
+    const rawPrice = Number.parseFloat(perfume?.precio);
+    const price = Number.isFinite(rawPrice) ? rawPrice : 0;
+    const mlValue = Number.parseFloat(perfume?.ml);
+    const type = perfume?.decant ? "decant" : "perfume";
+    const genero = typeof perfume?.genero === "string" ? perfume.genero.toUpperCase() : "";
+    const brand = typeof perfume?.marca === "string" ? perfume.marca.trim() : "";
+    const name = typeof perfume?.nombre === "string" ? perfume.nombre.trim() : "";
+
+    const haystack = [
+      name,
+      brand,
+      perfume?.notasPrincipales ?? "",
+      perfume?.descripcion ?? "",
+      perfume?.inspiracion ?? "",
+      perfume?.fragancia ?? ""
+    ].join(" ").toLowerCase();
+
+    return {
+      key: `${type}-${perfume?.id ?? window.crypto?.randomUUID?.() ?? Date.now()}`,
+      productId: perfume?.id ?? null,
+      type,
+      name,
+      brand,
+      description: perfume?.descripcion ?? "",
+      genero,
+      ml: Number.isFinite(mlValue) ? mlValue : null,
+      decant: Boolean(perfume?.decant),
+      notasPrincipales: perfume?.notasPrincipales ?? "",
+      price,
+      originalPrice: price,
+      discountPrice: calculateTransferPrice(price),
+      stock: Number.isFinite(perfume?.stock) ? perfume.stock : 0,
+      image: getPrimaryImage(perfume?.imagenes),
+      searchText: haystack,
+      raw: perfume
+    };
+  }
+
+  function normalizeVape(vape) {
+    const rawPrice = Number.parseFloat(vape?.precio);
+    const price = Number.isFinite(rawPrice) ? rawPrice : 0;
+    const brand = typeof vape?.marca === "string" ? vape.marca.trim() : "";
+    const name = typeof vape?.nombre === "string" ? vape.nombre.trim() : "";
+    const sabores = Array.isArray(vape?.sabores) ? vape.sabores : [];
+    const saboresTexto = sabores
+      .map((sabor) => sabor?.nombre ?? sabor?.name ?? "")
+      .join(" ");
+
+    const haystack = [
+      name,
+      brand,
+      vape?.descripcion ?? "",
+      saboresTexto,
+      vape?.modos ?? ""
+    ].join(" ").toLowerCase();
+
+    return {
+      key: `vape-${vape?.id ?? window.crypto?.randomUUID?.() ?? Date.now()}`,
+      productId: vape?.id ?? null,
+      type: "vape",
+      name,
+      brand,
+      description: vape?.descripcion ?? "",
+      pitadas: Number.isFinite(vape?.pitadas) ? vape.pitadas : null,
+      modos: vape?.modos ?? "",
+      price,
+      originalPrice: price,
+      discountPrice: calculateTransferPrice(price),
+      stock: Number.isFinite(vape?.stock) ? vape.stock : 0,
+      image: getPrimaryImage(vape?.imagenes),
+      sabores,
+      searchText: haystack,
+      raw: vape
+    };
+  }
+
+  function normalizeFeaturedProduct(destacado) {
+    const rawPrice = Number.parseFloat(destacado?.precio);
+    const price = Number.isFinite(rawPrice) ? rawPrice : 0;
+    const discountRaw = Number.parseFloat(destacado?.precioTransferencia);
+    const discountPrice = Number.isFinite(discountRaw)
+      ? discountRaw
+      : calculateTransferPrice(price);
+
+    const type = typeof destacado?.tipo === "string"
+      ? destacado.tipo.toLowerCase()
+      : "producto";
+    const brand = typeof destacado?.marca === "string" ? destacado.marca.trim() : "";
+    const name = typeof destacado?.nombre === "string" ? destacado.nombre.trim() : "";
+
+    return {
+      key: `destacado-${destacado?.id ?? window.crypto?.randomUUID?.() ?? Date.now()}`,
+      destacadoId: destacado?.id ?? null,
+      productId: destacado?.productoId ?? null,
+      type,
+      name,
+      brand,
+      description: destacado?.descripcion ?? "",
+      genero: typeof destacado?.genero === "string" ? destacado.genero.toUpperCase() : "",
+      ml: Number.isFinite(destacado?.ml) ? destacado.ml : null,
+      pitadas: Number.isFinite(destacado?.pitadas) ? destacado.pitadas : null,
+      price,
+      originalPrice: price,
+      discountPrice,
+      stock: Number.isFinite(destacado?.stock) ? destacado.stock : 0,
+      image: getPrimaryImage(destacado?.imagenes),
+      raw: destacado
+    };
+  }
+
+  function buildProductCardElement(product, options = {}) {
+    const {
+      searchTerm = "",
+      badge,
+      showMeta = true
+    } = options;
+
+    const cartId = String(product?.key ?? `${product?.type ?? "producto"}-${product?.productId ?? Date.now()}`);
+    const subtitleParts = [];
+    if (Number.isFinite(product?.ml)) {
+      subtitleParts.push(`${product.ml} ml`);
+    }
+    if (Number.isFinite(product?.pitadas)) {
+      subtitleParts.push(`${product.pitadas} puffs`);
+    }
+    if (product?.genero) {
+      const generoLabel = product.genero.charAt(0) + product.genero.slice(1).toLowerCase();
+      subtitleParts.push(generoLabel);
+    }
+    const subtitleText = subtitleParts.join(" • ");
+
+    const card = document.createElement("article");
+    card.className = "product-card";
+    card.dataset.productId = cartId;
+    card.dataset.productName = product?.name ?? "";
+    card.dataset.productPrice = String(product?.price ?? 0);
+    card.dataset.productOriginalPrice = String(product?.originalPrice ?? product?.price ?? 0);
+    card.dataset.productType = product?.type ?? "producto";
+    card.dataset.productImage = product?.image ?? FALLBACK_IMAGE_URL;
+    if (subtitleText) {
+      card.dataset.productSubtitle = subtitleText;
+    }
+
+    const figure = document.createElement("figure");
+    figure.className = "product-card__figure";
+    const image = document.createElement("img");
+    image.src = product?.image ?? FALLBACK_IMAGE_URL;
+    image.alt = `${product?.name ?? "Producto"} ${product?.brand ? `de ${product.brand}` : ""}`.trim();
+    figure.appendChild(image);
+    card.appendChild(figure);
+
+    if (badge) {
+      const badgeElement = document.createElement("span");
+      badgeElement.className = "product-card__badge";
+      badgeElement.textContent = badge;
+      card.appendChild(badgeElement);
+    } else if (product?.decant) {
+      const badgeElement = document.createElement("span");
+      badgeElement.className = "product-card__badge";
+      badgeElement.textContent = "Decant";
+      card.appendChild(badgeElement);
+    }
+
+    const body = document.createElement("div");
+    body.className = "product-card__body";
+
+    if (product?.brand) {
+      const brand = document.createElement("p");
+      brand.className = "product-card__brand";
+      brand.textContent = product.brand;
+      body.appendChild(brand);
+    }
+
+    const title = document.createElement("h3");
+    title.className = "product-card__title";
+    highlightElement(title, product?.name ?? "", searchTerm);
+    body.appendChild(title);
+
+    if (subtitleText) {
+      const subtitle = document.createElement("p");
+      subtitle.className = "product-card__subtitle";
+      highlightElement(subtitle, subtitleText, searchTerm);
+      body.appendChild(subtitle);
+    }
+
+    const prices = document.createElement("div");
+    prices.className = "product-card__prices";
+    const priceElement = document.createElement("span");
+    priceElement.className = "product-card__price";
+    priceElement.textContent = formatPrice(product?.price ?? 0);
+    prices.appendChild(priceElement);
+
+    const discountElement = document.createElement("span");
+    discountElement.className = "product-card__discount";
+    discountElement.innerHTML = `<span>15% OFF transferencia</span> ${formatPrice(product?.discountPrice ?? calculateTransferPrice(product?.price ?? 0))}`;
+    prices.appendChild(discountElement);
+    body.appendChild(prices);
+
+    if (showMeta) {
+      const meta = document.createElement("p");
+      meta.className = "product-card__meta";
+      const typeLabel = formatProductLabel(product?.type ?? "producto");
+      const metaPieces = [typeLabel];
+      if (Number.isFinite(product?.stock)) {
+        metaPieces.push(`${product.stock} en stock`);
+      }
+      meta.textContent = metaPieces.join(" • ");
+      body.appendChild(meta);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "product-card__actions";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn btn--primary";
+    button.dataset.action = "add-to-cart";
+    button.dataset.productId = cartId;
+    button.dataset.productName = product?.name ?? "";
+    button.dataset.productPrice = String(product?.price ?? 0);
+    button.dataset.productOriginalPrice = String(product?.price ?? 0);
+    if (Number.isFinite(product?.discountPrice)) {
+      button.dataset.productDiscount = String(product.discountPrice);
+    }
+    button.dataset.productType = product?.type ?? "producto";
+    button.dataset.productSubtitle = subtitleText;
+    button.dataset.productImage = product?.image ?? FALLBACK_IMAGE_URL;
+    button.textContent = "Agregar al carrito";
+    actions.appendChild(button);
+
+    body.appendChild(actions);
+    card.appendChild(body);
+
+    return card;
+  }
+
+  function formatProductLabel(type) {
+    switch ((type || "").toLowerCase()) {
+      case "perfume":
+        return "Perfume";
+      case "decant":
+        return "Decant";
+      case "vape":
+        return "Vape";
+      default:
+        return "Producto";
+    }
   }
 
   function extractProductData(trigger) {
@@ -685,6 +1047,60 @@ document.addEventListener("DOMContentLoaded", () => {
     items: [],
     shippingInfo: null
   };
+
+  function loadCartFromStorage() {
+    try {
+      const stored = window.localStorage.getItem(CART_STORAGE_KEY);
+      if (!stored) {
+        return;
+      }
+
+      const parsed = JSON.parse(stored);
+      if (!parsed || !Array.isArray(parsed.items)) {
+        return;
+      }
+
+      cartState.items = parsed.items
+        .map((item) => ({
+          id: item?.id ?? slugify(item?.name ?? Date.now()),
+          name: item?.name ?? "Producto",
+          subtitle: item?.subtitle ?? "",
+          price: Number.parseFloat(item?.price) || 0,
+          originalPrice: Number.parseFloat(item?.originalPrice ?? item?.price) || 0,
+          image: item?.image ?? FALLBACK_IMAGE_URL,
+          type: item?.type ?? "Producto",
+          quantity: Number.isFinite(item?.quantity) && item.quantity > 0 ? item.quantity : 1
+        }));
+
+      cartState.shippingInfo = parsed.shippingInfo ?? null;
+    } catch (error) {
+      console.warn("No se pudo cargar el carrito desde almacenamiento local:", error);
+      cartState.items = [];
+      cartState.shippingInfo = null;
+    }
+  }
+
+  function persistCart() {
+    try {
+      const payload = {
+        items: cartState.items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          subtitle: item.subtitle,
+          price: item.price,
+          originalPrice: item.originalPrice,
+          image: item.image,
+          type: item.type,
+          quantity: item.quantity
+        })),
+        shippingInfo: cartState.shippingInfo
+      };
+
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(payload));
+    } catch (error) {
+      console.warn("No se pudo guardar el carrito:", error);
+    }
+  }
 
   if (cartPanel) {
     cartPanel.setAttribute("tabindex", "-1");
@@ -846,6 +1262,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     renderCart();
+    persistCart();
     showCartToast(product);
   }
 
@@ -855,6 +1272,7 @@ document.addEventListener("DOMContentLoaded", () => {
       cartState.shippingInfo = null;
     }
     renderCart();
+    persistCart();
   }
 
   function changeQuantity(productId, delta) {
@@ -869,6 +1287,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     renderCart();
+    persistCart();
   }
 
   function calculateShippingBase(zipDigits) {
@@ -909,6 +1328,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     updateSummary();
+    persistCart();
   }
 
   function showCartToast(product) {
@@ -957,23 +1377,30 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3200);
   }
 
+  loadCartFromStorage();
   renderCart();
 
   if (cartTrigger) {
     cartTrigger.addEventListener("click", (event) => {
       event.preventDefault();
-      openCart();
+      window.location.href = "checkout-entrega.html";
     });
   }
 
   cartOverlay?.addEventListener("click", closeCart);
   cartCloseBtn?.addEventListener("click", closeCart);
-  emptyCta?.addEventListener("click", closeCart);
-  summarySecondary?.addEventListener("click", closeCart);
+  emptyCta?.addEventListener("click", () => {
+    window.location.href = "productos.html";
+  });
+
+  summarySecondary?.addEventListener("click", () => {
+    window.location.href = "productos.html";
+  });
 
   summaryPrimary?.addEventListener("click", () => {
     if (!cartState.items.length) return;
-    closeCart();
+    persistCart();
+    window.location.href = "checkout-entrega.html";
   });
 
   shippingForm?.addEventListener("submit", handleShipping);
@@ -1340,31 +1767,493 @@ document.addEventListener("DOMContentLoaded", () => {
 /* ===========================
    🔹 Sombra dinámica del header
 =========================== */
-const header = document.querySelector(".site-header");
-const navBottom = document.querySelector(".site-header__bottom");
+  const header = document.querySelector(".site-header");
+  const navBottom = document.querySelector(".site-header__bottom");
 
-if (header && navBottom) {
-  // Solo en desktop
-  if (window.innerWidth >= 768) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            // 🔹 Categorías visibles → sombra en .site-header__bottom
-            navBottom.classList.add("has-shadow");
-            header.classList.remove("has-shadow");
-          } else {
-            // 🔹 Categorías NO visibles → sombra en .site-header
-            navBottom.classList.remove("has-shadow");
-            header.classList.add("has-shadow");
-          }
-        });
-      },
-      { threshold: 0.01 }
-    );
+  if (header && navBottom) {
+    if (window.innerWidth >= 768) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              navBottom.classList.add("has-shadow");
+              header.classList.remove("has-shadow");
+            } else {
+              navBottom.classList.remove("has-shadow");
+              header.classList.add("has-shadow");
+            }
+          });
+        },
+        { threshold: 0.01 }
+      );
 
-    observer.observe(navBottom);
+      observer.observe(navBottom);
+    }
   }
-}
 
+  function setupHeaderSearch() {
+    const forms = [];
+    if (desktopSearchForm) {
+      forms.push(desktopSearchForm);
+    }
+    const mobileForm = mobileSearchOverlay?.querySelector("form");
+    if (mobileForm) {
+      forms.push(mobileForm);
+    }
+
+    forms.forEach((form) => {
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const input = form.querySelector("input[type='search'], input[type='text']");
+        const query = input?.value?.trim();
+        if (!query) {
+          return;
+        }
+        closeSearch();
+        const url = new URL("productos.html", window.location.origin);
+        url.searchParams.set("q", query);
+        window.location.href = url.toString();
+      });
+    });
+  }
+
+  function setSearchInputsValue(value) {
+    const safeValue = value ?? "";
+    const desktopInput = desktopSearchForm?.querySelector("input[type='search']");
+    if (desktopInput) {
+      desktopInput.value = safeValue;
+    }
+    const mobileInput = mobileSearchOverlay?.querySelector("input[type='search'], input[type='text']");
+    if (mobileInput) {
+      mobileInput.value = safeValue;
+    }
+  }
+
+  function setupMenuFilters() {
+    const links = document.querySelectorAll(".menu-filter-link");
+    links.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        closeMenu();
+        const url = new URL("productos.html", window.location.origin);
+        const { filterType, filterGenero, filterBrand, filterTag } = link.dataset;
+        if (filterType) {
+          url.searchParams.append("type", filterType);
+        }
+        if (filterGenero) {
+          url.searchParams.append("genero", filterGenero);
+        }
+        if (filterBrand) {
+          url.searchParams.append("brand", filterBrand);
+        }
+        if (filterTag) {
+          url.searchParams.append("tag", filterTag);
+        }
+        window.location.href = url.toString();
+      });
+    });
+  }
+
+  async function populateHeaderBrands() {
+    const perfumeList = document.querySelector('[data-brand-list="perfumes"]');
+    const vapeList = document.querySelector('[data-brand-list="vapes"]');
+    if (!perfumeList && !vapeList) {
+      return;
+    }
+
+    try {
+      const data = await fetchCatalogData();
+      const perfumeBrands = new Map();
+      data.perfumes.forEach((perfume) => {
+        const brand = typeof perfume?.marca === "string" ? perfume.marca.trim() : "";
+        if (brand) {
+          const key = brand.toLowerCase();
+          if (!perfumeBrands.has(key)) {
+            perfumeBrands.set(key, brand);
+          }
+        }
+      });
+
+      const vapeBrands = new Map();
+      data.vapes.forEach((vape) => {
+        const brand = typeof vape?.marca === "string" ? vape.marca.trim() : "";
+        if (brand) {
+          const key = brand.toLowerCase();
+          if (!vapeBrands.has(key)) {
+            vapeBrands.set(key, brand);
+          }
+        }
+      });
+
+      const renderBrandList = (container, brandMap, type) => {
+        if (!container) return;
+        container.innerHTML = "";
+        const entries = Array.from(brandMap.entries()).sort(([, a], [, b]) => a.localeCompare(b, "es", { sensitivity: "base" }));
+        entries.forEach(([key, label]) => {
+          const listItem = document.createElement("li");
+          const link = document.createElement("a");
+          link.href = "productos.html";
+          link.className = "menu-filter-link";
+          link.dataset.filterType = type;
+          link.dataset.filterBrand = label;
+          link.textContent = label;
+          listItem.appendChild(link);
+          container.appendChild(listItem);
+        });
+      };
+
+      renderBrandList(perfumeList, perfumeBrands, "perfume");
+      renderBrandList(vapeList, vapeBrands, "vape");
+
+      setupMenuFilters();
+    } catch (error) {
+      console.error("No se pudieron cargar las marcas del menú:", error);
+    }
+  }
+
+  async function renderFeaturedProductsSection(container) {
+    container.innerHTML = "";
+    container.setAttribute("aria-busy", "true");
+    try {
+      if (!window.apiClient || typeof window.apiClient.fetchFeaturedPublic !== "function") {
+        throw new Error("Cliente de API no disponible");
+      }
+
+      const response = await window.apiClient.fetchFeaturedPublic();
+      const destacados = Array.isArray(response)
+        ? response.slice(0, 8).map(normalizeFeaturedProduct)
+        : [];
+
+      if (!destacados.length) {
+        const empty = document.createElement("p");
+        empty.textContent = "Aún no hay productos destacados disponibles.";
+        container.appendChild(empty);
+        return;
+      }
+
+      destacados.forEach((item) => {
+        const card = buildProductCardElement(item, {
+          badge: "Destacado",
+          showMeta: false
+        });
+        container.appendChild(card);
+      });
+    } catch (error) {
+      console.error("Error al cargar los destacados:", error);
+      const message = document.createElement("p");
+      message.textContent = "No se pudieron cargar los productos destacados.";
+      container.appendChild(message);
+    } finally {
+      container.setAttribute("aria-busy", "false");
+    }
+  }
+
+  function initializeProductsPage() {
+    const productsContainer = document.getElementById("productos-lista");
+    if (!productsContainer) {
+      return;
+    }
+
+    const typeInputs = document.querySelectorAll('input[name="filter-type"]');
+    const genderInputs = document.querySelectorAll('input[name="filter-gender"]');
+    const clearButton = document.querySelector('.filtros-limpiar');
+    const priceRangeInput = document.getElementById('filter-price');
+    const priceLabel = document.getElementById('filter-price-value');
+
+    const defaultMaxPrice = priceRangeInput ? Number.parseFloat(priceRangeInput.value || priceRangeInput.max) : null;
+
+    const state = {
+      items: [],
+      filtered: []
+    };
+
+    const filters = {
+      types: new Set(),
+      genders: new Set(),
+      brands: new Set(),
+      maxPrice: Number.isFinite(defaultMaxPrice) ? defaultMaxPrice : null,
+      search: ''
+    };
+
+    const showMessage = (message) => {
+      productsContainer.innerHTML = '';
+      const paragraph = document.createElement('p');
+      paragraph.className = 'productos-empty';
+      paragraph.textContent = message;
+      productsContainer.appendChild(paragraph);
+    };
+
+    const updatePriceLabel = (value) => {
+      if (priceLabel) {
+        priceLabel.textContent = formatPrice(Number(value) || 0);
+      }
+    };
+
+    const updateUrlParams = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('type');
+      url.searchParams.delete('genero');
+      url.searchParams.delete('brand');
+      url.searchParams.delete('maxPrice');
+      url.searchParams.delete('q');
+
+      filters.types.forEach((type) => url.searchParams.append('type', type));
+      filters.genders.forEach((gender) => url.searchParams.append('genero', gender));
+      filters.brands.forEach((brand) => url.searchParams.append('brand', brand));
+
+      if (Number.isFinite(filters.maxPrice) && priceRangeInput) {
+        url.searchParams.set('maxPrice', filters.maxPrice);
+      }
+
+      if (filters.search) {
+        url.searchParams.set('q', filters.search);
+      }
+
+      window.history.replaceState({}, '', url);
+    };
+
+    const updateBrandGroupVisibility = () => {
+      const perfumeGroup = document.querySelector('[data-brand-group="perfume"]');
+      const vapeGroup = document.querySelector('[data-brand-group="vape"]');
+      const showPerfume = !filters.types.size || filters.types.has('perfume') || filters.types.has('decant');
+      const showVape = !filters.types.size || filters.types.has('vape');
+      perfumeGroup?.classList.toggle('is-hidden', !showPerfume);
+      vapeGroup?.classList.toggle('is-hidden', !showVape);
+    };
+
+    const renderProducts = (products, searchTerm) => {
+      productsContainer.innerHTML = '';
+      if (!products.length) {
+        showMessage('No encontramos productos con los filtros seleccionados.');
+        return;
+      }
+
+      products.forEach((product) => {
+        const card = buildProductCardElement(product, {
+          searchTerm,
+          showMeta: true
+        });
+        productsContainer.appendChild(card);
+      });
+    };
+
+    const renderBrandGroup = (container, brandMap, type) => {
+      if (!container) return;
+      container.innerHTML = '';
+      const entries = Array.from(brandMap.entries()).sort(([, a], [, b]) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+      entries.forEach(([key, label]) => {
+        const listItem = document.createElement('li');
+        const labelElement = document.createElement('label');
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.value = key;
+        input.checked = filters.brands.has(key);
+        input.dataset.brandType = type;
+        input.addEventListener('change', () => {
+          if (input.checked) {
+            filters.brands.add(key);
+          } else {
+            filters.brands.delete(key);
+          }
+          applyFilters();
+        });
+        labelElement.appendChild(input);
+        labelElement.appendChild(document.createTextNode(label));
+        listItem.appendChild(labelElement);
+        container.appendChild(listItem);
+      });
+    };
+
+    const updateBrandFilters = (items) => {
+      const perfumeGroup = document.querySelector('[data-brand-group="perfume"] ul');
+      const vapeGroup = document.querySelector('[data-brand-group="vape"] ul');
+      const perfumeBrands = new Map();
+      const vapeBrands = new Map();
+
+      items.forEach((item) => {
+        const brandLabel = item.brand;
+        if (!brandLabel) return;
+        const key = brandLabel.toLowerCase();
+        if (item.type === 'vape') {
+          if (!vapeBrands.has(key)) {
+            vapeBrands.set(key, brandLabel);
+          }
+        } else {
+          if (!perfumeBrands.has(key)) {
+            perfumeBrands.set(key, brandLabel);
+          }
+        }
+      });
+
+      renderBrandGroup(perfumeGroup, perfumeBrands, 'perfume');
+      renderBrandGroup(vapeGroup, vapeBrands, 'vape');
+      updateBrandGroupVisibility();
+    };
+
+    const applyFilters = () => {
+      let filtered = state.items.slice();
+
+      if (filters.types.size) {
+        filtered = filtered.filter((item) => filters.types.has(item.type));
+      }
+
+      if (filters.genders.size) {
+        filtered = filtered.filter((item) => {
+          if (!item.genero) return false;
+          return filters.genders.has(item.genero);
+        });
+      }
+
+      if (filters.brands.size) {
+        filtered = filtered.filter((item) => {
+          const brandKey = item.brand?.toLowerCase() ?? '';
+          return filters.brands.has(brandKey);
+        });
+      }
+
+      if (Number.isFinite(filters.maxPrice)) {
+        filtered = filtered.filter((item) => (item.price ?? 0) <= filters.maxPrice);
+      }
+
+      if (filters.search) {
+        const query = filters.search.toLowerCase();
+        filtered = filtered.filter((item) => item.searchText.includes(query));
+      }
+
+      state.filtered = filtered;
+      renderProducts(filtered, filters.search);
+      updateBrandGroupVisibility();
+      updateUrlParams();
+    };
+
+    const applyFiltersFromQuery = () => {
+      const params = new URLSearchParams(window.location.search);
+      filters.types.clear();
+      filters.genders.clear();
+      filters.brands.clear();
+
+      params.getAll('type').forEach((type) => {
+        if (type) {
+          filters.types.add(type.toLowerCase());
+        }
+      });
+
+      params.getAll('genero').forEach((gender) => {
+        if (gender) {
+          filters.genders.add(gender.toUpperCase());
+        }
+      });
+
+      params.getAll('brand').forEach((brand) => {
+        if (brand) {
+          filters.brands.add(brand.toLowerCase());
+        }
+      });
+
+      const searchQuery = params.get('q');
+      if (searchQuery) {
+        filters.search = searchQuery.trim();
+        setSearchInputsValue(filters.search);
+      }
+
+      const maxPriceParam = Number.parseFloat(params.get('maxPrice'));
+      if (Number.isFinite(maxPriceParam) && priceRangeInput) {
+        filters.maxPrice = maxPriceParam;
+        priceRangeInput.value = String(maxPriceParam);
+        updatePriceLabel(maxPriceParam);
+      } else if (priceRangeInput) {
+        filters.maxPrice = Number.parseFloat(priceRangeInput.value) || defaultMaxPrice;
+        updatePriceLabel(priceRangeInput.value);
+      }
+
+      typeInputs.forEach((input) => {
+        input.checked = filters.types.has(input.value.toLowerCase());
+      });
+
+      genderInputs.forEach((input) => {
+        input.checked = filters.genders.has(input.value.toUpperCase());
+      });
+    };
+
+    productsContainer.innerHTML = '';
+    const loading = document.createElement('p');
+    loading.textContent = 'Cargando productos...';
+    productsContainer.appendChild(loading);
+    productsContainer.setAttribute('aria-busy', 'true');
+
+    fetchCatalogData()
+      .then((data) => {
+        const perfumes = data.perfumes.map(normalizePerfume);
+        const vapes = data.vapes.map(normalizeVape);
+        state.items = [...perfumes, ...vapes];
+        updateBrandFilters(state.items);
+        applyFiltersFromQuery();
+        applyFilters();
+      })
+      .catch((error) => {
+        console.error('Error al cargar el catálogo:', error);
+        showMessage('No se pudieron cargar los productos. Intentalo nuevamente.');
+      })
+      .finally(() => {
+        productsContainer.removeAttribute('aria-busy');
+      });
+
+    typeInputs.forEach((input) => {
+      input.addEventListener('change', () => {
+        const value = input.value.toLowerCase();
+        if (input.checked) {
+          filters.types.add(value);
+        } else {
+          filters.types.delete(value);
+        }
+        updateBrandGroupVisibility();
+        applyFilters();
+      });
+    });
+
+    genderInputs.forEach((input) => {
+      input.addEventListener('change', () => {
+        const value = input.value.toUpperCase();
+        if (input.checked) {
+          filters.genders.add(value);
+        } else {
+          filters.genders.delete(value);
+        }
+        applyFilters();
+      });
+    });
+
+    if (priceRangeInput) {
+      priceRangeInput.addEventListener('input', () => {
+        const value = Number.parseFloat(priceRangeInput.value);
+        filters.maxPrice = Number.isFinite(value) ? value : defaultMaxPrice;
+        updatePriceLabel(filters.maxPrice);
+        applyFilters();
+      });
+    }
+
+    clearButton?.addEventListener('click', () => {
+      filters.types.clear();
+      filters.genders.clear();
+      filters.brands.clear();
+      filters.maxPrice = defaultMaxPrice;
+      filters.search = '';
+      typeInputs.forEach((input) => { input.checked = false; });
+      genderInputs.forEach((input) => { input.checked = false; });
+      if (priceRangeInput && Number.isFinite(defaultMaxPrice)) {
+        priceRangeInput.value = String(defaultMaxPrice);
+        updatePriceLabel(defaultMaxPrice);
+      }
+      setSearchInputsValue('');
+      updateBrandFilters(state.items);
+      applyFilters();
+    });
+  }
+
+  const featuredGrid = document.getElementById("featured-products-grid");
+  if (featuredGrid) {
+    renderFeaturedProductsSection(featuredGrid);
+  }
+
+  initializeProductsPage();
 });

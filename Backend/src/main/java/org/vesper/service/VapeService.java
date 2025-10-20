@@ -190,6 +190,7 @@ public class VapeService {
                 .descripcion(vape.getDescripcion())
                 .pitadas(vape.getPitadas())
                 .modos(vape.getModos())
+                .marca(vape.getMarca())
                 .stock(stockTotal)
                 .sabores(sabores)
                 .imagenes(imagenResponses)
