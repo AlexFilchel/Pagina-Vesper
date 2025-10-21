@@ -568,7 +568,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setupHeaderSearch();
   setupMenuFilters();
-  populateHeaderBrands();
 
   const currencyFormatter = new Intl.NumberFormat("es-AR", {
     style: "currency",
@@ -713,6 +712,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return { perfumes: [], vapes: [] };
   }
+
+  populateHeaderBrands();
 
   function getPrimaryImage(imagenes) {
     if (!Array.isArray(imagenes)) {
@@ -1830,27 +1831,51 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setupMenuFilters() {
+    const buildProductsUrl = (linkElement) => {
+      const baseHref = linkElement.getAttribute("href") || "productos.html";
+      let targetUrl;
+      try {
+        targetUrl = new URL(baseHref, window.location.href);
+      } catch (error) {
+        targetUrl = new URL("productos.html", window.location.href);
+      }
+      targetUrl.search = "";
+      targetUrl.hash = "";
+
+      const { filterType, filterGenero, filterBrand, filterTag } = linkElement.dataset;
+      if (filterType) {
+        targetUrl.searchParams.append("type", filterType);
+      }
+      if (filterGenero) {
+        targetUrl.searchParams.append("genero", filterGenero);
+      }
+      if (filterBrand) {
+        targetUrl.searchParams.append("brand", filterBrand);
+      }
+      if (filterTag) {
+        targetUrl.searchParams.append("tag", filterTag);
+      }
+
+      return targetUrl;
+    };
+
     const links = document.querySelectorAll(".menu-filter-link");
     links.forEach((link) => {
+      if (link.dataset.filterHandlerAttached === "true") {
+        return;
+      }
+
+      const targetUrl = buildProductsUrl(link);
+      link.href = targetUrl.toString();
+
       link.addEventListener("click", (event) => {
         event.preventDefault();
         closeMenu();
-        const url = new URL("productos.html", window.location.origin);
-        const { filterType, filterGenero, filterBrand, filterTag } = link.dataset;
-        if (filterType) {
-          url.searchParams.append("type", filterType);
-        }
-        if (filterGenero) {
-          url.searchParams.append("genero", filterGenero);
-        }
-        if (filterBrand) {
-          url.searchParams.append("brand", filterBrand);
-        }
-        if (filterTag) {
-          url.searchParams.append("tag", filterTag);
-        }
-        window.location.href = url.toString();
+        const destination = buildProductsUrl(link);
+        window.location.href = destination.toString();
       });
+
+      link.dataset.filterHandlerAttached = "true";
     });
   }
 
