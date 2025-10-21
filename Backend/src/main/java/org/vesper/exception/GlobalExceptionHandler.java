@@ -111,7 +111,7 @@ public class GlobalExceptionHandler {
     private HttpStatus resolveHttpStatus(VesperException ex) {
         if (ex instanceof ResourceNotFoundException) {
             return HttpStatus.NOT_FOUND;
-        } else if (ex instanceof AlreadyExistsException) {
+        } else if (ex instanceof AlreadyExistsException || ex instanceof BusinessRuleException) {
             return HttpStatus.BAD_REQUEST;
         } else if (ex instanceof InvalidCredentialsException) {
             return HttpStatus.UNAUTHORIZED;

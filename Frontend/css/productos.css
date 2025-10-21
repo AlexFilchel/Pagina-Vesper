@@ -94,26 +94,37 @@ main.productos-page {
   list-style: none;
   margin: 0;
   padding: 0;
-  max-height: 160px;
+}
+
+.filter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 180px;
   overflow-y: auto;
 }
 
-.filtro li {
-  margin-bottom: 8px;
+.filter-list li {
+  margin: 0;
 }
 
-.filtro label {
+.filter-list label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-size: 0.95rem;
-  color: #333;
+  color: #1f2937;
   cursor: pointer;
 }
 
-.filtro input[type="checkbox"] {
-  margin-right: 8px;
+.filter-list input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #004aad;
 }
 
 /* Rango de precios */
-.filtro input[type="range"] {
+.range-control input[type="range"] {
   width: 100%;
   margin-top: 10px;
 }
@@ -125,6 +136,16 @@ main.productos-page {
   justify-content: space-between;
   margin-top: 6px;
   font-weight: 500;
+}
+
+.productos-status {
+  color: #4b5563;
+  font-size: 0.95rem;
+  padding: 12px 0;
+}
+
+.productos-status.is-error {
+  color: #b91c1c;
 }
 
 .filters-overlay {
@@ -262,49 +283,24 @@ body.filters-open {
 
 .productos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: clamp(18px, 3vw, 28px);
 }
 
-/* Tarjeta producto (reutiliza estilos de index) */
-.product {
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  padding: 15px;
-  text-align: center;
-  background: #fff;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+@media (min-width: 640px) {
+  .productos-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-.product:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+@media (min-width: 1024px) {
+  .productos-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
-.product img {
-  max-width: 100%;
-  border-radius: 8px;
-  margin-bottom: 12px;
-}
-
-.product h3 {
-  font-size: 1rem;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #222;
-}
-
-.product .price {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #004aad;
-  margin-bottom: 4px;
-}
-
-.product .discount {
-  font-size: 0.9rem;
-  color: #888;
-  text-decoration: line-through;
+.productos-grid .product-card {
+  height: 100%;
 }
 
 /* =======================

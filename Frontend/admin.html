@@ -425,14 +425,46 @@
 
           <article class="accordion-item">
             <button class="accordion-header" type="button" aria-expanded="false">
-              <span class="accordion-title">Gestionar productos más vendidos</span>
+              <span class="accordion-title">Gestionar productos destacados</span>
               <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
             </button>
             <div class="accordion-content" hidden>
-              <div class="empty-state">
-                <span class="material-symbols-outlined" aria-hidden="true">construction</span>
-                <p>Funcionalidad en desarrollo.</p>
-              </div>
+              <section class="featured-admin" id="featured-admin" aria-label="Productos destacados">
+                <header class="featured-admin__header">
+                  <div>
+                    <h3>Productos destacados</h3>
+                    <p class="featured-admin__description">Seleccioná hasta 8 productos para mostrarlos en la página principal.</p>
+                  </div>
+                  <span class="featured-admin__counter"><strong id="featured-count">0</strong>/8</span>
+                </header>
+
+                <form class="featured-admin__form" id="featured-form" novalidate>
+                  <label class="visually-hidden" for="featured-select">Producto a agregar</label>
+                  <div class="featured-admin__form-controls">
+                    <select id="featured-select" name="producto" required aria-label="Seleccionar producto a destacar"></select>
+                    <button type="submit" class="btn btn--primary">Agregar</button>
+                  </div>
+                </form>
+
+                <p class="featured-admin__feedback" id="featured-feedback" role="status" hidden></p>
+
+                <div class="table-responsive">
+                  <table class="admin-table featured-admin__table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Marca</th>
+                        <th scope="col">Precio</th>
+                        <th scope="col">Tipo</th>
+                        <th scope="col" class="text-center">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody id="featured-table-body"></tbody>
+                  </table>
+                </div>
+
+                <p class="featured-admin__empty" id="featured-empty" hidden>No hay productos destacados configurados.</p>
+              </section>
             </div>
           </article>
         </div>

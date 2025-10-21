@@ -116,6 +116,25 @@
 
   const apiClient = {
     request,
+    async fetchFeaturedProducts() {
+      return request('/public/productos-destacados');
+    },
+    async fetchAdminFeaturedProducts() {
+      return withAuthenticatedRequest('/admin/productos-destacados', 'GET');
+    },
+    async addFeaturedProduct(productoId) {
+      return withAuthenticatedRequest('/admin/productos-destacados', 'POST', { productoId });
+    },
+    async removeFeaturedProduct(id) {
+      return withAuthenticatedRequest(`/admin/productos-destacados/${id}`, 'DELETE');
+    },
+    async fetchAllProducts() {
+      const [perfumes, vapes] = await Promise.all([
+        request('/public/perfumes'),
+        request('/public/vapes')
+      ]);
+      return { perfumes, vapes };
+    },
     async fetchPerfumes() {
       return request('/public/perfumes');
     },
