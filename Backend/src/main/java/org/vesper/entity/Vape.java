@@ -11,6 +11,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "vapes")
+@PrimaryKeyJoinColumn(name = "producto_id")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

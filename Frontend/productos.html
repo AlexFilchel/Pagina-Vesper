@@ -84,15 +84,15 @@
         </a>
         <div id="submenu-perfumes" class="main-nav__dropdown" role="menu">
           <ul class="main-nav__list">
-            <li><a href="productos.html" role="menuitem">Masculinos</a></li>
-            <li><a href="productos.html" role="menuitem">Femeninos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="FEMENINO">Femeninos</a></li>
           </ul>
         </div>
       </li>
 
       <!-- Vapes -->
       <li class="main-nav__item">
-        <a href="productos.html" class="main-nav__link main-nav__link--direct">Vapes</a>
+        <a href="productos.html" class="main-nav__link main-nav__link--direct menu-filter-link" data-filter-type="vape">Vapes</a>
       </li>
 
       <!-- Decants -->
@@ -102,9 +102,9 @@
         </a>
         <div id="submenu-decants" class="main-nav__dropdown" role="menu">
           <ul class="main-nav__list">
-            <li><a href="productos.html" role="menuitem">Masculinos</a></li>
-            <li><a href="productos.html" role="menuitem">Femeninos</a></li>
-            <li><a href="productos.html" role="menuitem">Combos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="FEMENINO">Femeninos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-tag="combo">Combos</a></li>
           </ul>
         </div>
       </li>
@@ -168,36 +168,41 @@
         </div>
     </div>
 
-              <!-- HACER QUE SI SE SELECCIONA PERFUME O DECANT SE MUESTREN SOLO LAS MARCAS DE PERFUMES, SI ES VAPE SE MUESTRAN LAS MARCAS DE VAPES Y SI NO LAS DOS -->
-               <!-- TAMBIEN SI SE SELECCIONA DECANT QUE SALGA UNA OPCION EXTRA QUE SEA COMBO -->
-                <!-- VER SI ES POSIBLE -->
-    <div class="filtro">
+    <div class="filtro" data-filter-group="type">
         <h4>Tipo de Producto</h4>
         <ul>
-          <li><label><input type="checkbox" value="Perfume">Perfume</label></li>
-          <li><label><input type="checkbox" value="Eau de Toilette">Decant</label></li>
-          <li><label><input type="checkbox" value="Vapes"> Vape</label></li>
+          <li><label><input type="checkbox" name="filter-type" value="perfume">Perfume</label></li>
+          <li><label><input type="checkbox" name="filter-type" value="decant">Decant</label></li>
+          <li><label><input type="checkbox" name="filter-type" value="vape">Vape</label></li>
         </ul>
     </div>
 
-    <div class="filtro">
+    <div class="filtro" data-filter-group="gender">
         <h4>Género</h4>
         <ul>
-          <li><label><input type="checkbox" value="Masculino">Masculino</label></li>
-          <li><label><input type="checkbox" value="Femenino">Femenino</label></li>
+          <li><label><input type="checkbox" name="filter-gender" value="MASCULINO">Masculino</label></li>
+          <li><label><input type="checkbox" name="filter-gender" value="FEMENINO">Femenino</label></li>
+          <li><label><input type="checkbox" name="filter-gender" value="UNISEX">Unisex</label></li>
         </ul>
     </div>
 
-    <div class="filtro">
+    <div class="filtro filtro-marcas" data-filter-group="brand">
         <h4>Marca</h4>
-        <ul id="filtro-marcas"></ul>
+        <div class="filtro-marcas__grupo" data-brand-group="perfume">
+          <h5>Perfumes</h5>
+          <ul aria-label="Marcas de perfumes"></ul>
+        </div>
+        <div class="filtro-marcas__grupo" data-brand-group="vape">
+          <h5>Vapes</h5>
+          <ul aria-label="Marcas de vapes"></ul>
+        </div>
     </div>
 
-      <div class="filtro">
+      <div class="filtro filtro-precio">
         <h4>Rango de Precio</h4>
-        <input type="range" min="0" max="500000" step="1000" value="250000">
+        <input type="range" min="0" max="600000" step="1000" value="600000" id="filter-price">
         <div class="precio-rango">
-          <span>$0</span> - <span>$500.000</span>
+          <span>$0</span> - <span id="filter-price-value">$600.000</span>
         </div>
       </div>
     </aside>

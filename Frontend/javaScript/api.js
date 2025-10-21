@@ -146,6 +146,18 @@
     async deleteVape(id) {
       return withAuthenticatedRequest(`/admin/vapes/${id}`, 'DELETE');
     },
+    async fetchFeaturedPublic() {
+      return request('/public/productos-destacados');
+    },
+    async fetchFeaturedAdmin() {
+      return withAuthenticatedRequest('/admin/productos-destacados', 'GET');
+    },
+    async addFeaturedProduct(productoId) {
+      return withAuthenticatedRequest('/admin/productos-destacados', 'POST', { productoId });
+    },
+    async removeFeaturedProduct(id) {
+      return withAuthenticatedRequest(`/admin/productos-destacados/${id}`, 'DELETE');
+    },
     async registerCurrentUser() {
       return withAuthenticatedRequest('/user/registrar', 'POST');
     },

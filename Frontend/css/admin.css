@@ -199,6 +199,91 @@
   border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
+.featured-admin {
+  display: grid;
+  gap: clamp(16px, 4vw, 24px);
+}
+
+.featured-admin__header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.featured-admin__header h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #102a57;
+  margin-bottom: 6px;
+}
+
+.featured-admin__header p {
+  margin: 0;
+  color: #4a5568;
+}
+
+.featured-admin__counter {
+  font-weight: 600;
+  color: #004aad;
+  background: rgba(0, 74, 173, 0.08);
+  padding: 8px 14px;
+  border-radius: 999px;
+}
+
+.featured-admin__controls .form-field {
+  max-width: 520px;
+}
+
+.featured-admin__control-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.featured-admin__control-group select {
+  flex: 1 1 260px;
+  min-width: 220px;
+}
+
+.featured-admin__control-group .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.featured-admin__helper {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+#featuredProductsBody td {
+  vertical-align: middle;
+}
+
+#featuredProductsBody .column-actions {
+  display: flex;
+  gap: 10px;
+}
+
+#featuredProductsBody .btn-remove {
+  background: none;
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: #dc2626;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+#featuredProductsBody .btn-remove:hover,
+#featuredProductsBody .btn-remove:focus-visible {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: #dc2626;
+  color: #b91c1c;
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;
