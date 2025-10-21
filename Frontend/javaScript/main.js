@@ -716,11 +716,47 @@ document.addEventListener("DOMContentLoaded", () => {
   populateHeaderBrands();
 
   function getPrimaryImage(imagenes) {
-    if (!Array.isArray(imagenes)) {
+    const pickFromValue = (value) => {
+      if (typeof value === "string" && value.trim().length > 0) {
+        return value.trim();
+      }
+      if (value && typeof value === "object") {
+        const candidates = [
+          value.url,
+          value.imageUrl,
+          value.imagenUrl,
+          value.secureUrl,
+          value.secure_url,
+          value.link
+        ];
+        for (const candidate of candidates) {
+          if (typeof candidate === "string" && candidate.trim().length > 0) {
+            return candidate.trim();
+          }
+        }
+        const nested = value.imagen ?? value.image ?? value.source;
+        if (nested && nested !== value) {
+          const nestedPick = pickFromValue(nested);
+          if (nestedPick) {
+            return nestedPick;
+          }
+        }
+      }
+      return null;
+    };
+
+    if (Array.isArray(imagenes)) {
+      for (const item of imagenes) {
+        const picked = pickFromValue(item);
+        if (picked) {
+          return picked;
+        }
+      }
       return FALLBACK_IMAGE_URL;
     }
-    const candidate = imagenes.find((item) => typeof item?.url === "string" && item.url.trim().length > 0);
-    return candidate?.url ?? FALLBACK_IMAGE_URL;
+
+    const single = pickFromValue(imagenes);
+    return single ?? FALLBACK_IMAGE_URL;
   }
 
   function normalizePerfume(perfume) {
@@ -814,6 +850,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const brand = typeof destacado?.marca === "string" ? destacado.marca.trim() : "";
     const name = typeof destacado?.nombre === "string" ? destacado.nombre.trim() : "";
 
+    const imageSource = destacado?.imagenes ?? destacado?.producto?.imagenes ?? destacado?.productoImagenes ?? null;
+
     return {
       key: `destacado-${destacado?.id ?? window.crypto?.randomUUID?.() ?? Date.now()}`,
       destacadoId: destacado?.id ?? null,
@@ -829,7 +867,7 @@ document.addEventListener("DOMContentLoaded", () => {
       originalPrice: price,
       discountPrice,
       stock: Number.isFinite(destacado?.stock) ? destacado.stock : 0,
-      image: getPrimaryImage(destacado?.imagenes),
+      image: getPrimaryImage(imageSource),
       raw: destacado
     };
   }
@@ -1920,7 +1958,8 @@ document.addEventListener("DOMContentLoaded", () => {
           link.href = "productos.html";
           link.className = "menu-filter-link";
           link.dataset.filterType = type;
-          link.dataset.filterBrand = label;
+          link.dataset.filterBrand = key;
+          link.dataset.filterBrandLabel = label;
           link.textContent = label;
           listItem.appendChild(link);
           container.appendChild(listItem);
@@ -2211,8 +2250,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const perfumes = data.perfumes.map(normalizePerfume);
         const vapes = data.vapes.map(normalizeVape);
         state.items = [...perfumes, ...vapes];
-        updateBrandFilters(state.items);
         applyFiltersFromQuery();
+        updateBrandFilters(state.items);
         applyFilters();
       })
       .catch((error) => {

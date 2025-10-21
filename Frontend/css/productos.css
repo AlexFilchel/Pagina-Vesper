@@ -184,6 +184,35 @@ body.filters-open {
   gap: 20px;
 }
 
+@media (min-width: 1024px) {
+  .productos-page {
+    align-items: start;
+    min-height: 0;
+  }
+
+  .productos {
+    min-height: 0;
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    padding-right: 8px;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable both-edges;
+  }
+
+  .productos::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .productos::-webkit-scrollbar-thumb {
+    background-color: rgba(100, 116, 139, 0.35);
+    border-radius: 999px;
+  }
+
+  .productos::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(100, 116, 139, 0.55);
+  }
+}
+
 .productos-toolbar {
   display: flex;
   justify-content: flex-end;
@@ -290,7 +319,7 @@ body.filters-open {
 .productos-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: clamp(18px, 4vw, 28px);
+  gap: clamp(24px, 4vw, 36px);
 }
 
 @media (min-width: 640px) {
