@@ -1383,7 +1383,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (cartTrigger) {
     cartTrigger.addEventListener("click", (event) => {
       event.preventDefault();
-      window.location.href = "checkout-entrega.html";
+      openCart();
     });
   }
 
