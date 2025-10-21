@@ -956,7 +956,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const discountElement = document.createElement("span");
     discountElement.className = "product-card__discount";
-    discountElement.innerHTML = `<span>15% OFF transferencia</span> ${formatPrice(product?.discountPrice ?? calculateTransferPrice(product?.price ?? 0))}`;
+    discountElement.innerHTML = `<span>15% OFF transferencia</span>`;
     prices.appendChild(discountElement);
     body.appendChild(prices);
 

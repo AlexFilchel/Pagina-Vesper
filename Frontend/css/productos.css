@@ -319,7 +319,7 @@ body.filters-open {
 .productos-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: clamp(24px, 4vw, 36px);
+  gap: clamp(28px, 4.5vw, 48px);
 }
 
 @media (min-width: 640px) {
