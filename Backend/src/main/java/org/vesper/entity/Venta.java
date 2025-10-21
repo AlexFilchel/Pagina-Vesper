@@ -20,7 +20,7 @@ public class Venta {
      * Estados posibles de una venta.
      */
     public enum EstadoVenta {
-        PENDIENTE, COMPLETADA, CANCELADA
+        PENDIENTE, COMPLETADA, CANCELADA,RECHAZADA
     }
 
     @Id

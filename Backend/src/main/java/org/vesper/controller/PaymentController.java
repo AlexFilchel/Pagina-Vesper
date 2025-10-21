@@ -1,15 +1,20 @@
 package org.vesper.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,10 +26,13 @@ import org.vesper.repo.RegistroPagoRepository;
 import org.vesper.repo.VentaRepository;
 import org.vesper.service.PaymentService;
 
-import com.mercadopago.client.payment.PaymentClient;
-import com.mercadopago.resources.payment.Payment;
-
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -32,84 +40,41 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PaymentController {
 
-    private final PaymentService paymentService;
-    private final VentaRepository ventaRepository; // Para endpoints de debug
-    private final RegistroPagoRepository registroPagoRepository; // Para endpoints de debug
+    private static final Logger logger = LoggerFactory.getLogger(PaymentController.class);
 
-    /**
-     * Inicia el proceso de compra. Recibe el carrito, crea una Venta en estado 'PENDIENTE'
-     * y genera una preferencia de pago en Mercado Pago.
-     *
-     * @param ventaRequest El DTO con la lista de productos y cantidades.
-     * @param jwt El token JWT del usuario autenticado, inyectado por Spring Security.
-     * @return Un DTO con el ID de la preferencia y la URL de pago (init_point).
-     */
+    private final PaymentService paymentService;
+    private final VentaRepository ventaRepository;
+    private final RegistroPagoRepository registroPagoRepository;
+    private final ObjectMapper objectMapper;
+
+    @Value("${mercadopago.webhook.secret:}")
+    private String webhookSecret;
+
     @PostMapping("/user/payments/crearOrden")
     public ResponseEntity<PreferenciaResponseDTO> crearOrdenYPreferencia(
             @Valid @RequestBody VentaRequest ventaRequest,
             @AuthenticationPrincipal Jwt jwt) {
-        System.out.println("Se invocó /create-order correctamente");
+        logger.info("Se invoco /create-order correctamente");
         PreferenciaResponseDTO response = paymentService.crearOrdenYPrefencia(ventaRequest, jwt);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
-     * Endpoint público para recibir notificaciones de Webhook de Mercado Pago.
-     * Se encarga de procesar los cambios de estado de un pago y actualizar la venta correspondiente.
-     *
-     * @param payload El cuerpo de la notificación enviada por Mercado Pago.
-     * @return Una respuesta HTTP 200 si el procesamiento es exitoso, o 500 si falla.
+     * Endpoint publico para recibir notificaciones de Mercado Pago.
+     * Procesa los cambios de estado de un pago y actualiza la venta vinculada.
      */
     @PostMapping("/public/payments/webhook")
-    public ResponseEntity<String> handleWebhook(@RequestBody Map<String, Object> payload) {
-        // El logger sería más apropiado aquí que System.out.println
-        try {
-            Long paymentId = Long.valueOf(((Map<String, Object>) payload.get("data")).get("id").toString());
-
-            PaymentClient paymentClient = new PaymentClient();
-            Payment payment = paymentClient.get(paymentId);
-
-            // Recuperar Venta desde external_reference
-            Long ventaId = Long.valueOf(payment.getExternalReference());
-            Venta venta = ventaRepository.findById(ventaId)
-                    .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
-
-            // Buscar si ya existe un registro (idempotencia)
-            RegistroPago registro = registroPagoRepository.findByMpPaymentId(String.valueOf(paymentId))
-                    .orElseGet(RegistroPago::new);
-
-            registro.setMpPaymentId(String.valueOf(paymentId));
-            registro.setStatus(payment.getStatus());
-            registro.setAmount(payment.getTransactionAmount().floatValue());
-            registro.setPaymentMethod(payment.getPaymentMethodId());
-
-            // ✅ Conversión de OffsetDateTime a LocalDateTime
-            if (payment.getDateApproved() != null) {
-                registro.setDateApproved(payment.getDateApproved().toLocalDateTime());
-            }
-
-            registro.setVenta(venta);
-
-            registroPagoRepository.save(registro);
-
-            // Actualizar estado de la venta
-            switch (payment.getStatus()) {
-                case "approved" -> venta.setEstado(Venta.EstadoVenta.COMPLETADA.toString()); // Usar el Enum para consistencia
-                case "in_process", "pending" -> venta.setEstado("PENDIENTE");
-                case "rejected" -> venta.setEstado("RECHAZADA");
-                default -> venta.setEstado("DESCONOCIDO");
-            }
-            ventaRepository.save(venta);
-
-            return ResponseEntity.ok("Webhook procesado correctamente");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error procesando webhook: " + e.getMessage());
+    public ResponseEntity<String> handleWebhook(
+            @RequestBody String rawPayload,
+            @RequestHeader(value = "x-mercadopago-signature", required = false) String signature) throws Exception {
+        // 1. Validar la firma en el controlador
+        if (!isSignatureValid(rawPayload, signature)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Firma del webhook invalida");
         }
+        // 2. Delegar el procesamiento al servicio. Las excepciones serán manejadas por GlobalExceptionHandler
+        paymentService.procesarWebhook(rawPayload);
+        return ResponseEntity.ok("Webhook procesado correctamente");
     }
-    // =========================================================
-    // 🔴 ENDPOINTS DE ADMIN (requieren rol ADMIN)
-    // =========================================================
 
     @GetMapping("/admin/payments/pagos")
     public List<RegistroPago> listarPagos() {
@@ -121,26 +86,72 @@ public class PaymentController {
         return ventaRepository.findAll();
     }
 
-    // =========================================================
-    // 🟢 ENDPOINTS PÚBLICOS (para callbacks de Mercado Pago)
-    // =========================================================
-
     @GetMapping("/public/payments/success")
     public String pagoExitoso(@RequestParam Map<String, String> params) {
-        // Aquí deberías redirigir a una página de éxito en tu frontend.
-        // Ejemplo: return "redirect:https://tufrontend.com/pago/exitoso?payment_id=" + params.get("payment_id");
         return "Pago aprobado! Datos: " + params;
     }
 
     @GetMapping("/public/payments/failure")
     public String pagoFallido(@RequestParam Map<String, String> params) {
-        // Redirigir a página de fallo en el frontend.
         return "Pago fallido. Datos: " + params;
     }
 
     @GetMapping("/public/payments/pending")
     public String pagoPendiente(@RequestParam Map<String, String> params) {
-        // Redirigir a página de pago pendiente en el frontend.
         return "Pago pendiente. Datos: " + params;
+    }
+
+    private boolean isSignatureValid(String rawPayload, String header) throws GeneralSecurityException {
+        if (!StringUtils.hasText(webhookSecret)) {
+            logger.warn("La propiedad 'mercadopago.webhook.secret' no está configurada. Se omite la validación de firma.");
+            // En un entorno de producción estricto, podrías devolver 'false' aquí.
+            // Para desarrollo, permitirlo puede ser útil.
+            return true;
+        }
+        if (!StringUtils.hasText(header)) {
+            logger.warn("No se recibió encabezado de firma 'x-mercadopago-signature'.");
+            return false;
+        }
+        String[] parts = header.split("=", 2);
+        if (parts.length != 2) {
+            logger.warn("Formato inesperado para la firma de Mercado Pago: {}", header);
+            return false;
+        }
+
+        String algorithm = parts[0].trim().toLowerCase(Locale.ROOT);
+        if (!"sha256".equals(algorithm)) {
+            logger.warn("Algoritmo de firma no soportado: {}", algorithm);
+            return false;
+        }
+
+        String macAlgorithm = "HmacSHA256";
+        String signature = parts[1].trim();
+
+        Mac mac = Mac.getInstance(macAlgorithm);
+        mac.init(new SecretKeySpec(webhookSecret.getBytes(StandardCharsets.UTF_8), macAlgorithm));
+        byte[] expected = mac.doFinal(rawPayload.getBytes(StandardCharsets.UTF_8));
+        byte[] provided = hexToBytes(signature);
+
+        boolean matches = MessageDigest.isEqual(expected, provided);
+        if (!matches) {
+            logger.warn("Firma de webhook no coincide. Payload recibido.");
+        }
+        return matches;
+    }
+
+    private byte[] hexToBytes(String hex) {
+        if (hex.length() % 2 != 0) {
+            throw new IllegalArgumentException("Longitud de firma invalida");
+        }
+        byte[] data = new byte[hex.length() / 2];
+        for (int i = 0; i < hex.length(); i += 2) {
+            int hi = Character.digit(hex.charAt(i), 16);
+            int lo = Character.digit(hex.charAt(i + 1), 16);
+            if (hi < 0 || lo < 0) {
+                throw new IllegalArgumentException("Caracteres hexadecimales invalidos");
+            }
+            data[i / 2] = (byte) ((hi << 4) + lo);
+        }
+        return data;
     }
 }
