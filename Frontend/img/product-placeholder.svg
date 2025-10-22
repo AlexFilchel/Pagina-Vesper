@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-labelledby="title desc">
+  <title id="title">Imagen de producto no disponible</title>
+  <desc id="desc">Ilustración simple con el logotipo de Vesper difuminado</desc>
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#dbeafe"/>
+      <stop offset="100%" stop-color="#bfdbfe"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" fill="url(#gradient)" rx="28"/>
+  <g fill="#1d4ed8" opacity="0.2" transform="translate(80 120)">
+    <path d="M120 0c-44 0-80 36-80 80 0 44 36 80 80 80s80-36 80-80c0-44-36-80-80-80zm0 36c24 0 44 20 44 44s-20 44-44 44-44-20-44-44 20-44 44-44z"/>
+    <path d="M48 208h144c26 0 48 22 48 48v32c0 8.8-7.2 16-16 16H16c-8.8 0-16-7.2-16-16v-32c0-26 22-48 48-48z"/>
+  </g>
+  <g fill="#1d4ed8" opacity="0.55" transform="translate(120 160)">
+    <path d="M80 0c-31 0-56 25-56 56s25 56 56 56 56-25 56-56S111 0 80 0zm0 32c13 0 24 11 24 24s-11 24-24 24-24-11-24-24 11-24 24-24z"/>
+    <path d="M24 152h112c16 0 28 12 28 28v20c0 6.6-5.4 12-12 12H8c-6.6 0-12-5.4-12-12v-20c0-16 12-28 28-28z"/>
+  </g>
+</svg>

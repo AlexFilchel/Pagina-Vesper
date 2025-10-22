@@ -580,7 +580,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const TRANSFER_DISCOUNT_RATE = 0.15;
   const CART_STORAGE_KEY = "vesper.cart.v1";
-  const FALLBACK_IMAGE_URL = "img/logo_vesper.jpg";
+  const FALLBACK_IMAGE_URL = "img/product-placeholder.svg";
+  const API_BASE_URL = (window.apiClient?.basePath || "/api").replace(/\/+$/, "");
+
+  function buildApiUrl(path) {
+    if (!path) {
+      return API_BASE_URL || "";
+    }
+
+    const trimmed = typeof path === "string" ? path.trim() : "";
+    if (!trimmed) {
+      return API_BASE_URL || "";
+    }
+
+    if (/^(?:https?:|data:|blob:)/i.test(trimmed) || trimmed.startsWith("//")) {
+      return trimmed;
+    }
+
+    if (!API_BASE_URL) {
+      return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    }
+
+    if (!trimmed.startsWith("/")) {
+      return trimmed;
+    }
+
+    const cleanBase = API_BASE_URL.replace(/\/+$/, "");
+    const cleanPath = trimmed.replace(/^\/+/, "");
+    return `${cleanBase}/${cleanPath}`;
+  }
+
+  function buildProductImageUrl(productId, providedUrl) {
+    const candidate = typeof providedUrl === "string" ? providedUrl.trim() : "";
+    if (candidate) {
+      return buildApiUrl(candidate);
+    }
+
+    if (productId !== null && productId !== undefined) {
+      return buildApiUrl(`/public/productos/${productId}/imagen`);
+    }
+
+    return FALLBACK_IMAGE_URL;
+  }
 
   function parsePriceValue(value) {
     if (typeof value === "number") return value;
@@ -714,6 +755,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   populateHeaderBrands();
+  setupProductCardTouchInteractions();
 
   function getPrimaryImage(imagenes) {
     const pickFromValue = (value) => {
@@ -752,11 +794,11 @@ document.addEventListener("DOMContentLoaded", () => {
           return picked;
         }
       }
-      return FALLBACK_IMAGE_URL;
+      return null;
     }
 
     const single = pickFromValue(imagenes);
-    return single ?? FALLBACK_IMAGE_URL;
+    return single ?? null;
   }
 
   function normalizePerfume(perfume) {
@@ -777,6 +819,7 @@ document.addEventListener("DOMContentLoaded", () => {
       perfume?.fragancia ?? ""
     ].join(" ").toLowerCase();
 
+    const primaryImage = getPrimaryImage(perfume?.imagenes);
     return {
       key: `${type}-${perfume?.id ?? window.crypto?.randomUUID?.() ?? Date.now()}`,
       productId: perfume?.id ?? null,
@@ -792,7 +835,7 @@ document.addEventListener("DOMContentLoaded", () => {
       originalPrice: price,
       discountPrice: calculateTransferPrice(price),
       stock: Number.isFinite(perfume?.stock) ? perfume.stock : 0,
-      image: getPrimaryImage(perfume?.imagenes),
+      image: buildProductImageUrl(perfume?.id ?? null, primaryImage),
       searchText: haystack,
       raw: perfume
     };
@@ -816,6 +859,7 @@ document.addEventListener("DOMContentLoaded", () => {
       vape?.modos ?? ""
     ].join(" ").toLowerCase();
 
+    const primaryImage = getPrimaryImage(vape?.imagenes);
     return {
       key: `vape-${vape?.id ?? window.crypto?.randomUUID?.() ?? Date.now()}`,
       productId: vape?.id ?? null,
@@ -829,7 +873,7 @@ document.addEventListener("DOMContentLoaded", () => {
       originalPrice: price,
       discountPrice: calculateTransferPrice(price),
       stock: Number.isFinite(vape?.stock) ? vape.stock : 0,
-      image: getPrimaryImage(vape?.imagenes),
+      image: buildProductImageUrl(vape?.id ?? null, primaryImage),
       sabores,
       searchText: haystack,
       raw: vape
@@ -851,6 +895,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const name = typeof destacado?.nombre === "string" ? destacado.nombre.trim() : "";
 
     const imageSource = destacado?.imagenes ?? destacado?.producto?.imagenes ?? destacado?.productoImagenes ?? null;
+    const primaryImage = getPrimaryImage(imageSource);
 
     return {
       key: `destacado-${destacado?.id ?? window.crypto?.randomUUID?.() ?? Date.now()}`,
@@ -867,7 +912,7 @@ document.addEventListener("DOMContentLoaded", () => {
       originalPrice: price,
       discountPrice,
       stock: Number.isFinite(destacado?.stock) ? destacado.stock : 0,
-      image: getPrimaryImage(imageSource),
+      image: buildProductImageUrl(destacado?.productoId ?? null, primaryImage),
       raw: destacado
     };
   }
@@ -910,6 +955,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const image = document.createElement("img");
     image.src = product?.image ?? FALLBACK_IMAGE_URL;
     image.alt = `${product?.name ?? "Producto"} ${product?.brand ? `de ${product.brand}` : ""}`.trim();
+    image.loading = "lazy";
     figure.appendChild(image);
     card.appendChild(figure);
 
@@ -995,6 +1041,65 @@ document.addEventListener("DOMContentLoaded", () => {
     card.appendChild(body);
 
     return card;
+  }
+
+  function setupProductCardTouchInteractions() {
+    const supportsTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+    if (!supportsTouch) {
+      return;
+    }
+
+    const activeClass = "product-card--show-actions";
+    const hideTimers = new WeakMap();
+
+    const clearTimer = (card) => {
+      const timerId = hideTimers.get(card);
+      if (timerId) {
+        clearTimeout(timerId);
+        hideTimers.delete(card);
+      }
+    };
+
+    const scheduleHide = (card, delayMs) => {
+      if (!card) return;
+      clearTimer(card);
+      const timeoutId = window.setTimeout(() => {
+        card.classList.remove(activeClass);
+        hideTimers.delete(card);
+      }, delayMs);
+      hideTimers.set(card, timeoutId);
+    };
+
+    document.addEventListener("touchstart", (event) => {
+      const card = event.target.closest?.(".product-card");
+      if (!card) {
+        return;
+      }
+
+      document.querySelectorAll(`.${activeClass}`).forEach((openCard) => {
+        if (openCard !== card) {
+          openCard.classList.remove(activeClass);
+          clearTimer(openCard);
+        }
+      });
+
+      card.classList.add(activeClass);
+      clearTimer(card);
+    }, { passive: true });
+
+    const handleTouchEnd = (event) => {
+      const card = event.target.closest?.(".product-card");
+      if (!card) {
+        return;
+      }
+
+      const interactingWithActions = Boolean(event.target.closest?.(".product-card__actions"));
+      const delay = interactingWithActions ? 2600 : 1400;
+      scheduleHide(card, delay);
+    };
+
+    document.addEventListener("touchend", handleTouchEnd);
+    document.addEventListener("touchcancel", handleTouchEnd);
   }
 
   function formatProductLabel(type) {

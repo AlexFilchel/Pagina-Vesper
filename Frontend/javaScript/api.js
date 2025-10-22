@@ -169,5 +169,7 @@
     }
   };
 
+  apiClient.basePath = API_BASE_PATH;
+
   window.apiClient = apiClient;
 })();
