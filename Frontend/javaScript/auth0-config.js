@@ -4,6 +4,9 @@
   let auth0Client = null;
   const REDIRECT_URI = window.location.origin + window.location.pathname;
 
+  // ============================================================
+  // 🔹 Cargar SDK de Auth0 dinámicamente
+  // ============================================================
   const script = document.createElement('script');
   script.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js';
   
@@ -18,6 +21,9 @@
 
   document.head.appendChild(script);
 
+  // ============================================================
+  // 🔹 Inicializar Auth0
+  // ============================================================
   async function initAuth0() {
     try {
       const createClient = window.createAuth0Client || window.auth0.createAuth0Client;
@@ -29,7 +35,6 @@
           redirect_uri: REDIRECT_URI,
           audience: "https://verper/api"
         },
-        // 🔒 Mantener sesión activa
         useRefreshTokens: true,
         cacheLocation: "localstorage"
       });
@@ -37,25 +42,29 @@
       window.auth0Client = auth0Client;
       console.log("✅ Auth0 inicializado correctamente");
 
-      // Manejar callback si vuelve de login
+      // Si vuelve del login, procesar callback
       if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
-        console.log("📥 Procesando callback...");
+        console.log("📥 Procesando callback de Auth0...");
         await auth0Client.handleRedirectCallback();
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      setupUI();
+      // Iniciar flujo principal
+      await setupUI();
     } catch (error) {
       console.error("❌ Error inicializando Auth0:", error);
     }
   }
 
+  // ============================================================
+  // 🔹 Configurar interfaz y login/registro automático
+  // ============================================================
   async function setupUI() {
-    const loginBtn = document.getElementById("btn-login");
-    const accountLabel = document.querySelector(".site-header__action-label");
+    const accountButton = document.getElementById("account-button");
+    const accountLabel = accountButton?.querySelector(".site-header__action-label");
 
-    if (!loginBtn || !accountLabel) {
-      console.warn("⚠️ Elementos no encontrados en esta página");
+    if (!accountButton || !accountLabel) {
+      console.warn("⚠️ Elementos del header no encontrados");
       return;
     }
 
@@ -63,26 +72,37 @@
     console.log("🔐 Autenticado:", isAuth);
 
     if (isAuth) {
+      // 🔹 Obtener datos del usuario autenticado
       const user = await auth0Client.getUser();
+
+      // 🟢 Registrar automáticamente en la base de datos
       await registerUserIfNeeded(user);
 
-      const username =
-        user.nickname || user.username || user.given_name || user.name || "Usuario";
-
+      // 🔹 Actualizar UI con el nombre del usuario
+      const username = user.nickname || user.username || user.given_name || user.name || "Usuario";
       accountLabel.textContent = username;
+      accountButton.setAttribute("aria-haspopup", "dialog");
+      accountButton.setAttribute("aria-expanded", "false");
+      accountButton.classList.add("is-authenticated");
 
-      loginBtn.textContent = "Cerrar sesión";
-      loginBtn.onclick = (e) => {
-        e.preventDefault();
-        auth0Client.logout({
-          logoutParams: { returnTo: window.location.origin + "/Frontend/index.html" }
-        });
+      accountButton.onclick = (event) => {
+        event.preventDefault();
+        const modalController = window.profileModalController;
+        if (modalController && typeof modalController.open === "function") {
+          modalController.open();
+        } else {
+          console.warn("⚠️ Modal de perfil no disponible en esta vista.");
+        }
       };
     } else {
+      // 🔹 Si no está logueado → mostrar botón de login
       accountLabel.textContent = "Mi cuenta";
-      loginBtn.textContent = "Iniciar sesión";
-      loginBtn.onclick = (e) => {
-        e.preventDefault();
+      accountButton.setAttribute("aria-haspopup", "false");
+      accountButton.setAttribute("aria-expanded", "false");
+      accountButton.classList.remove("is-authenticated");
+
+      accountButton.onclick = (event) => {
+        event.preventDefault();
         auth0Client.loginWithRedirect({
           authorizationParams: { redirect_uri: REDIRECT_URI }
         });
@@ -90,24 +110,36 @@
     }
   }
 
+  // ============================================================
+  // 🔹 Registrar el usuario autenticado en tu backend (una vez)
+  // ============================================================
   async function registerUserIfNeeded(user) {
     if (!user || !user.sub) return;
+
     const storageKey = `vesper:user-registered:${user.sub}`;
     if (localStorage.getItem(storageKey) === 'true') {
-      return;
-    }
-
-    if (!window.apiClient || typeof window.apiClient.registerCurrentUser !== 'function') {
-      console.warn('⚠️ Cliente de API no disponible para registrar usuario.');
+      console.log('ℹ️ Usuario ya registrado anteriormente');
       return;
     }
 
     try {
-      await window.apiClient.registerCurrentUser();
-      localStorage.setItem(storageKey, 'true');
-      console.log('✅ Usuario sincronizado con la base de datos');
+      // 🔑 Obtener token JWT del usuario autenticado
+      const token = await auth0Client.getTokenSilently();
+
+      // 🔹 Llamar al endpoint /api/user/registrar
+      const response = await fetch('http://localhost:8080/api/user/registrar', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        localStorage.setItem(storageKey, 'true');
+        console.log('✅ Usuario registrado correctamente en la base de datos');
+      } else {
+        console.warn('⚠️ Falló el registro de usuario:', await response.text());
+      }
     } catch (error) {
-      console.error('❌ Error registrando usuario en la API:', error);
+      console.error('❌ Error registrando usuario:', error);
     }
   }
 })();

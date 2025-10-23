@@ -60,20 +60,15 @@
         <span class="material-symbols-outlined">search</span>
       </button>
 
-      <!-- Menú desplegable Mi cuenta -->
-      <div class="site-header__action site-header__action--has-dropdown">
-  <button class="site-header__action-btn" type="button">
-    <span class="site-header__action-icon">
-      <span class="material-symbols-outlined">person_outline</span>
-    </span>
-    <span class="site-header__action-label">Mi cuenta</span>
-  </button>
-  <div class="site-header__dropdown">
-    <ul class="site-header__dropdown-list">
-      <li><a href="#" id="btn-login" class="login-link">Iniciar sesión</a></li>
-    </ul>
-  </div>
-</div>
+      <!-- Acción Mi cuenta -->
+      <div class="site-header__action site-header__action--account">
+        <button class="site-header__action-btn" type="button" id="account-button" aria-haspopup="false" aria-expanded="false">
+          <span class="site-header__action-icon">
+            <span class="material-symbols-outlined">person_outline</span>
+          </span>
+          <span class="site-header__action-label">Mi cuenta</span>
+        </button>
+      </div>
 
 
       <a href="#" class="site-header__action" id="link-carrito" aria-haspopup="dialog">
@@ -100,15 +95,15 @@
         </a>
         <div id="submenu-perfumes" class="main-nav__dropdown" role="menu">
           <ul class="main-nav__list">
-            <li><a href="productos.html" role="menuitem">Masculinos</a></li>
-            <li><a href="productos.html" role="menuitem">Femeninos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="FEMENINO">Femeninos</a></li>
           </ul>
         </div>
       </li>
 
       <!-- Vapes -->
       <li class="main-nav__item">
-        <a href="/productos?categoria=vapes" class="main-nav__link main-nav__link--direct">Vapes</a>
+        <a href="productos.html" class="main-nav__link main-nav__link--direct menu-filter-link" data-filter-type="vape">Vapes</a>
       </li>
 
       <!-- Decants -->
@@ -118,9 +113,9 @@
         </a>
         <div id="submenu-decants" class="main-nav__dropdown" role="menu">
           <ul class="main-nav__list">
-            <li><a href="productos.html" role="menuitem">Masculinos</a></li>
-            <li><a href="productos.html" role="menuitem">Femeninos</a></li>
-            <li><a href="productos.html" role="menuitem">Combos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="FEMENINO">Femeninos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-tag="combo">Combos</a></li>
           </ul>
         </div>
       </li>
@@ -211,7 +206,7 @@
   </div>
 
   <div class="carousel-item">
-    <img src="img/perfumer_carrusel_2.avif" alt="Perfume2 2">
+    <img src="img/perfume_carrusel_2.avif" alt="Perfume2 2">
     <div class="carousel-caption">
       <h2>Gadgets Premium</h2>
       <p>Innovación y estilo, con 6 cuotas sin interés.</p>
@@ -282,11 +277,16 @@
 
 
     <!-- Productos Destacados -->
-    <section class="featured-products">
+    <section class="featured-products" aria-labelledby="featured-products-title">
       <div class="container">
-        <h2 class="section-title">Productos Destacados</h2>
-        <div id="product-list" class="product-list"></div>
-        <button class="btn btn--primary">Ver Todos los Productos</button>
+        <div class="featured-products__header">
+          <h2 id="featured-products-title" class="section-title">Productos destacados</h2>
+          <p class="featured-products__subtitle">Elegimos los lanzamientos más buscados para que disfrutes hasta 15% OFF pagando por transferencia.</p>
+        </div>
+        <div id="featured-products-grid" class="featured-products__grid" aria-live="polite" aria-busy="false"></div>
+        <div class="featured-products__footer">
+          <a class="btn btn--primary" href="productos.html">Ver todos los productos</a>
+        </div>
       </div>
     </section>
 
@@ -396,6 +396,57 @@
 
 <div class="cart-toast-layer" aria-live="polite" aria-atomic="true"></div>
   
+  <div id="profile-modal" class="profile-modal" aria-hidden="true">
+    <div class="profile-modal__overlay" data-profile-close></div>
+    <div class="profile-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title" tabindex="-1">
+      <button type="button" class="profile-modal__close" data-profile-close aria-label="Cerrar">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="profile-modal__header">
+        <h2 id="profile-modal-title">Mi Perfil</h2>
+        <p class="profile-modal__subtitle">Gestioná tus datos personales</p>
+      </header>
+      <div class="profile-modal__body">
+        <div id="profile-loading" class="profile-modal__loading" aria-live="polite">Cargando tus datos...</div>
+        <form id="profile-form" class="profile-modal__form" novalidate>
+          <div class="profile-modal__field-group">
+            <label for="profile-username">Username</label>
+            <input type="text" id="profile-username" name="username" data-static="true" disabled>
+          </div>
+          <div class="profile-modal__field-grid">
+            <div class="profile-modal__field-group">
+              <label for="profile-first-name">Nombre</label>
+              <input type="text" id="profile-first-name" name="firstName" autocomplete="given-name" required>
+            </div>
+            <div class="profile-modal__field-group">
+              <label for="profile-last-name">Apellido</label>
+              <input type="text" id="profile-last-name" name="lastName" autocomplete="family-name" required>
+            </div>
+          </div>
+          <div class="profile-modal__field-group">
+            <label for="profile-email">Email</label>
+            <input type="email" id="profile-email" name="email" data-static="true" disabled>
+          </div>
+          <div class="profile-modal__field-grid">
+            <div class="profile-modal__field-group">
+              <label for="profile-dni">DNI</label>
+              <input type="text" id="profile-dni" name="dni" inputmode="numeric" autocomplete="off" required>
+            </div>
+            <div class="profile-modal__field-group">
+              <label for="profile-phone">Teléfono</label>
+              <input type="tel" id="profile-phone" name="phone" autocomplete="tel" required>
+            </div>
+          </div>
+        </form>
+        <p id="profile-feedback" class="profile-modal__feedback" role="alert" hidden></p>
+      </div>
+      <footer class="profile-modal__footer">
+        <button type="submit" form="profile-form" class="btn btn--primary" id="profile-submit">Actualizar Datos</button>
+        <button type="button" class="btn btn--secondary" id="profile-logout">Cerrar sesión</button>
+      </footer>
+    </div>
+  </div>
+
   <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script defer src="javaScript/api.js"></script>
   <script defer src="javaScript/auth0-config.js"></script>

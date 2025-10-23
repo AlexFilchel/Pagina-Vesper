@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.VapeRequest;
 import org.vesper.dto.VapeResponse;
 import org.vesper.service.VapeService;
@@ -107,12 +106,15 @@ public class VapeController {
     /**
      * Actualiza un vape existente (solo administradores).
      */
-    @PutMapping("/admin/vapes/{id}")
+    @PutMapping(value = "/admin/vapes/{id}", consumes = {"multipart/form-data"})
     public ResponseEntity<VapeResponse> actualizarVape(
-            @PathVariable Long id,
-            @Valid @RequestBody VapeRequest request) {
-        return ResponseEntity.ok(vapeService.actualizarVape(id, request));
+        @PathVariable Long id,
+        @RequestPart("producto") @Valid VapeRequest request,
+        @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+
+    return ResponseEntity.ok(vapeService.actualizarVape(id, request, files));
     }
+
 
     /**
      * Elimina un vape (solo administradores).

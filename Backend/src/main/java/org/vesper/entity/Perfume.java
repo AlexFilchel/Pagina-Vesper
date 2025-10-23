@@ -13,6 +13,7 @@ import java.util.List;
  */
 @Entity
 @Table(name = "perfumes")
+@PrimaryKeyJoinColumn(name = "producto_id")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

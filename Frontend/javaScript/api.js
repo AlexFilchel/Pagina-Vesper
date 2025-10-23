@@ -64,13 +64,13 @@
     const fetchOptions = { method, headers: requestHeaders };
 
     if (body instanceof FormData) {
+      requestHeaders.delete('Content-Type'); 
       fetchOptions.body = body;
     } else if (body !== undefined && body !== null) {
-      if (!requestHeaders.has('Content-Type')) {
-        requestHeaders.set('Content-Type', 'application/json');
-      }
+      requestHeaders.set('Content-Type', 'application/json');
       fetchOptions.body = JSON.stringify(body);
     }
+
 
     if (authenticated) {
       try {
@@ -146,8 +146,26 @@
     async deleteVape(id) {
       return withAuthenticatedRequest(`/admin/vapes/${id}`, 'DELETE');
     },
+    async fetchFeaturedPublic() {
+      return request('/public/productos-destacados');
+    },
+    async fetchFeaturedAdmin() {
+      return withAuthenticatedRequest('/admin/productos-destacados', 'GET');
+    },
+    async addFeaturedProduct(productoId) {
+      return withAuthenticatedRequest('/admin/productos-destacados', 'POST', { productoId });
+    },
+    async removeFeaturedProduct(id) {
+      return withAuthenticatedRequest(`/admin/productos-destacados/${id}`, 'DELETE');
+    },
     async registerCurrentUser() {
       return withAuthenticatedRequest('/user/registrar', 'POST');
+    },
+    async getUserProfile() {
+      return withAuthenticatedRequest('/user/perfil', 'GET');
+    },
+    async updateUserProfile(payload) {
+      return withAuthenticatedRequest('/user/perfil', 'PUT', payload);
     }
   };
 

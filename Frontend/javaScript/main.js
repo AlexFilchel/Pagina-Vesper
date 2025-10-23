@@ -39,8 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const mobileSearchOverlay = document.querySelector(".mobile-search-overlay");
   const mobileSearchInput = mobileSearchOverlay?.querySelector("input");
   const overlaySearchButton = mobileSearchOverlay?.querySelector("button");
-  const accountDropdown = document.querySelector(".site-header__action--has-dropdown");
-  const accountBtn = accountDropdown?.querySelector(".site-header__action-btn");
+  const accountButton = document.getElementById("account-button");
   const searchIconMaterial = searchToggle ? searchToggle.querySelector(".material-symbols-outlined") : null;
   const searchIconFontAwesome = searchToggle ? searchToggle.querySelector(".fa-solid") : null;
 
@@ -72,14 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const headerRect = siteHeader?.getBoundingClientRect();
     if (headerRect) {
       mobileSearchOverlay.style.setProperty("--mobile-search-top", `${Math.max(headerRect.bottom, 0)}px`);
-    }
-  }
-
-  function updateAccountMenuPosition() {
-    if (!accountDropdown) return;
-    const headerRect = siteHeader?.getBoundingClientRect();
-    if (headerRect) {
-      accountDropdown.style.setProperty("--mobile-account-top", `${Math.max(headerRect.bottom, 0)}px`);
     }
   }
 
@@ -129,22 +120,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function closeAccountDropdown() {
-    if (!accountDropdown) return;
-    accountDropdown.classList.remove("is-open");
-  }
-
   const handleResize = () => {
     if (window.innerWidth >= 768) {
       closeSearch();
       closeMenu();
-      closeAccountDropdown();
     } else {
       if (mobileSearchOverlay?.classList.contains("is-visible")) {
         updateSearchOverlayPosition();
-      }
-      if (accountDropdown?.classList.contains("is-open")) {
-        updateAccountMenuPosition();
       }
     }
   };
@@ -154,7 +136,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const willOpen = !mainNav.classList.contains("is-open");
       if (willOpen) {
         closeSearch();
-        closeAccountDropdown();
       }
       mainNav.classList.toggle("is-open", willOpen);
       siteHeader?.classList.toggle("is-menu-open", willOpen);
@@ -189,7 +170,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (willOpen) {
         closeMenu();
-        closeAccountDropdown();
         openSearch();
       } else {
         closeSearch();
@@ -197,34 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (accountBtn && accountDropdown) {
-    accountBtn.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const willOpen = !accountDropdown.classList.contains("is-open");
-      if (willOpen) {
-        closeMenu();
-        closeSearch();
-        updateAccountMenuPosition();
-      }
-      accountDropdown.classList.toggle("is-open", willOpen);
-    });
-  }
-
-  if (accountDropdown) {
-    accountDropdown.querySelectorAll("a").forEach(link => {
-      link.addEventListener("click", () => {
-        closeAccountDropdown();
-      });
-    });
-  }
-
   document.addEventListener("click", (event) => {
-    if (accountDropdown && !accountDropdown.contains(event.target)) {
-      closeAccountDropdown();
-    }
-
     if (mobileSearchOverlay?.classList.contains("is-visible")) {
       const clickedInsideSearch = mobileSearchOverlay.contains(event.target);
       const clickedToggle = searchToggle?.contains(event.target) ?? false;
@@ -237,7 +190,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       closeSearch();
-      closeAccountDropdown();
       if (window.innerWidth < 768) {
         closeMenu();
       }
@@ -250,13 +202,372 @@ document.addEventListener("DOMContentLoaded", () => {
     if (mobileSearchOverlay?.classList.contains("is-visible")) {
       updateSearchOverlayPosition();
     }
-    if (accountDropdown?.classList.contains("is-open")) {
-      updateAccountMenuPosition();
-    }
   }, { passive: true });
+
+  /* ===========================
+     🔹 Modal de perfil de usuario
+  =========================== */
+  const profileModal = document.getElementById("profile-modal");
+  const profileDialog = profileModal?.querySelector(".profile-modal__dialog");
+  const profileForm = document.getElementById("profile-form");
+  const profileLoading = document.getElementById("profile-loading");
+  const profileFeedback = document.getElementById("profile-feedback");
+  const profileSubmitBtn = document.getElementById("profile-submit");
+  const profileLogoutBtn = document.getElementById("profile-logout");
+  const profileFields = {
+    username: document.getElementById("profile-username"),
+    firstName: document.getElementById("profile-first-name"),
+    lastName: document.getElementById("profile-last-name"),
+    email: document.getElementById("profile-email"),
+    dni: document.getElementById("profile-dni"),
+    phone: document.getElementById("profile-phone")
+  };
+
+  const profileState = {
+    isOpen: false,
+    isLoading: false,
+    data: null,
+    lastFocusedElement: null,
+    feedbackTimeout: null,
+    loadingPromise: null
+  };
+
+  const focusableSelector = "a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex='-1'])";
+
+  if (profileLoading) {
+    profileLoading.hidden = true;
+  }
+
+  function clearProfileFeedback() {
+    if (!profileFeedback) return;
+    if (profileState.feedbackTimeout) {
+      window.clearTimeout(profileState.feedbackTimeout);
+      profileState.feedbackTimeout = null;
+    }
+    profileFeedback.textContent = "";
+    profileFeedback.className = "profile-modal__feedback";
+    profileFeedback.hidden = true;
+  }
+
+  function setProfileFeedback(message, type = "info") {
+    if (!profileFeedback) return;
+    if (profileState.feedbackTimeout) {
+      window.clearTimeout(profileState.feedbackTimeout);
+      profileState.feedbackTimeout = null;
+    }
+
+    profileFeedback.hidden = false;
+    profileFeedback.textContent = message;
+    profileFeedback.className = "profile-modal__feedback";
+    if (type === "error") {
+      profileFeedback.classList.add("profile-modal__feedback--error");
+    } else if (type === "success") {
+      profileFeedback.classList.add("profile-modal__feedback--success");
+      profileState.feedbackTimeout = window.setTimeout(() => {
+        clearProfileFeedback();
+      }, 4000);
+    }
+  }
+
+  function toggleEditableFieldsDisabled(disabled) {
+    Object.values(profileFields).forEach((field) => {
+      if (!field) return;
+      if (field.dataset.static === "true") return;
+      field.disabled = disabled;
+    });
+  }
+
+  function setProfileLoading(isLoading, options = {}) {
+    const { disableLogout = false } = options;
+    if (!profileModal) return;
+    profileModal.classList.toggle("is-loading", isLoading);
+    if (profileForm) {
+      profileForm.classList.toggle("is-disabled", isLoading);
+      if (isLoading) {
+        profileForm.setAttribute("aria-busy", "true");
+      } else {
+        profileForm.removeAttribute("aria-busy");
+      }
+    }
+    toggleEditableFieldsDisabled(isLoading);
+    if (profileSubmitBtn) {
+      profileSubmitBtn.disabled = isLoading;
+    }
+    if (profileLogoutBtn) {
+      profileLogoutBtn.disabled = disableLogout && isLoading;
+    }
+    if (profileLoading) {
+      profileLoading.hidden = !isLoading;
+    }
+  }
+
+  function resetProfileValidation() {
+    Object.values(profileFields).forEach((field) => {
+      field?.classList.remove("is-invalid");
+    });
+  }
+
+  function fillProfileForm(data = {}) {
+    if (!profileForm) return;
+    const mapping = {
+      username: data.username || data.userName || "",
+      firstName: data.nombre || data.firstName || "",
+      lastName: data.apellido || data.lastName || "",
+      email: data.email || "",
+      dni: data.dni || data.documento || "",
+      phone: data.telefono || data.phone || ""
+    };
+
+    Object.entries(mapping).forEach(([key, value]) => {
+      const field = profileFields[key];
+      if (!field) return;
+      field.value = value != null ? String(value) : "";
+    });
+  }
+
+  function handleProfileFocusTrap(event) {
+    if (!profileState.isOpen || event.key !== "Tab" || !profileDialog) return;
+    const focusable = Array.from(profileDialog.querySelectorAll(focusableSelector))
+      .filter((el) => !(el instanceof HTMLElement && el.hasAttribute("hidden")) && !el.closest("[hidden]") && el.offsetParent !== null);
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus({ preventScroll: true });
+    } else if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus({ preventScroll: true });
+    }
+  }
+
+  function handleProfileKeydown(event) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeProfileModal();
+      return;
+    }
+    handleProfileFocusTrap(event);
+  }
+
+  async function fetchProfileData(force = false) {
+    if (!profileModal) return null;
+    if (profileState.isLoading && profileState.loadingPromise) {
+      return profileState.loadingPromise;
+    }
+    if (!force && profileState.data) {
+      fillProfileForm(profileState.data);
+      return profileState.data;
+    }
+
+    if (!window.apiClient || typeof window.apiClient.getUserProfile !== "function") {
+      setProfileFeedback("No se pudo cargar la información del perfil.", "error");
+      return null;
+    }
+
+    profileState.isLoading = true;
+    setProfileLoading(true);
+    clearProfileFeedback();
+    resetProfileValidation();
+
+    const loading = window.apiClient.getUserProfile()
+      .then((data) => {
+        profileState.data = data || null;
+        if (data) {
+          fillProfileForm(data);
+        } else {
+          setProfileFeedback("No se encontraron datos de perfil para mostrar.", "error");
+        }
+        return data;
+      })
+      .catch((error) => {
+        console.error("❌ Error cargando perfil:", error);
+        const message = error?.message || "No se pudo cargar tu perfil.";
+        setProfileFeedback(message, "error");
+        throw error;
+      })
+      .finally(() => {
+        profileState.isLoading = false;
+        profileState.loadingPromise = null;
+        setProfileLoading(false);
+      });
+
+    profileState.loadingPromise = loading;
+    return loading;
+  }
+
+  function openProfileModal() {
+    if (!profileModal || profileState.isOpen) return;
+    closeMenu();
+    closeSearch();
+    profileState.lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    profileState.isOpen = true;
+    profileModal.classList.add("is-visible");
+    profileModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+    if (accountButton) {
+      accountButton.setAttribute("aria-expanded", "true");
+    }
+    clearProfileFeedback();
+    resetProfileValidation();
+    window.requestAnimationFrame(() => {
+      profileDialog?.focus({ preventScroll: true });
+    });
+    document.addEventListener("keydown", handleProfileKeydown);
+    fetchProfileData(true).catch(() => {
+      /* handled in fetchProfileData */
+    });
+  }
+
+  function closeProfileModal() {
+    if (!profileModal || !profileState.isOpen) return;
+    profileState.isOpen = false;
+    profileModal.classList.remove("is-visible");
+    profileModal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+    if (accountButton) {
+      accountButton.setAttribute("aria-expanded", "false");
+    }
+    document.removeEventListener("keydown", handleProfileKeydown);
+    clearProfileFeedback();
+    window.requestAnimationFrame(() => {
+      profileState.lastFocusedElement?.focus?.({ preventScroll: true });
+      profileState.lastFocusedElement = null;
+    });
+  }
+
+  if (profileModal) {
+    profileModal.querySelectorAll("[data-profile-close]").forEach((element) => {
+      element.addEventListener("click", (event) => {
+        event.preventDefault();
+        closeProfileModal();
+      });
+    });
+  }
+
+  if (profileForm) {
+    profileForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!profileForm) return;
+      resetProfileValidation();
+      const { valid, message } = validateProfileForm();
+      if (!valid) {
+        setProfileFeedback(message, "error");
+        return;
+      }
+
+      if (!window.apiClient || typeof window.apiClient.updateUserProfile !== "function") {
+        setProfileFeedback("Servicio de actualización de perfil no disponible.", "error");
+        return;
+      }
+
+      const payload = {
+        username: profileFields.username?.value?.trim() || undefined,
+        nombre: profileFields.firstName?.value?.trim() || "",
+        apellido: profileFields.lastName?.value?.trim() || "",
+        email: profileFields.email?.value?.trim() || "",
+        dni: profileFields.dni?.value?.trim() || "",
+        telefono: profileFields.phone?.value?.trim() || ""
+      };
+
+      try {
+        profileState.isLoading = true;
+        setProfileLoading(true, { disableLogout: true });
+        await window.apiClient.updateUserProfile(payload);
+        profileState.data = { ...(profileState.data ?? {}), ...payload };
+        setProfileFeedback("Tus datos se actualizaron correctamente.", "success");
+      } catch (error) {
+        console.error("❌ Error actualizando perfil:", error);
+        const messageError = error?.message || "No se pudo actualizar tu perfil.";
+        setProfileFeedback(messageError, "error");
+      } finally {
+        profileState.isLoading = false;
+        setProfileLoading(false);
+      }
+    });
+
+    profileForm.querySelectorAll("input").forEach((input) => {
+      input.addEventListener("input", () => {
+        input.classList.remove("is-invalid");
+        if (profileFeedback && profileFeedback.classList.contains("profile-modal__feedback--error")) {
+          clearProfileFeedback();
+        }
+      });
+    });
+  }
+
+  function validateProfileForm() {
+    const requiredFields = [
+      { field: profileFields.firstName, name: "Nombre" },
+      { field: profileFields.lastName, name: "Apellido" },
+      { field: profileFields.dni, name: "DNI" },
+      { field: profileFields.phone, name: "Teléfono" }
+    ];
+
+    let message = "";
+
+    requiredFields.forEach(({ field, name }) => {
+      if (!field) return;
+      if (!field.value.trim()) {
+        field.classList.add("is-invalid");
+        if (!message) {
+          message = `El campo ${name} es obligatorio.`;
+        }
+      }
+    });
+
+    const dniValue = profileFields.dni?.value?.trim() ?? "";
+    if (dniValue) {
+      const numericDni = dniValue.replace(/[^0-9]/g, "");
+      if (numericDni.length < 6) {
+        profileFields.dni?.classList.add("is-invalid");
+        message = message || "Ingresá un DNI válido (mínimo 6 números).";
+      }
+    }
+
+    const phoneValue = profileFields.phone?.value?.trim() ?? "";
+    if (phoneValue) {
+      const numericPhone = phoneValue.replace(/[^0-9]/g, "");
+      if (numericPhone.length < 6) {
+        profileFields.phone?.classList.add("is-invalid");
+        message = message || "Ingresá un teléfono válido.";
+      }
+    }
+
+    return { valid: message === "", message: message || "" };
+  }
+
+  if (profileLogoutBtn) {
+    profileLogoutBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      closeProfileModal();
+      const client = window.auth0Client;
+      if (client && typeof client.logout === "function") {
+        client.logout({
+          logoutParams: { returnTo: window.location.origin + "/Frontend/index.html" }
+        });
+      } else {
+        window.location.href = window.location.origin + "/Frontend/index.html";
+      }
+    });
+  }
+
+  if (profileModal) {
+    profileModal.setAttribute("aria-hidden", "true");
+  }
+
+  window.profileModalController = {
+    open: openProfileModal,
+    close: closeProfileModal,
+    refresh: (force = true) => fetchProfileData(force)
+  };
 
   window.addEventListener("resize", handleResize);
   handleResize();
+
+  setupHeaderSearch();
+  setupMenuFilters();
 
   const currencyFormatter = new Intl.NumberFormat("es-AR", {
     style: "currency",
@@ -266,6 +577,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const formatPrice = (value) => currencyFormatter.format(value);
+
+  const TRANSFER_DISCOUNT_RATE = 0.15;
+  const CART_STORAGE_KEY = "vesper.cart.v1";
+  const FALLBACK_IMAGE_URL = "img/logo_vesper.jpg";
 
   function parsePriceValue(value) {
     if (typeof value === "number") return value;
@@ -299,6 +614,400 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
+  }
+
+  function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function highlightElement(element, text, query) {
+    if (!element) return;
+    element.textContent = "";
+
+    const safeText = typeof text === "string" ? text : "";
+    const normalizedQuery = typeof query === "string" ? query.trim() : "";
+
+    if (!normalizedQuery) {
+      element.textContent = safeText;
+      return;
+    }
+
+    try {
+      const regex = new RegExp(escapeRegExp(normalizedQuery), "gi");
+      let lastIndex = 0;
+      let match;
+
+      while ((match = regex.exec(safeText)) !== null) {
+        if (match.index > lastIndex) {
+          element.appendChild(document.createTextNode(safeText.slice(lastIndex, match.index)));
+        }
+        const mark = document.createElement("mark");
+        mark.textContent = match[0];
+        element.appendChild(mark);
+        lastIndex = match.index + match[0].length;
+      }
+
+      if (lastIndex < safeText.length) {
+        element.appendChild(document.createTextNode(safeText.slice(lastIndex)));
+      }
+
+      if (!element.childNodes.length) {
+        element.textContent = safeText;
+      }
+    } catch (error) {
+      console.warn("No se pudo resaltar el texto de búsqueda:", error);
+      element.textContent = safeText;
+    }
+  }
+
+  function calculateTransferPrice(value) {
+    if (!Number.isFinite(value)) return value;
+    const discounted = value * (1 - TRANSFER_DISCOUNT_RATE);
+    return Math.round(discounted * 100) / 100;
+  }
+
+  const catalogCache = {
+    promise: null,
+    data: null
+  };
+
+  async function fetchCatalogData(force = false) {
+    if (!force && catalogCache.data) {
+      return catalogCache.data;
+    }
+
+    if (!catalogCache.promise || force) {
+      const loadData = async () => {
+        try {
+          const perfumesPromise = window.apiClient?.fetchPerfumes?.()
+            ?? fetch('http://localhost:8080/api/public/perfumes').then((res) => res.json());
+          const vapesPromise = window.apiClient?.fetchVapes?.()
+            ?? fetch('http://localhost:8080/api/public/vapes').then((res) => res.json());
+
+          const [perfumes, vapes] = await Promise.all([perfumesPromise, vapesPromise]);
+          const data = {
+            perfumes: Array.isArray(perfumes) ? perfumes : [],
+            vapes: Array.isArray(vapes) ? vapes : []
+          };
+          catalogCache.data = data;
+          return data;
+        } catch (error) {
+          catalogCache.data = { perfumes: [], vapes: [] };
+          throw error;
+        } finally {
+          catalogCache.promise = null;
+        }
+      };
+
+      catalogCache.promise = loadData();
+    }
+
+    if (catalogCache.data && !force) {
+      return catalogCache.data;
+    }
+
+    if (catalogCache.promise) {
+      return catalogCache.promise;
+    }
+
+    return { perfumes: [], vapes: [] };
+  }
+
+  populateHeaderBrands();
+
+  function getPrimaryImage(imagenes) {
+    const pickFromValue = (value) => {
+      if (typeof value === "string" && value.trim().length > 0) {
+        return value.trim();
+      }
+      if (value && typeof value === "object") {
+        const candidates = [
+          value.url,
+          value.imageUrl,
+          value.imagenUrl,
+          value.secureUrl,
+          value.secure_url,
+          value.link
+        ];
+        for (const candidate of candidates) {
+          if (typeof candidate === "string" && candidate.trim().length > 0) {
+            return candidate.trim();
+          }
+        }
+        const nested = value.imagen ?? value.image ?? value.source;
+        if (nested && nested !== value) {
+          const nestedPick = pickFromValue(nested);
+          if (nestedPick) {
+            return nestedPick;
+          }
+        }
+      }
+      return null;
+    };
+
+    if (Array.isArray(imagenes)) {
+      for (const item of imagenes) {
+        const picked = pickFromValue(item);
+        if (picked) {
+          return picked;
+        }
+      }
+      return FALLBACK_IMAGE_URL;
+    }
+
+    const single = pickFromValue(imagenes);
+    return single ?? FALLBACK_IMAGE_URL;
+  }
+
+  function normalizePerfume(perfume) {
+    const rawPrice = Number.parseFloat(perfume?.precio);
+    const price = Number.isFinite(rawPrice) ? rawPrice : 0;
+    const mlValue = Number.parseFloat(perfume?.ml);
+    const type = perfume?.decant ? "decant" : "perfume";
+    const genero = typeof perfume?.genero === "string" ? perfume.genero.toUpperCase() : "";
+    const brand = typeof perfume?.marca === "string" ? perfume.marca.trim() : "";
+    const name = typeof perfume?.nombre === "string" ? perfume.nombre.trim() : "";
+
+    const haystack = [
+      name,
+      brand,
+      perfume?.notasPrincipales ?? "",
+      perfume?.descripcion ?? "",
+      perfume?.inspiracion ?? "",
+      perfume?.fragancia ?? ""
+    ].join(" ").toLowerCase();
+
+    return {
+      key: `${type}-${perfume?.id ?? window.crypto?.randomUUID?.() ?? Date.now()}`,
+      productId: perfume?.id ?? null,
+      type,
+      name,
+      brand,
+      description: perfume?.descripcion ?? "",
+      genero,
+      ml: Number.isFinite(mlValue) ? mlValue : null,
+      decant: Boolean(perfume?.decant),
+      notasPrincipales: perfume?.notasPrincipales ?? "",
+      price,
+      originalPrice: price,
+      discountPrice: calculateTransferPrice(price),
+      stock: Number.isFinite(perfume?.stock) ? perfume.stock : 0,
+      image: getPrimaryImage(perfume?.imagenes),
+      searchText: haystack,
+      raw: perfume
+    };
+  }
+
+  function normalizeVape(vape) {
+    const rawPrice = Number.parseFloat(vape?.precio);
+    const price = Number.isFinite(rawPrice) ? rawPrice : 0;
+    const brand = typeof vape?.marca === "string" ? vape.marca.trim() : "";
+    const name = typeof vape?.nombre === "string" ? vape.nombre.trim() : "";
+    const sabores = Array.isArray(vape?.sabores) ? vape.sabores : [];
+    const saboresTexto = sabores
+      .map((sabor) => sabor?.nombre ?? sabor?.name ?? "")
+      .join(" ");
+
+    const haystack = [
+      name,
+      brand,
+      vape?.descripcion ?? "",
+      saboresTexto,
+      vape?.modos ?? ""
+    ].join(" ").toLowerCase();
+
+    return {
+      key: `vape-${vape?.id ?? window.crypto?.randomUUID?.() ?? Date.now()}`,
+      productId: vape?.id ?? null,
+      type: "vape",
+      name,
+      brand,
+      description: vape?.descripcion ?? "",
+      pitadas: Number.isFinite(vape?.pitadas) ? vape.pitadas : null,
+      modos: vape?.modos ?? "",
+      price,
+      originalPrice: price,
+      discountPrice: calculateTransferPrice(price),
+      stock: Number.isFinite(vape?.stock) ? vape.stock : 0,
+      image: getPrimaryImage(vape?.imagenes),
+      sabores,
+      searchText: haystack,
+      raw: vape
+    };
+  }
+
+  function normalizeFeaturedProduct(destacado) {
+    const rawPrice = Number.parseFloat(destacado?.precio);
+    const price = Number.isFinite(rawPrice) ? rawPrice : 0;
+    const discountRaw = Number.parseFloat(destacado?.precioTransferencia);
+    const discountPrice = Number.isFinite(discountRaw)
+      ? discountRaw
+      : calculateTransferPrice(price);
+
+    const type = typeof destacado?.tipo === "string"
+      ? destacado.tipo.toLowerCase()
+      : "producto";
+    const brand = typeof destacado?.marca === "string" ? destacado.marca.trim() : "";
+    const name = typeof destacado?.nombre === "string" ? destacado.nombre.trim() : "";
+
+    const imageSource = destacado?.imagenes ?? destacado?.producto?.imagenes ?? destacado?.productoImagenes ?? null;
+
+    return {
+      key: `destacado-${destacado?.id ?? window.crypto?.randomUUID?.() ?? Date.now()}`,
+      destacadoId: destacado?.id ?? null,
+      productId: destacado?.productoId ?? null,
+      type,
+      name,
+      brand,
+      description: destacado?.descripcion ?? "",
+      genero: typeof destacado?.genero === "string" ? destacado.genero.toUpperCase() : "",
+      ml: Number.isFinite(destacado?.ml) ? destacado.ml : null,
+      pitadas: Number.isFinite(destacado?.pitadas) ? destacado.pitadas : null,
+      price,
+      originalPrice: price,
+      discountPrice,
+      stock: Number.isFinite(destacado?.stock) ? destacado.stock : 0,
+      image: getPrimaryImage(imageSource),
+      raw: destacado
+    };
+  }
+
+  function buildProductCardElement(product, options = {}) {
+    const {
+      searchTerm = "",
+      badge,
+      showMeta = true
+    } = options;
+
+    const cartId = String(product?.key ?? `${product?.type ?? "producto"}-${product?.productId ?? Date.now()}`);
+    const subtitleParts = [];
+    if (Number.isFinite(product?.ml)) {
+      subtitleParts.push(`${product.ml} ml`);
+    }
+    if (Number.isFinite(product?.pitadas)) {
+      subtitleParts.push(`${product.pitadas} puffs`);
+    }
+    if (product?.genero) {
+      const generoLabel = product.genero.charAt(0) + product.genero.slice(1).toLowerCase();
+      subtitleParts.push(generoLabel);
+    }
+    const subtitleText = subtitleParts.join(" • ");
+
+    const card = document.createElement("article");
+    card.className = "product-card";
+    card.dataset.productId = cartId;
+    card.dataset.productName = product?.name ?? "";
+    card.dataset.productPrice = String(product?.price ?? 0);
+    card.dataset.productOriginalPrice = String(product?.originalPrice ?? product?.price ?? 0);
+    card.dataset.productType = product?.type ?? "producto";
+    card.dataset.productImage = product?.image ?? FALLBACK_IMAGE_URL;
+    if (subtitleText) {
+      card.dataset.productSubtitle = subtitleText;
+    }
+
+    const figure = document.createElement("figure");
+    figure.className = "product-card__figure";
+    const image = document.createElement("img");
+    image.src = product?.image ?? FALLBACK_IMAGE_URL;
+    image.alt = `${product?.name ?? "Producto"} ${product?.brand ? `de ${product.brand}` : ""}`.trim();
+    figure.appendChild(image);
+    card.appendChild(figure);
+
+    if (badge) {
+      const badgeElement = document.createElement("span");
+      badgeElement.className = "product-card__badge";
+      badgeElement.textContent = badge;
+      card.appendChild(badgeElement);
+    } else if (product?.decant) {
+      const badgeElement = document.createElement("span");
+      badgeElement.className = "product-card__badge";
+      badgeElement.textContent = "Decant";
+      card.appendChild(badgeElement);
+    }
+
+    const body = document.createElement("div");
+    body.className = "product-card__body";
+
+    if (product?.brand) {
+      const brand = document.createElement("p");
+      brand.className = "product-card__brand";
+      brand.textContent = product.brand;
+      body.appendChild(brand);
+    }
+
+    const title = document.createElement("h3");
+    title.className = "product-card__title";
+    highlightElement(title, product?.name ?? "", searchTerm);
+    body.appendChild(title);
+
+    if (subtitleText) {
+      const subtitle = document.createElement("p");
+      subtitle.className = "product-card__subtitle";
+      highlightElement(subtitle, subtitleText, searchTerm);
+      body.appendChild(subtitle);
+    }
+
+    const prices = document.createElement("div");
+    prices.className = "product-card__prices";
+    const priceElement = document.createElement("span");
+    priceElement.className = "product-card__price";
+    priceElement.textContent = formatPrice(product?.price ?? 0);
+    prices.appendChild(priceElement);
+
+    const discountElement = document.createElement("span");
+    discountElement.className = "product-card__discount";
+    discountElement.innerHTML = `<span>15% OFF transferencia</span>`;
+    prices.appendChild(discountElement);
+    body.appendChild(prices);
+
+    if (showMeta) {
+      const meta = document.createElement("p");
+      meta.className = "product-card__meta";
+      const typeLabel = formatProductLabel(product?.type ?? "producto");
+      const metaPieces = [typeLabel];
+      if (Number.isFinite(product?.stock)) {
+        metaPieces.push(`${product.stock} en stock`);
+      }
+      meta.textContent = metaPieces.join(" • ");
+      body.appendChild(meta);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "product-card__actions";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn btn--primary";
+    button.dataset.action = "add-to-cart";
+    button.dataset.productId = cartId;
+    button.dataset.productName = product?.name ?? "";
+    button.dataset.productPrice = String(product?.price ?? 0);
+    button.dataset.productOriginalPrice = String(product?.price ?? 0);
+    if (Number.isFinite(product?.discountPrice)) {
+      button.dataset.productDiscount = String(product.discountPrice);
+    }
+    button.dataset.productType = product?.type ?? "producto";
+    button.dataset.productSubtitle = subtitleText;
+    button.dataset.productImage = product?.image ?? FALLBACK_IMAGE_URL;
+    button.textContent = "Agregar al carrito";
+    actions.appendChild(button);
+
+    body.appendChild(actions);
+    card.appendChild(body);
+
+    return card;
+  }
+
+  function formatProductLabel(type) {
+    switch ((type || "").toLowerCase()) {
+      case "perfume":
+        return "Perfume";
+      case "decant":
+        return "Decant";
+      case "vape":
+        return "Vape";
+      default:
+        return "Producto";
+    }
   }
 
   function extractProductData(trigger) {
@@ -377,6 +1086,60 @@ document.addEventListener("DOMContentLoaded", () => {
     items: [],
     shippingInfo: null
   };
+
+  function loadCartFromStorage() {
+    try {
+      const stored = window.localStorage.getItem(CART_STORAGE_KEY);
+      if (!stored) {
+        return;
+      }
+
+      const parsed = JSON.parse(stored);
+      if (!parsed || !Array.isArray(parsed.items)) {
+        return;
+      }
+
+      cartState.items = parsed.items
+        .map((item) => ({
+          id: item?.id ?? slugify(item?.name ?? Date.now()),
+          name: item?.name ?? "Producto",
+          subtitle: item?.subtitle ?? "",
+          price: Number.parseFloat(item?.price) || 0,
+          originalPrice: Number.parseFloat(item?.originalPrice ?? item?.price) || 0,
+          image: item?.image ?? FALLBACK_IMAGE_URL,
+          type: item?.type ?? "Producto",
+          quantity: Number.isFinite(item?.quantity) && item.quantity > 0 ? item.quantity : 1
+        }));
+
+      cartState.shippingInfo = parsed.shippingInfo ?? null;
+    } catch (error) {
+      console.warn("No se pudo cargar el carrito desde almacenamiento local:", error);
+      cartState.items = [];
+      cartState.shippingInfo = null;
+    }
+  }
+
+  function persistCart() {
+    try {
+      const payload = {
+        items: cartState.items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          subtitle: item.subtitle,
+          price: item.price,
+          originalPrice: item.originalPrice,
+          image: item.image,
+          type: item.type,
+          quantity: item.quantity
+        })),
+        shippingInfo: cartState.shippingInfo
+      };
+
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(payload));
+    } catch (error) {
+      console.warn("No se pudo guardar el carrito:", error);
+    }
+  }
 
   if (cartPanel) {
     cartPanel.setAttribute("tabindex", "-1");
@@ -538,6 +1301,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     renderCart();
+    persistCart();
     showCartToast(product);
   }
 
@@ -547,6 +1311,7 @@ document.addEventListener("DOMContentLoaded", () => {
       cartState.shippingInfo = null;
     }
     renderCart();
+    persistCart();
   }
 
   function changeQuantity(productId, delta) {
@@ -561,6 +1326,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     renderCart();
+    persistCart();
   }
 
   function calculateShippingBase(zipDigits) {
@@ -601,6 +1367,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     updateSummary();
+    persistCart();
   }
 
   function showCartToast(product) {
@@ -649,6 +1416,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3200);
   }
 
+  loadCartFromStorage();
   renderCart();
 
   if (cartTrigger) {
@@ -660,12 +1428,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   cartOverlay?.addEventListener("click", closeCart);
   cartCloseBtn?.addEventListener("click", closeCart);
-  emptyCta?.addEventListener("click", closeCart);
-  summarySecondary?.addEventListener("click", closeCart);
+  emptyCta?.addEventListener("click", () => {
+    window.location.href = "productos.html";
+  });
+
+  summarySecondary?.addEventListener("click", () => {
+    window.location.href = "productos.html";
+  });
 
   summaryPrimary?.addEventListener("click", () => {
     if (!cartState.items.length) return;
-    closeCart();
+    persistCart();
+    window.location.href = "checkout-entrega.html";
   });
 
   shippingForm?.addEventListener("submit", handleShipping);
@@ -1032,31 +1806,518 @@ document.addEventListener("DOMContentLoaded", () => {
 /* ===========================
    🔹 Sombra dinámica del header
 =========================== */
-const header = document.querySelector(".site-header");
-const navBottom = document.querySelector(".site-header__bottom");
+  const header = document.querySelector(".site-header");
+  const navBottom = document.querySelector(".site-header__bottom");
 
-if (header && navBottom) {
-  // Solo en desktop
-  if (window.innerWidth >= 768) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            // 🔹 Categorías visibles → sombra en .site-header__bottom
-            navBottom.classList.add("has-shadow");
-            header.classList.remove("has-shadow");
-          } else {
-            // 🔹 Categorías NO visibles → sombra en .site-header
-            navBottom.classList.remove("has-shadow");
-            header.classList.add("has-shadow");
-          }
-        });
-      },
-      { threshold: 0.01 }
-    );
+  if (header && navBottom) {
+    if (window.innerWidth >= 768) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              navBottom.classList.add("has-shadow");
+              header.classList.remove("has-shadow");
+            } else {
+              navBottom.classList.remove("has-shadow");
+              header.classList.add("has-shadow");
+            }
+          });
+        },
+        { threshold: 0.01 }
+      );
 
-    observer.observe(navBottom);
+      observer.observe(navBottom);
+    }
   }
-}
 
+  function setupHeaderSearch() {
+    const forms = [];
+    if (desktopSearchForm) {
+      forms.push(desktopSearchForm);
+    }
+    const mobileForm = mobileSearchOverlay?.querySelector("form");
+    if (mobileForm) {
+      forms.push(mobileForm);
+    }
+
+    forms.forEach((form) => {
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const input = form.querySelector("input[type='search'], input[type='text']");
+        const query = input?.value?.trim();
+        if (!query) {
+          return;
+        }
+        closeSearch();
+        const url = new URL("productos.html", window.location.origin);
+        url.searchParams.set("q", query);
+        window.location.href = url.toString();
+      });
+    });
+  }
+
+  function setSearchInputsValue(value) {
+    const safeValue = value ?? "";
+    const desktopInput = desktopSearchForm?.querySelector("input[type='search']");
+    if (desktopInput) {
+      desktopInput.value = safeValue;
+    }
+    const mobileInput = mobileSearchOverlay?.querySelector("input[type='search'], input[type='text']");
+    if (mobileInput) {
+      mobileInput.value = safeValue;
+    }
+  }
+
+  function setupMenuFilters() {
+    const buildProductsUrl = (linkElement) => {
+      const baseHref = linkElement.getAttribute("href") || "productos.html";
+      let targetUrl;
+      try {
+        targetUrl = new URL(baseHref, window.location.href);
+      } catch (error) {
+        targetUrl = new URL("productos.html", window.location.href);
+      }
+      targetUrl.search = "";
+      targetUrl.hash = "";
+
+      const { filterType, filterGenero, filterBrand, filterTag } = linkElement.dataset;
+      if (filterType) {
+        targetUrl.searchParams.append("type", filterType);
+      }
+      if (filterGenero) {
+        targetUrl.searchParams.append("genero", filterGenero);
+      }
+      if (filterBrand) {
+        targetUrl.searchParams.append("brand", filterBrand);
+      }
+      if (filterTag) {
+        targetUrl.searchParams.append("tag", filterTag);
+      }
+
+      return targetUrl;
+    };
+
+    const links = document.querySelectorAll(".menu-filter-link");
+    links.forEach((link) => {
+      if (link.dataset.filterHandlerAttached === "true") {
+        return;
+      }
+
+      const targetUrl = buildProductsUrl(link);
+      link.href = targetUrl.toString();
+
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        closeMenu();
+        const destination = buildProductsUrl(link);
+        window.location.href = destination.toString();
+      });
+
+      link.dataset.filterHandlerAttached = "true";
+    });
+  }
+
+  async function populateHeaderBrands() {
+    const perfumeList = document.querySelector('[data-brand-list="perfumes"]');
+    const vapeList = document.querySelector('[data-brand-list="vapes"]');
+    if (!perfumeList && !vapeList) {
+      return;
+    }
+
+    try {
+      const data = await fetchCatalogData();
+      const perfumeBrands = new Map();
+      data.perfumes.forEach((perfume) => {
+        const brand = typeof perfume?.marca === "string" ? perfume.marca.trim() : "";
+        if (brand) {
+          const key = brand.toLowerCase();
+          if (!perfumeBrands.has(key)) {
+            perfumeBrands.set(key, brand);
+          }
+        }
+      });
+
+      const vapeBrands = new Map();
+      data.vapes.forEach((vape) => {
+        const brand = typeof vape?.marca === "string" ? vape.marca.trim() : "";
+        if (brand) {
+          const key = brand.toLowerCase();
+          if (!vapeBrands.has(key)) {
+            vapeBrands.set(key, brand);
+          }
+        }
+      });
+
+      const renderBrandList = (container, brandMap, type) => {
+        if (!container) return;
+        container.innerHTML = "";
+        const entries = Array.from(brandMap.entries()).sort(([, a], [, b]) => a.localeCompare(b, "es", { sensitivity: "base" }));
+        entries.forEach(([key, label]) => {
+          const listItem = document.createElement("li");
+          const link = document.createElement("a");
+          link.href = "productos.html";
+          link.className = "menu-filter-link";
+          link.dataset.filterType = type;
+          link.dataset.filterBrand = key;
+          link.dataset.filterBrandLabel = label;
+          link.textContent = label;
+          listItem.appendChild(link);
+          container.appendChild(listItem);
+        });
+      };
+
+      renderBrandList(perfumeList, perfumeBrands, "perfume");
+      renderBrandList(vapeList, vapeBrands, "vape");
+
+      setupMenuFilters();
+    } catch (error) {
+      console.error("No se pudieron cargar las marcas del menú:", error);
+    }
+  }
+
+  async function renderFeaturedProductsSection(container) {
+    container.innerHTML = "";
+    container.setAttribute("aria-busy", "true");
+    try {
+      if (!window.apiClient || typeof window.apiClient.fetchFeaturedPublic !== "function") {
+        throw new Error("Cliente de API no disponible");
+      }
+
+      const response = await window.apiClient.fetchFeaturedPublic();
+      const destacados = Array.isArray(response)
+        ? response.slice(0, 8).map(normalizeFeaturedProduct)
+        : [];
+
+      if (!destacados.length) {
+        const empty = document.createElement("p");
+        empty.textContent = "Aún no hay productos destacados disponibles.";
+        container.appendChild(empty);
+        return;
+      }
+
+      destacados.forEach((item) => {
+        const card = buildProductCardElement(item, {
+          badge: "Destacado",
+          showMeta: false
+        });
+        container.appendChild(card);
+      });
+    } catch (error) {
+      console.error("Error al cargar los destacados:", error);
+      const message = document.createElement("p");
+      message.textContent = "No se pudieron cargar los productos destacados.";
+      container.appendChild(message);
+    } finally {
+      container.setAttribute("aria-busy", "false");
+    }
+  }
+
+  function initializeProductsPage() {
+    const productsContainer = document.getElementById("productos-lista");
+    if (!productsContainer) {
+      return;
+    }
+
+    const typeInputs = document.querySelectorAll('input[name="filter-type"]');
+    const genderInputs = document.querySelectorAll('input[name="filter-gender"]');
+    const clearButton = document.querySelector('.filtros-limpiar');
+    const priceRangeInput = document.getElementById('filter-price');
+    const priceLabel = document.getElementById('filter-price-value');
+
+    const defaultMaxPrice = priceRangeInput ? Number.parseFloat(priceRangeInput.value || priceRangeInput.max) : null;
+
+    const state = {
+      items: [],
+      filtered: []
+    };
+
+    const filters = {
+      types: new Set(),
+      genders: new Set(),
+      brands: new Set(),
+      maxPrice: Number.isFinite(defaultMaxPrice) ? defaultMaxPrice : null,
+      search: ''
+    };
+
+    const showMessage = (message) => {
+      productsContainer.innerHTML = '';
+      const paragraph = document.createElement('p');
+      paragraph.className = 'productos-empty';
+      paragraph.textContent = message;
+      productsContainer.appendChild(paragraph);
+    };
+
+    const updatePriceLabel = (value) => {
+      if (priceLabel) {
+        priceLabel.textContent = formatPrice(Number(value) || 0);
+      }
+    };
+
+    const updateUrlParams = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('type');
+      url.searchParams.delete('genero');
+      url.searchParams.delete('brand');
+      url.searchParams.delete('maxPrice');
+      url.searchParams.delete('q');
+
+      filters.types.forEach((type) => url.searchParams.append('type', type));
+      filters.genders.forEach((gender) => url.searchParams.append('genero', gender));
+      filters.brands.forEach((brand) => url.searchParams.append('brand', brand));
+
+      if (Number.isFinite(filters.maxPrice) && priceRangeInput) {
+        url.searchParams.set('maxPrice', filters.maxPrice);
+      }
+
+      if (filters.search) {
+        url.searchParams.set('q', filters.search);
+      }
+
+      window.history.replaceState({}, '', url);
+    };
+
+    const updateBrandGroupVisibility = () => {
+      const perfumeGroup = document.querySelector('[data-brand-group="perfume"]');
+      const vapeGroup = document.querySelector('[data-brand-group="vape"]');
+      const showPerfume = !filters.types.size || filters.types.has('perfume') || filters.types.has('decant');
+      const showVape = !filters.types.size || filters.types.has('vape');
+      perfumeGroup?.classList.toggle('is-hidden', !showPerfume);
+      vapeGroup?.classList.toggle('is-hidden', !showVape);
+    };
+
+    const renderProducts = (products, searchTerm) => {
+      productsContainer.innerHTML = '';
+      if (!products.length) {
+        showMessage('No encontramos productos con los filtros seleccionados.');
+        return;
+      }
+
+      products.forEach((product) => {
+        const card = buildProductCardElement(product, {
+          searchTerm,
+          showMeta: true
+        });
+        productsContainer.appendChild(card);
+      });
+    };
+
+    const renderBrandGroup = (container, brandMap, type) => {
+      if (!container) return;
+      container.innerHTML = '';
+      const entries = Array.from(brandMap.entries()).sort(([, a], [, b]) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+      entries.forEach(([key, label]) => {
+        const listItem = document.createElement('li');
+        const labelElement = document.createElement('label');
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.value = key;
+        input.checked = filters.brands.has(key);
+        input.dataset.brandType = type;
+        input.addEventListener('change', () => {
+          if (input.checked) {
+            filters.brands.add(key);
+          } else {
+            filters.brands.delete(key);
+          }
+          applyFilters();
+        });
+        labelElement.appendChild(input);
+        labelElement.appendChild(document.createTextNode(label));
+        listItem.appendChild(labelElement);
+        container.appendChild(listItem);
+      });
+    };
+
+    const updateBrandFilters = (items) => {
+      const perfumeGroup = document.querySelector('[data-brand-group="perfume"] ul');
+      const vapeGroup = document.querySelector('[data-brand-group="vape"] ul');
+      const perfumeBrands = new Map();
+      const vapeBrands = new Map();
+
+      items.forEach((item) => {
+        const brandLabel = item.brand;
+        if (!brandLabel) return;
+        const key = brandLabel.toLowerCase();
+        if (item.type === 'vape') {
+          if (!vapeBrands.has(key)) {
+            vapeBrands.set(key, brandLabel);
+          }
+        } else {
+          if (!perfumeBrands.has(key)) {
+            perfumeBrands.set(key, brandLabel);
+          }
+        }
+      });
+
+      renderBrandGroup(perfumeGroup, perfumeBrands, 'perfume');
+      renderBrandGroup(vapeGroup, vapeBrands, 'vape');
+      updateBrandGroupVisibility();
+    };
+
+    const applyFilters = () => {
+      let filtered = state.items.slice();
+
+      if (filters.types.size) {
+        filtered = filtered.filter((item) => filters.types.has(item.type));
+      }
+
+      if (filters.genders.size) {
+        filtered = filtered.filter((item) => {
+          if (!item.genero) return false;
+          return filters.genders.has(item.genero);
+        });
+      }
+
+      if (filters.brands.size) {
+        filtered = filtered.filter((item) => {
+          const brandKey = item.brand?.toLowerCase() ?? '';
+          return filters.brands.has(brandKey);
+        });
+      }
+
+      if (Number.isFinite(filters.maxPrice)) {
+        filtered = filtered.filter((item) => (item.price ?? 0) <= filters.maxPrice);
+      }
+
+      if (filters.search) {
+        const query = filters.search.toLowerCase();
+        filtered = filtered.filter((item) => item.searchText.includes(query));
+      }
+
+      state.filtered = filtered;
+      renderProducts(filtered, filters.search);
+      updateBrandGroupVisibility();
+      updateUrlParams();
+    };
+
+    const applyFiltersFromQuery = () => {
+      const params = new URLSearchParams(window.location.search);
+      filters.types.clear();
+      filters.genders.clear();
+      filters.brands.clear();
+
+      params.getAll('type').forEach((type) => {
+        if (type) {
+          filters.types.add(type.toLowerCase());
+        }
+      });
+
+      params.getAll('genero').forEach((gender) => {
+        if (gender) {
+          filters.genders.add(gender.toUpperCase());
+        }
+      });
+
+      params.getAll('brand').forEach((brand) => {
+        if (brand) {
+          filters.brands.add(brand.toLowerCase());
+        }
+      });
+
+      const searchQuery = params.get('q');
+      if (searchQuery) {
+        filters.search = searchQuery.trim();
+        setSearchInputsValue(filters.search);
+      }
+
+      const maxPriceParam = Number.parseFloat(params.get('maxPrice'));
+      if (Number.isFinite(maxPriceParam) && priceRangeInput) {
+        filters.maxPrice = maxPriceParam;
+        priceRangeInput.value = String(maxPriceParam);
+        updatePriceLabel(maxPriceParam);
+      } else if (priceRangeInput) {
+        filters.maxPrice = Number.parseFloat(priceRangeInput.value) || defaultMaxPrice;
+        updatePriceLabel(priceRangeInput.value);
+      }
+
+      typeInputs.forEach((input) => {
+        input.checked = filters.types.has(input.value.toLowerCase());
+      });
+
+      genderInputs.forEach((input) => {
+        input.checked = filters.genders.has(input.value.toUpperCase());
+      });
+    };
+
+    productsContainer.innerHTML = '';
+    const loading = document.createElement('p');
+    loading.textContent = 'Cargando productos...';
+    productsContainer.appendChild(loading);
+    productsContainer.setAttribute('aria-busy', 'true');
+
+    fetchCatalogData()
+      .then((data) => {
+        const perfumes = data.perfumes.map(normalizePerfume);
+        const vapes = data.vapes.map(normalizeVape);
+        state.items = [...perfumes, ...vapes];
+        applyFiltersFromQuery();
+        updateBrandFilters(state.items);
+        applyFilters();
+      })
+      .catch((error) => {
+        console.error('Error al cargar el catálogo:', error);
+        showMessage('No se pudieron cargar los productos. Intentalo nuevamente.');
+      })
+      .finally(() => {
+        productsContainer.removeAttribute('aria-busy');
+      });
+
+    typeInputs.forEach((input) => {
+      input.addEventListener('change', () => {
+        const value = input.value.toLowerCase();
+        if (input.checked) {
+          filters.types.add(value);
+        } else {
+          filters.types.delete(value);
+        }
+        updateBrandGroupVisibility();
+        applyFilters();
+      });
+    });
+
+    genderInputs.forEach((input) => {
+      input.addEventListener('change', () => {
+        const value = input.value.toUpperCase();
+        if (input.checked) {
+          filters.genders.add(value);
+        } else {
+          filters.genders.delete(value);
+        }
+        applyFilters();
+      });
+    });
+
+    if (priceRangeInput) {
+      priceRangeInput.addEventListener('input', () => {
+        const value = Number.parseFloat(priceRangeInput.value);
+        filters.maxPrice = Number.isFinite(value) ? value : defaultMaxPrice;
+        updatePriceLabel(filters.maxPrice);
+        applyFilters();
+      });
+    }
+
+    clearButton?.addEventListener('click', () => {
+      filters.types.clear();
+      filters.genders.clear();
+      filters.brands.clear();
+      filters.maxPrice = defaultMaxPrice;
+      filters.search = '';
+      typeInputs.forEach((input) => { input.checked = false; });
+      genderInputs.forEach((input) => { input.checked = false; });
+      if (priceRangeInput && Number.isFinite(defaultMaxPrice)) {
+        priceRangeInput.value = String(defaultMaxPrice);
+        updatePriceLabel(defaultMaxPrice);
+      }
+      setSearchInputsValue('');
+      updateBrandFilters(state.items);
+      applyFilters();
+    });
+  }
+
+  const featuredGrid = document.getElementById("featured-products-grid");
+  if (featuredGrid) {
+    renderFeaturedProductsSection(featuredGrid);
+  }
+
+  initializeProductsPage();
 });

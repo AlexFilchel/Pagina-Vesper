@@ -6,6 +6,8 @@ import org.vesper.entity.Usuario;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.repo.UsuarioRepository;
 
+import jakarta.transaction.Transactional;
+
 import java.util.List;
 
 @Service
@@ -17,6 +19,7 @@ public class UsuarioService {
     /**
      * Guarda o actualiza un usuario proveniente de Auth0 (autoregistro).
      */
+    @Transactional
     public Usuario registrarOActualizarDesdeAuth0(String auth0Id, String email, String nombre, String apellido) {
         return usuarioRepository.findByAuth0Id(auth0Id)
                 .map(usuario -> {

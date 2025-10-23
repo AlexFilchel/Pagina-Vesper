@@ -21,9 +21,7 @@ public class VapeRequest {
     private String descripcion;
     private String marca;
     private Integer stock;
-    //private String imagen;
-
     private Integer pitadas;
     private String modos;
-    private Set<Long> saboresIds; // IDs de sabores seleccionados
+    private Set<VapeSaborRequest> sabores;
 }

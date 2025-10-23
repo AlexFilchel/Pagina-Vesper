@@ -20,11 +20,16 @@ const dom = {
   promotionModal: document.getElementById('promotionModal'),
   promotionProductSelect: document.getElementById('promotionProduct'),
   editPromotionProductSelect: document.getElementById('editPromotionProduct'),
-  adminModals: document.querySelectorAll('.admin-modal')
+  adminModals: document.querySelectorAll('.admin-modal'),
+  featuredTableBody: document.getElementById('featuredProductsBody'),
+  featuredSelect: document.getElementById('featuredProductSelect'),
+  addFeaturedButton: document.getElementById('addFeaturedButton'),
+  featuredCounter: document.getElementById('featuredCounter')
 };
 
 let addProductHelpers;
 let editProductHelpers;
+let featuredProducts = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupAccordions();
@@ -42,14 +47,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await ensureApiClient();
     await loadProductsFromApi();
+    await loadFeaturedProducts();
   } catch (error) {
     console.error('Error inicializando la API del administrador:', error);
     showToast('No se pudieron cargar los productos del catálogo.');
     renderProductsTable();
+    renderFeaturedProducts('No se pudo obtener la lista de destacados.');
   }
 
   renderPromotionsTable();
 
+  dom.addFeaturedButton?.addEventListener('click', handleAddFeaturedProduct);
+
+  dom.featuredTableBody?.addEventListener('click', (event) => {
+    const target = event.target.closest('.btn-remove[data-featured-id]');
+    if (!target) return;
+    const destacadoId = Number.parseInt(target.dataset.featuredId, 10);
+    if (!Number.isFinite(destacadoId)) return;
+    removeFeaturedProduct(destacadoId);
+  });
+
+  // ============================
+  // 📦 CREAR PRODUCTO
+  // ============================
   dom.addProductForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!dom.addProductForm.checkValidity()) {
@@ -72,12 +92,69 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!client) throw new Error('Cliente de API no disponible.');
 
       const newProduct = collectProductData(dom.addProductForm);
+
       if (newProduct.type === 'vape') {
-        const created = await client.createVape(toVapeRequest(newProduct));
+        // ✅ Construir el objeto completo del producto
+        const producto = {
+          nombre: newProduct.name,
+          marca: newProduct.brand,
+          descripcion: newProduct.description,
+          precio: newProduct.price,
+          stock: newProduct.stock,
+          pitadas: newProduct.puffs,
+          modos: newProduct.modes,
+          sabores: newProduct.flavors
+            .filter(f => typeof f.name === 'string' && f.name.trim().length > 0)
+            .map(f => ({
+              nombre: f.name.trim(),
+              stock: Number.isFinite(f.stock) ? f.stock : 0
+            }))
+        };
+
+        // ✅ Crear el FormData correctamente
+        const formData = new FormData();
+        formData.append(
+          "producto",
+          new Blob([JSON.stringify(producto)], { type: "application/json" })
+        );
+
+        // Adjuntar imágenes (opcional)
+        const fileInput = dom.addProductForm.querySelector('#vapeImages');
+        if (fileInput && fileInput.files.length > 0) {
+          for (const file of fileInput.files) formData.append("files", file);
+        }
+
+        // Enviar al backend
+        const created = await client.request("/admin/vapes", {
+          method: "POST",
+          body: formData,
+          authenticated: true
+        });
+
         const mapped = mapVapeResponse(created, newProduct);
         upsertProduct(mapped);
       } else {
-        const created = await client.createPerfume(toPerfumeRequest(newProduct));
+        const producto = toPerfumeRequest(newProduct);
+
+        const formData = new FormData();
+        formData.append(
+          "producto",
+          new Blob([JSON.stringify(producto)], { type: "application/json" })
+        );
+
+        const fileInput = dom.addProductForm.querySelector('#productImages');
+        if (fileInput && fileInput.files.length > 0) {
+          for (const file of fileInput.files) {
+            formData.append("files", file);
+          }
+        }
+
+        const created = await client.request("/admin/perfumes", {
+          method: "POST",
+          body: formData,
+          authenticated: true
+        });
+
         const mapped = mapPerfumeResponse(created, newProduct);
         upsertProduct(mapped);
       }
@@ -94,15 +171,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // ============================
+  // 🧩 EDITAR PRODUCTO
+  // ============================
   dom.editProductForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!dom.editProductForm.checkValidity()) {
       dom.editProductForm.reportValidity();
       return;
     }
-    if (!validateProductForm(dom.editProductForm)) {
-      return;
-    }
+    if (!validateProductForm(dom.editProductForm)) return;
 
     const productId = dom.editProductForm.dataset.productId;
     const originalType = dom.editProductForm.dataset.productType || dom.editProductForm.productType?.value;
@@ -119,7 +197,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       editedProduct.type = originalType;
 
       if (originalType === 'vape') {
-        const updated = await client.updateVape(productId, toVapeRequest(editedProduct));
+        // ✅ También usamos FormData al editar
+        const producto = {
+          nombre: editedProduct.name,
+          marca: editedProduct.brand,
+          descripcion: editedProduct.description,
+          precio: editedProduct.price,
+          stock: editedProduct.stock,
+          pitadas: editedProduct.puffs,
+          modos: editedProduct.modes,
+          sabores: editedProduct.flavors
+            .filter(f => typeof f.name === 'string' && f.name.trim().length > 0)
+            .map(f => ({
+              nombre: f.name.trim(),
+              stock: Number.isFinite(f.stock) ? f.stock : 0
+            }))
+        };
+
+        const formData = new FormData();
+        formData.append(
+          "producto",
+          new Blob([JSON.stringify(producto)], { type: "application/json" })
+        );
+
+        const fileInput = dom.editProductForm.querySelector('input[type="file"]');
+        if (fileInput && fileInput.files.length > 0) {
+          for (const file of fileInput.files) formData.append("files", file);
+        }
+
+        const updated = await client.request(`/admin/vapes/${productId}`, {
+          method: "PUT",
+          body: formData,
+          authenticated: true
+        });
+
         const mapped = mapVapeResponse(updated, editedProduct);
         upsertProduct(mapped);
       } else {
@@ -143,6 +254,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // ============================
+  // 🎟️ PROMOCIONES
+  // ============================
   dom.addPromotionForm?.addEventListener('submit', (event) => {
     event.preventDefault();
     if (!dom.addPromotionForm.checkValidity()) {
@@ -184,6 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+
 
 function setupAccordions() {
   dom.accordionHeaders.forEach((header) => {
@@ -492,6 +607,181 @@ async function loadProductsFromApi() {
   renderProductsTable();
   populateProductOptions();
   renderPromotionsTable();
+  refreshFeaturedSelectOptions();
+}
+
+async function loadFeaturedProducts() {
+  if (!dom.featuredTableBody) return;
+
+  try {
+    const client = await ensureApiClient();
+    if (!client || typeof client.fetchFeaturedAdmin !== 'function') {
+      throw new Error('Cliente de API no disponible.');
+    }
+
+    const response = await client.fetchFeaturedAdmin();
+    featuredProducts = Array.isArray(response) ? response : [];
+    renderFeaturedProducts();
+  } catch (error) {
+    console.error('Error al cargar los productos destacados:', error);
+    featuredProducts = [];
+    renderFeaturedProducts('No se pudieron cargar los productos destacados.');
+  }
+}
+
+function renderFeaturedProducts(errorMessage) {
+  if (!dom.featuredTableBody) return;
+
+  dom.featuredTableBody.innerHTML = '';
+  const total = featuredProducts.length;
+  if (dom.featuredCounter) {
+    dom.featuredCounter.textContent = `${total}/8 destacados`;
+  }
+
+  if (errorMessage) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 5;
+    cell.textContent = errorMessage;
+    row.appendChild(cell);
+    dom.featuredTableBody.appendChild(row);
+    refreshFeaturedSelectOptions();
+    return;
+  }
+
+  if (total === 0) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 5;
+    cell.textContent = 'Aún no hay productos destacados.';
+    row.appendChild(cell);
+    dom.featuredTableBody.appendChild(row);
+    refreshFeaturedSelectOptions();
+    return;
+  }
+
+  featuredProducts.forEach((item) => {
+    const row = document.createElement('tr');
+
+    const nameCell = document.createElement('td');
+    nameCell.textContent = item?.nombre ?? '';
+    row.appendChild(nameCell);
+
+    const brandCell = document.createElement('td');
+    brandCell.textContent = item?.marca ?? '';
+    row.appendChild(brandCell);
+
+    const priceCell = document.createElement('td');
+    priceCell.textContent = currencyFormatter.format(item?.precio ?? 0);
+    row.appendChild(priceCell);
+
+    const typeCell = document.createElement('td');
+    typeCell.textContent = formatProductType(String(item?.tipo ?? '').toLowerCase());
+    row.appendChild(typeCell);
+
+    const actionsCell = document.createElement('td');
+    actionsCell.classList.add('column-actions');
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'btn-remove';
+    deleteButton.dataset.featuredId = String(item?.id ?? '');
+    deleteButton.textContent = 'Eliminar';
+    actionsCell.appendChild(deleteButton);
+    row.appendChild(actionsCell);
+
+    dom.featuredTableBody.appendChild(row);
+  });
+
+  refreshFeaturedSelectOptions();
+}
+
+function refreshFeaturedSelectOptions() {
+  if (!dom.featuredSelect) return;
+
+  const currentValue = dom.featuredSelect.value;
+  dom.featuredSelect.innerHTML = '';
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  placeholder.textContent = 'Seleccioná un producto disponible';
+  dom.featuredSelect.appendChild(placeholder);
+
+  const destacadosIds = new Set(
+    featuredProducts.map((item) => String(item?.productoId ?? item?.id ?? ''))
+  );
+
+  const available = products
+    .filter((product) => !destacadosIds.has(String(product.id)))
+    .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+
+  available.forEach((product) => {
+    const option = document.createElement('option');
+    option.value = String(product.id);
+    const typeLabel = formatProductType(product.type);
+    let detail = '';
+    if (product.type === 'vape' && Number.isFinite(product.puffs)) {
+      detail = `${product.puffs} puffs`;
+    } else if (Number.isFinite(product.volume)) {
+      detail = `${product.volume} ml`;
+    }
+    const detailText = detail ? ` • ${detail}` : '';
+    option.textContent = `${product.brand} – ${product.name}${detailText} (${typeLabel})`;
+    dom.featuredSelect.appendChild(option);
+  });
+
+  if (available.some((product) => String(product.id) === currentValue)) {
+    dom.featuredSelect.value = currentValue;
+  }
+}
+
+async function handleAddFeaturedProduct() {
+  if (!dom.featuredSelect || !dom.addFeaturedButton) return;
+
+  const selectedValue = dom.featuredSelect.value;
+  const productoId = Number.parseInt(selectedValue, 10);
+  if (!Number.isFinite(productoId)) {
+    dom.featuredSelect.focus();
+    return;
+  }
+
+  dom.addFeaturedButton.disabled = true;
+
+  try {
+    const client = await ensureApiClient();
+    if (!client || typeof client.addFeaturedProduct !== 'function') {
+      throw new Error('Cliente de API no disponible.');
+    }
+
+    await client.addFeaturedProduct(productoId);
+    showToast('Producto agregado a destacados.');
+    await loadFeaturedProducts();
+  } catch (error) {
+    console.error('Error al agregar producto destacado:', error);
+    const message = error?.message || 'No se pudo agregar el producto a destacados.';
+    showToast(message);
+  } finally {
+    dom.addFeaturedButton.disabled = false;
+    dom.featuredSelect.value = '';
+  }
+}
+
+async function removeFeaturedProduct(destacadoId) {
+  try {
+    const client = await ensureApiClient();
+    if (!client || typeof client.removeFeaturedProduct !== 'function') {
+      throw new Error('Cliente de API no disponible.');
+    }
+
+    await client.removeFeaturedProduct(destacadoId);
+    showToast('Producto destacado eliminado.');
+    await loadFeaturedProducts();
+  } catch (error) {
+    console.error('Error al eliminar producto destacado:', error);
+    const message = error?.message || 'No se pudo eliminar el producto destacado.';
+    showToast(message);
+  }
 }
 
 function mapPerfumeResponse(perfume, fallback = {}) {
@@ -519,10 +809,21 @@ function mapPerfumeResponse(perfume, fallback = {}) {
 }
 
 function mapVapeResponse(vape, fallback = {}) {
-  const flavorsFromResponse = vape?.sabores ? Array.from(vape.sabores) : [];
-  const formattedFlavors = flavorsFromResponse.length
-    ? flavorsFromResponse.map((name) => ({ name, stock: null }))
+  const rawFlavors = Array.isArray(vape?.sabores)
+    ? vape.sabores
+    : (vape?.sabores ? Array.from(vape.sabores) : []);
+
+  const formattedFlavors = rawFlavors.length
+    ? rawFlavors.map((flavor) => ({
+        name: flavor?.nombre ?? flavor?.name ?? '',
+        stock: parseNumberValue(flavor?.stock)
+      }))
     : (fallback.flavors || []);
+
+  const computedStock = formattedFlavors.reduce((acc, flavor) => {
+    const stockValue = parseNumberValue(flavor?.stock);
+    return acc + (Number.isFinite(stockValue) ? stockValue : 0);
+  }, 0);
 
   return {
     id: vape?.id ?? fallback.id ?? String(Date.now()),
@@ -534,7 +835,7 @@ function mapVapeResponse(vape, fallback = {}) {
     modes: vape?.modos ?? fallback.modes ?? '',
     flavors: formattedFlavors,
     price: parseNumberValue(vape?.precio) ?? fallback.price ?? 0,
-    stock: parseNumberValue(vape?.stock) ?? fallback.stock ?? 0
+    stock: parseNumberValue(vape?.stock) ?? computedStock ?? fallback.stock ?? 0
   };
 }
 
@@ -581,6 +882,15 @@ function toPerfumeRequest(product) {
 }
 
 function toVapeRequest(product) {
+  const sabores = Array.isArray(product.flavors)
+    ? product.flavors
+        .filter((flavor) => typeof flavor.name === 'string' && flavor.name.trim().length > 0)
+        .map((flavor) => ({
+          nombre: flavor.name.trim(),
+          stock: Number.isFinite(flavor.stock) ? flavor.stock : 0
+        }))
+    : [];
+
   return {
     nombre: product.name,
     precio: product.price,
@@ -588,7 +898,8 @@ function toVapeRequest(product) {
     marca: product.brand,
     stock: product.stock,
     pitadas: product.puffs,
-    modos: product.modes
+    modos: product.modes,
+    sabores
   };
 }
 
@@ -638,7 +949,9 @@ function renderProductsTable() {
     editButton.type = 'button';
     editButton.className = 'btn btn--ghost js-edit-product';
     editButton.dataset.productId = String(product.id);
+    editButton.dataset.productType = product.type; 
     editButton.textContent = 'Modificar';
+
 
     const deleteButton = document.createElement('button');
     deleteButton.type = 'button';
@@ -657,7 +970,8 @@ function renderProductsTable() {
   dom.productsTableBody.querySelectorAll('.js-edit-product').forEach((button) => {
     button.addEventListener('click', () => {
       const productId = button.dataset.productId;
-      openProductModal(productId);
+      const productType = button.dataset.productType;
+      openProductModal(productId, productType);
     });
   });
 
@@ -743,8 +1057,9 @@ function renderPromotionsTable() {
 
     const editButton = document.createElement('button');
     editButton.type = 'button';
-    editButton.className = 'btn btn--ghost js-edit-promotion';
-    editButton.dataset.promotionId = String(promotion.id);
+    editButton.className = 'btn btn--ghost js-edit-product';
+    editButton.dataset.productId = String(product.id);
+    editButton.dataset.productType = product.type; 
     editButton.textContent = 'Modificar';
 
     const toggleButton = document.createElement('button');
@@ -828,6 +1143,7 @@ function populateProductOptions() {
       }
     }
   });
+  refreshFeaturedSelectOptions();
 }
 
 function collectPromotionData(form) {
@@ -841,8 +1157,11 @@ function collectPromotionData(form) {
   };
 }
 
-function openProductModal(productId) {
-  const product = products.find((item) => String(item.id) === String(productId));
+function openProductModal(productId, productType) {
+  const product = products.find(
+    (item) => String(item.id) === String(productId) && item.type === productType
+  ); // 🔹 ahora busca por id + tipo
+
   if (!product) return;
   if (!editProductHelpers) {
     editProductHelpers = setupProductForm(dom.editProductForm);
@@ -850,6 +1169,7 @@ function openProductModal(productId) {
   editProductHelpers?.fill(product);
   dom.editProductForm.dataset.productId = product.id;
   dom.editProductForm.dataset.productType = product.type;
+
   const typeSelect = dom.editProductForm?.querySelector('select[name="productType"]');
   if (typeSelect) {
     typeSelect.value = product.type;
@@ -857,6 +1177,7 @@ function openProductModal(productId) {
   }
   openModal(dom.productModal);
 }
+
 
 function openPromotionModal(promotionId) {
   const promotion = promotions.find((item) => String(item.id) === String(promotionId));

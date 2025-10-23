@@ -13,6 +13,7 @@ import org.vesper.entity.DetalleVenta;
 import org.vesper.entity.Perfume;
 import org.vesper.entity.Producto;
 import org.vesper.entity.Vape;
+import org.vesper.entity.VapeSabor;
 import org.vesper.entity.Venta;
 import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
@@ -25,6 +26,8 @@ import org.vesper.entity.Venta.EstadoVenta;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,11 +61,29 @@ public class VentaService {
                             .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + detalleRequest.getProductoId())));
 
             Integer cantidadSolicitada = detalleRequest.getCantidad();
-            if (producto.getStock() == null || producto.getStock() < cantidadSolicitada) {
-                throw new AlreadyExistsException("Stock insuficiente para el producto: " + producto.getNombre());
-            }
+            if (producto instanceof Vape) {
+                Vape vape = (Vape) producto;
+                int stockDisponible = Optional.ofNullable(vape.getVapeSabores())
+                        .orElse(Collections.emptySet())
+                        .stream()
+                        .map(VapeSabor::getStock)
+                        .filter(Objects::nonNull)
+                        .mapToInt(Integer::intValue)
+                        .sum();
 
-            producto.setStock(producto.getStock() - cantidadSolicitada);
+                if (stockDisponible < cantidadSolicitada) {
+                    throw new AlreadyExistsException("Stock insuficiente para el producto: " + producto.getNombre());
+                }
+
+                reducirStockVape(vape, cantidadSolicitada);
+                producto.setStock(stockDisponible - cantidadSolicitada);
+            } else {
+                if (producto.getStock() == null || producto.getStock() < cantidadSolicitada) {
+                    throw new AlreadyExistsException("Stock insuficiente para el producto: " + producto.getNombre());
+                }
+
+                producto.setStock(producto.getStock() - cantidadSolicitada);
+            }
 
             Double precioUnitario = producto.getPrecio();
             double subtotal = precioUnitario * cantidadSolicitada;
@@ -221,5 +242,26 @@ public class VentaService {
             throw new UnauthorizedException("Usuario no autorizado");
         }
         return value;
+    }
+
+    private void reducirStockVape(Vape vape, int cantidad) {
+        int restante = cantidad;
+        for (VapeSabor vapeSabor : Optional.ofNullable(vape.getVapeSabores())
+                .orElse(Collections.emptySet())) {
+            if (restante <= 0) {
+                break;
+            }
+            int disponible = Optional.ofNullable(vapeSabor.getStock()).orElse(0);
+            if (disponible <= 0) {
+                continue;
+            }
+            int aDescontar = Math.min(disponible, restante);
+            vapeSabor.setStock(disponible - aDescontar);
+            restante -= aDescontar;
+        }
+
+        if (restante > 0) {
+            throw new AlreadyExistsException("Stock insuficiente para el producto: " + vape.getNombre());
+        }
     }
 }

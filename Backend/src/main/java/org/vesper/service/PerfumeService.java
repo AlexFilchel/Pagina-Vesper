@@ -13,6 +13,8 @@ import org.vesper.exception.ResourceNotFoundException;
 
 import org.vesper.repo.PerfumeRepository;
 
+import jakarta.transaction.Transactional;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +53,7 @@ public class PerfumeService {
     /**
      * Crea un nuevo perfume (solo admins).
      */
+    @Transactional
     public PerfumeResponse crearPerfume(PerfumeRequest request, List<MultipartFile> files) {
         // Validar duplicado por nombre
         if (perfumeRepository.existsByNombre(request.getNombre())) {
@@ -80,6 +83,7 @@ public class PerfumeService {
     /**
      * Actualiza un perfume existente (solo admins).
      */
+    @Transactional
     public PerfumeResponse actualizarPerfume(Long id, PerfumeRequest request) {
         Perfume existente = perfumeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Perfume no encontrado con id: " + id));
@@ -107,6 +111,7 @@ public class PerfumeService {
     /**
      * Elimina un perfume existente por ID (solo admins).
      */
+    @Transactional
     public void eliminarPerfume(Long id) {
         if (!perfumeRepository.existsById(id)) {
             throw new ResourceNotFoundException("Perfume no encontrado con id: " + id);

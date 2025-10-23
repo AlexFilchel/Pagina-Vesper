@@ -1,22 +1,29 @@
 package org.vesper.entity;
 
+import jakarta.persistence.InheritanceType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Table;
 import jakarta.persistence.TableGenerator;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-@MappedSuperclass
+
+@Entity
+@Table(name = "productos")
+@Inheritance(strategy = InheritanceType.JOINED)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class Producto {
+public abstract class Producto {
 
     @TableGenerator(
             name = "producto_id_generator",

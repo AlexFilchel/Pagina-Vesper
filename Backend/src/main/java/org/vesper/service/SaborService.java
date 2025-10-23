@@ -7,6 +7,8 @@ import org.vesper.dto.SaborResponse;
 import org.vesper.entity.Sabor;
 import org.vesper.repo.SaborRepository;
 
+import jakarta.transaction.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -45,6 +47,7 @@ public class SaborService {
     // 🔴 MÉTODOS ADMIN
     // =========================================================
 
+    @Transactional
     public SaborResponse crear(SaborRequest request) {
         if (saborRepository.findByNombreIgnoreCase(request.getNombre()).isPresent()) {
             throw new IllegalArgumentException("Ya existe un sabor con el nombre: " + request.getNombre());
@@ -57,6 +60,7 @@ public class SaborService {
         return toResponse(saborRepository.save(nuevo));
     }
 
+    @Transactional
     public SaborResponse actualizar(Long id, SaborRequest request) {
         Sabor sabor = saborRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Sabor no encontrado con id: " + id));
