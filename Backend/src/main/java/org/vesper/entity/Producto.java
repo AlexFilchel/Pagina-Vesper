@@ -25,14 +25,6 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public abstract class Producto {
 
-    @TableGenerator(
-            name = "producto_id_generator",
-            table = "producto_id_sequence",
-            pkColumnName = "sequence_name",
-            valueColumnName = "next_val",
-            pkColumnValue = "producto",
-            allocationSize = 1
-    )
     @Id
     @GeneratedValue(strategy = GenerationType.TABLE, generator = "producto_id_generator")
     private Long id;

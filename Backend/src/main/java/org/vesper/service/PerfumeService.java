@@ -146,30 +146,30 @@ public class PerfumeService {
     // MÉTODOS PRIVADOS (mapeo DTO ↔ Entidad)
     // =========================================================
 
-    private PerfumeResponse toResponse(Perfume perfume) {
+    public PerfumeResponse toResponse(Perfume perfume) {
         List<ImagenResponse> imagenResponses = perfume.getImagenes().stream()
                 .map(imagen -> new ImagenResponse(imagen.getId(), imagen.getUrl()))
                 .collect(Collectors.toList());
 
-        return new PerfumeResponse(
-                perfume.getId(),
-                perfume.getNombre(),
-                perfume.getPrecio(),
-                perfume.getDescripcion(),
-                perfume.getVolumen(),
-                perfume.getGenero(),
-                perfume.getNotasPrincipales(),
-                perfume.getSalida(),
-                perfume.getCorazon(),
-                perfume.getFondo(),
-                perfume.getInspiracion(),
-                perfume.getDecant(),
-                perfume.getFragancia(),
-                perfume.getMl(),
-                perfume.getMarca(),
-                perfume.getStock(),
-                imagenResponses
-        );
+        return PerfumeResponse.builder()
+                .id(perfume.getId())
+                .nombre(perfume.getNombre())
+                .descripcion(perfume.getDescripcion())
+                .marca(perfume.getMarca())
+                .precio(perfume.getPrecio())
+                .stock(perfume.getStock())
+                .imagenes(imagenResponses)
+                .volumen(perfume.getVolumen())
+                .genero(perfume.getGenero())
+                .notasPrincipales(perfume.getNotasPrincipales())
+                .salida(perfume.getSalida())
+                .corazon(perfume.getCorazon())
+                .fondo(perfume.getFondo())
+                .inspiracion(perfume.getInspiracion())
+                .decant(perfume.getDecant())
+                .fragancia(perfume.getFragancia())
+                .ml(perfume.getMl())
+                .build();
     }
 
     private Perfume toEntity(PerfumeRequest request) {

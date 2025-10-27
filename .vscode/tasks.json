@@ -9,7 +9,7 @@
         "command": ".\\gradlew bootRun"
       },
       "options": {
-        "cwd": "${workspaceFolder}/Backend/BackendE_Commerce"
+        "cwd": "${workspaceFolder}/Backend"
       },
       "group": {
         "kind": "build",

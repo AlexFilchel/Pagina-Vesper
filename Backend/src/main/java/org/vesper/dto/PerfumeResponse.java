@@ -1,26 +1,20 @@
 package org.vesper.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
+import lombok.experimental.SuperBuilder;
 
 /**
  * DTO de respuesta para representar perfumes en el API.
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class PerfumeResponse {
-    private Long id;
-    private String nombre;
-    private Double precio;
-    private String descripcion;
-    //private String imagen;
-
+@SuperBuilder
+public class PerfumeResponse extends ProductoResponse {
     private String volumen;
     private String genero;
     private String notasPrincipales;
@@ -31,8 +25,4 @@ public class PerfumeResponse {
     private Boolean decant;
     private String fragancia;
     private Double ml;
-    private String marca;
-    private Integer stock;
-    private List<ImagenResponse> imagenes;
-
 }
