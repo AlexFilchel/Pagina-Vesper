@@ -28,6 +28,9 @@ public class RegistroPago {
     @Column(name = "status")
     private String status;
 
+    @Column(name = "status_detail")
+    private String statusDetail;
+
     // Monto del pago
     @Column(name = "amount")
     private Float amount;
@@ -40,6 +43,7 @@ public class RegistroPago {
     @Column(name = "date_approved")
     private LocalDateTime dateApproved;
 
+    
     // Relación con Venta (corta el ciclo RegistroPago -> venta -> registroPago ...)
     @OneToOne
     @JoinColumn(name = "idVenta", nullable = false)

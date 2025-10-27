@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Spring Boot (Gradle BootRun)",
+      "type": "shell",
+      "command": "./gradlew bootRun",
+      "windows": {
+        "command": ".\\gradlew bootRun"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/Backend/BackendE_Commerce"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

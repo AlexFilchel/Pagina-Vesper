@@ -126,39 +126,73 @@ public class PaymentService {
      */
     @Transactional
     public void procesarWebhook(String rawPayload) throws IOException, MPApiException {
-        // 1. Parsear el payload para obtener el ID del pago
-        Map<String, Object> payload = objectMapper.readValue(rawPayload, new TypeReference<>() {});
-        Map<?, ?> dataMap = (Map<?, ?>) payload.get("data");
-        if (dataMap == null || dataMap.get("id") == null) {
-            throw new IllegalArgumentException("Estructura de webhook inesperada: falta 'data.id'");
-        }
-        Long paymentId = Long.valueOf(dataMap.get("id").toString());
+        logger.info("📦 Webhook recibido: {}", rawPayload);
 
+        // 1️⃣ Parsear el JSON flexible
+        Map<String, Object> payload = objectMapper.readValue(rawPayload, new TypeReference<>() {});
+        Long paymentId = null;
+
+        // 🔹 Caso A: estructura moderna con "data.id"
+        if (payload.containsKey("data")) {
+            Map<?, ?> dataMap = (Map<?, ?>) payload.get("data");
+            if (dataMap != null && dataMap.get("id") != null) {
+                paymentId = Long.valueOf(dataMap.get("id").toString());
+            }
+        }
+
+        // 🔹 Caso B: estructura simplificada con "id" en la raíz
+        if (paymentId == null && payload.get("id") != null) {
+            paymentId = Long.valueOf(payload.get("id").toString());
+        }
+
+        // 🔹 Caso C: formato legacy con "resource" (ej. {"resource":"131049990968","topic":"payment"})
+        if (paymentId == null && payload.get("resource") != null) {
+            String resource = payload.get("resource").toString();
+            // Si el resource es solo el número (a veces es URL completa)
+            if (resource.matches("\\d+")) {
+                paymentId = Long.valueOf(resource);
+            } else if (resource.contains("/")) {
+                // Extraer el último número de la URL (por ejemplo, /v1/payments/131049990968)
+                try {
+                    String idPart = resource.substring(resource.lastIndexOf('/') + 1);
+                    paymentId = Long.valueOf(idPart);
+                } catch (NumberFormatException ex) {
+                    logger.warn("⚠️ No se pudo extraer un número válido de 'resource': {}", resource);
+                }
+            }
+        }
+
+        if (paymentId == null) {
+            throw new IllegalArgumentException("Estructura de webhook inesperada: falta 'data.id', 'id' o 'resource'");
+        }
+
+        logger.info("🔍 Procesando notificación de pago con ID {}", paymentId);
+
+        // 2️⃣ Obtener el estado actualizado del pago desde la API de Mercado Pago
         Payment payment;
         try {
-            // 2. Obtener el estado actualizado del pago desde la API de Mercado Pago
             PaymentClient paymentClient = new PaymentClient();
             payment = paymentClient.get(paymentId);
         } catch (MPApiException e) {
-            // La API respondió con un error (ej. 404 Not Found). La relanzamos para que GlobalExceptionHandler la capture.
+            logger.error("❌ Error API Mercado Pago (status {}): {}", e.getStatusCode(), e.getMessage());
             throw e;
         } catch (MPException e) {
-            // Error general de la librería (ej. conexión). La envolvemos en nuestra excepción.
-            logger.error("Fallo al comunicarse con Mercado Pago para obtener el pago {}: {}", paymentId, e.getMessage(), e);
+            logger.error("🌐 Fallo al comunicarse con MP para pago {}: {}", paymentId, e.getMessage(), e);
             throw new MercadoPagoIntegrationException("No fue posible obtener los detalles del pago desde Mercado Pago.");
         }
 
-        // 3. Encontrar la venta asociada a través de la referencia externa
+        // 3️⃣ Buscar la venta asociada
         Long ventaId = Long.valueOf(payment.getExternalReference());
         Venta venta = ventaRepository.findById(ventaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con id: " + ventaId));
 
-        // 4. Crear o actualizar el registro del pago
+        // 4️⃣ Crear o actualizar registro del pago
         RegistroPago registro = registroPagoRepository.findByMpPaymentId(String.valueOf(paymentId))
                 .orElseGet(RegistroPago::new);
 
         registro.setMpPaymentId(String.valueOf(paymentId));
         registro.setStatus(payment.getStatus());
+        registro.setStatusDetail(payment.getStatusDetail());
         registro.setAmount(payment.getTransactionAmount().floatValue());
         registro.setPaymentMethod(payment.getPaymentMethodId());
         if (payment.getDateApproved() != null) {
@@ -167,9 +201,14 @@ public class PaymentService {
         registro.setVenta(venta);
         registroPagoRepository.save(registro);
 
-        // 5. Actualizar el estado de la venta y descontar stock si corresponde
+        // 5️⃣ Actualizar venta y stock
         actualizarEstadoVentaYStock(venta, payment.getStatus());
+
+        logger.info("✅ Webhook procesado correctamente. Venta {} actualizada a estado '{}'.",
+                venta.getId(), payment.getStatus());
     }
+
+
 
     private void actualizarEstadoVentaYStock(Venta venta, String estadoPago) {
         String estadoAnterior = venta.getEstado();
