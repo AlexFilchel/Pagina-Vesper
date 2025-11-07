@@ -116,30 +116,35 @@
   async function registerUserIfNeeded(user) {
     if (!user || !user.sub) return;
 
-    const storageKey = `vesper:user-registered:${user.sub}`;
-    if (localStorage.getItem(storageKey) === 'true') {
-      console.log('ℹ️ Usuario ya registrado anteriormente');
+    if (localStorage.getItem('vesper.usuarioId')) {
+      console.log(`ℹ️ ID de usuario ya existe en localStorage: ${localStorage.getItem('vesper.usuarioId')}`);
       return;
     }
 
-    try {
-      // 🔑 Obtener token JWT del usuario autenticado
-      const token = await auth0Client.getTokenSilently();
+    console.log("ℹ️ No se encontró ID de usuario en localStorage, sincronizando con el backend...");
 
-      // 🔹 Llamar al endpoint /api/user/registrar
+    try {
+      const token = await auth0Client.getTokenSilently();
       const response = await fetch('http://localhost:8080/api/user/registrar', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.ok) {
-        localStorage.setItem(storageKey, 'true');
-        console.log('✅ Usuario registrado correctamente en la base de datos');
+        const registeredUser = await response.json();
+        if (registeredUser && registeredUser.id) {
+          localStorage.setItem('vesper.usuarioId', registeredUser.id);
+          const storageKey = `vesper:user-registered:${user.sub}`;
+          localStorage.setItem(storageKey, 'true');
+          console.log(`✅ Usuario sincronizado. ID guardado: ${registeredUser.id}`);
+        } else {
+          console.warn('⚠️ La respuesta del backend no contenía un ID de usuario.');
+        }
       } else {
-        console.warn('⚠️ Falló el registro de usuario:', await response.text());
+        console.warn('⚠️ Falló la sincronización de usuario:', await response.text());
       }
     } catch (error) {
-      console.error('❌ Error registrando usuario:', error);
+      console.error('❌ Error sincronizando usuario:', error);
     }
   }
 })();
