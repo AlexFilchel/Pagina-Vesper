@@ -301,7 +301,7 @@
     const discountData = calculateDiscount(price, previousPrice);
     const transferPrice = calculateTransferPrice(price);
     const pyramid = buildPyramid(data);
-    const features = buildFeatureList(data, type);
+    const details = buildDetailList(data, type);
     const flavors = extractFlavorList(data);
     const description = buildDescriptionCopy({
       rawDescription: data?.descripcion,
@@ -309,9 +309,8 @@
       name: data?.nombre,
       brand: data?.marca,
       pyramid,
-      features,
-      flavors,
-      rawData: data
+      details,
+      flavors
     });
 
     return {
@@ -330,7 +329,7 @@
       primaryImage,
       galleryImages,
       pyramid,
-      features,
+      details,
       flavors,
       subtitle,
       genero: data?.genero || '',
@@ -349,35 +348,25 @@
   }
 
   function buildSubtitle(data, type) {
-    const pieces = [];
     if (type === 'vape') {
       if (Number.isFinite(data?.pitadas)) {
-        pieces.push(`${data.pitadas} puffs`);
+        return `${data.pitadas} pitadas`;
       }
-      if (data?.modos) {
-        pieces.push(data.modos);
+      const puffText = formatPuffCount(data?.pitadas);
+      return puffText;
+    }
+
+    if (type === 'perfume' || type === 'decant') {
+      if (Number.isFinite(data?.ml)) {
+        const value = Number(data.ml);
+        return `${value % 1 === 0 ? value : value.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ml`;
       }
-      if (Array.isArray(data?.sabores) && data.sabores.length) {
-        pieces.push(`${data.sabores.length} sabores`);
+      if (data?.volumen) {
+        return sanitizeSnippet(data.volumen);
       }
-      return pieces.join(' • ');
     }
 
-    if (Number.isFinite(data?.ml)) {
-      pieces.push(`${data.ml} ml`);
-    } else if (data?.volumen) {
-      pieces.push(data.volumen);
-    }
-
-    if (data?.genero) {
-      pieces.push(capitalize(data.genero));
-    }
-
-    if (data?.fragancia) {
-      pieces.push(data.fragancia);
-    }
-
-    return pieces.join(' • ');
+    return '';
   }
 
   function calculateDiscount(price, previousPrice) {
@@ -405,33 +394,63 @@
     };
   }
 
-  function buildFeatureList(data, type) {
+  function buildDetailList(data, type) {
     if (type === 'vape') {
       return [
-        { label: 'Concentración', value: data?.modos ? `Modos ${data.modos}` : 'Intensidad equilibrada' },
-        { label: 'Duración', value: Number.isFinite(data?.pitadas) ? `${data.pitadas} puffs aproximados` : 'Hasta 6000 puffs' },
-        { label: 'Proyección', value: 'Vapor abundante y denso' },
-        { label: 'Temporada', value: 'Uso en cualquier estación' },
-        { label: 'Ocasión', value: 'Momentos sociales o relajados' }
+        { label: 'Cantidad de pitadas', value: formatPuffCount(data?.pitadas) },
+        { label: 'Modos disponibles', value: formatModeCount(data?.modos) }
       ];
     }
 
-    const concentration = inferConcentration(data);
-    const longevity = inferLongevity(concentration);
-    const projection = inferProjection(concentration);
-    const season = inferSeason(data);
-    const occasion = inferOccasion(data);
-
     return [
-      { label: 'Concentración', value: concentration },
-      { label: 'Duración', value: longevity },
-      { label: 'Proyección', value: projection },
-      { label: 'Temporada', value: season },
-      { label: 'Ocasión', value: occasion }
+      { label: 'Mililitros', value: formatMilliliters(data) },
+      { label: 'Notas principales', value: sanitizeSnippet(data?.notasPrincipales) },
+      { label: 'Familia olfativa', value: sanitizeSnippet(data?.familiaOlfativa || data?.familia || '') },
+      { label: 'Inspiración', value: sanitizeSnippet(data?.inspiracion) }
     ];
   }
 
-  function buildDescriptionCopy({ rawDescription, type, name, brand, pyramid, features, flavors, rawData }) {
+  function formatPuffCount(value) {
+    if (value == null) return '';
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) {
+      return `${numeric} pitadas`;
+    }
+    const text = sanitizeSnippet(value);
+    if (!text) return '';
+    if (/puff/i.test(text)) {
+      return text.replace(/puffs?/gi, 'pitadas');
+    }
+    if (!/pitad/i.test(text)) {
+      return `${text} pitadas`;
+    }
+    return text;
+  }
+
+  function formatModeCount(value) {
+    if (value == null) return '';
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) {
+      const suffix = numeric === 1 ? 'modo' : 'modos';
+      return `${numeric} ${suffix}`;
+    }
+    const text = sanitizeSnippet(value);
+    return text ? text : '';
+  }
+
+  function formatMilliliters(perfume) {
+    if (perfume == null) return '';
+    if (Number.isFinite(perfume?.ml)) {
+      const value = Number(perfume.ml);
+      return `${value % 1 === 0 ? value : value.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ml`;
+    }
+    if (perfume?.volumen) {
+      return sanitizeSnippet(perfume.volumen);
+    }
+    return '';
+  }
+
+  function buildDescriptionCopy({ rawDescription, type, name, brand, pyramid, details, flavors }) {
     const segments = [];
     const baseDescription = sanitizeSnippet(rawDescription);
     const cleanedName = sanitizeSnippet(name);
@@ -448,26 +467,20 @@
         segments.push(`Descubrí ${productName}${brandText}, un vape listo para disfrutar desde el primer momento.`);
       }
 
-      const extras = [];
-      const puffCount = Number.isFinite(rawData?.pitadas) ? `${rawData.pitadas} puffs` : '';
-      if (puffCount) {
-        extras.push(`Ofrece aproximadamente ${puffCount} para acompañarte durante días.`);
-      } else {
-        extras.push('Su batería está optimizada para vapear durante horas.');
+      const puffDetail = sanitizeSnippet(getDetailValue(details, 'Cantidad de pitadas'));
+      if (puffDetail) {
+        segments.push(`Disfrutá de ${puffDetail} sin recargas.`);
       }
 
-      const modes = sanitizeSnippet(rawData?.modos);
-      if (modes) {
-        extras.push(`Incluye modos ${modes} para personalizar cada calada.`);
+      const modesDetail = sanitizeSnippet(getDetailValue(details, 'Modos disponibles'));
+      if (modesDetail) {
+        segments.push(`Personalizá cada calada con ${modesDetail}.`);
       }
 
       const flavorPreview = formatList((flavors || []).slice(0, 3));
       if (flavorPreview) {
-        extras.push(`Experimentá sabores como ${flavorPreview}.`);
+        segments.push(`Sabores destacados: ${flavorPreview}.`);
       }
-
-      extras.push('Produce un vapor abundante y suave en cada calada.');
-      segments.push(extras.filter(Boolean).join(' '));
     } else {
       if (!baseDescription) {
         const descriptor = type === 'decant' ? 'decant inspirado en la fragancia original' : 'fragancia';
@@ -475,40 +488,33 @@
         segments.push(`Descubrí ${productName}${brandText}, ${descriptor} creada para realzar cada ocasión.`);
       }
 
+      const mlDetail = sanitizeSnippet(getDetailValue(details, 'Mililitros'));
+      if (mlDetail) {
+        segments.push(`Presentación de ${mlDetail}.`);
+      }
+
+      const mainNotes = sanitizeSnippet(getDetailValue(details, 'Notas principales'));
+      if (mainNotes) {
+        segments.push(`Notas principales: ${mainNotes}.`);
+      }
+
+      const family = sanitizeSnippet(getDetailValue(details, 'Familia olfativa'));
+      if (family) {
+        segments.push(`Familia olfativa: ${family}.`);
+      }
+
       const pyramidSentence = buildPyramidSentence(pyramid);
       if (pyramidSentence) {
         segments.push(pyramidSentence);
       }
 
-      const concentration = sanitizeSnippet(getFeatureValue(features, 'Concentración'));
-      const longevity = sanitizeSnippet(getFeatureValue(features, 'Duración'));
-      const projection = sanitizeSnippet(getFeatureValue(features, 'Proyección'));
-      const season = sanitizeSnippet(getFeatureValue(features, 'Temporada'));
-      const occasion = sanitizeSnippet(getFeatureValue(features, 'Ocasión'));
-
-      const highlightParts = [];
-      if (concentration && !/no especificado/i.test(concentration)) {
-        highlightParts.push(`concentración ${concentration}`);
-      }
-      if (longevity && !/no especificado/i.test(longevity)) {
-        highlightParts.push(`duración ${longevity}`);
-      }
-      if (projection && !/no especificado/i.test(projection)) {
-        highlightParts.push(`proyección ${projection.toLowerCase()}`);
-      }
-      if (highlightParts.length) {
-        segments.push(`Destaca por su ${highlightParts.join(', ')}.`);
-      }
-
-      const ambience = [];
-      if (season && !/no especificado/i.test(season)) {
-        ambience.push(season.toLowerCase());
-      }
-      if (occasion && !/no especificado/i.test(occasion)) {
-        ambience.push(occasion.toLowerCase());
-      }
-      if (ambience.length) {
-        segments.push(`Ideal para ${formatList(ambience)}.`);
+      const inspiration = sanitizeSnippet(getDetailValue(details, 'Inspiración'));
+      if (inspiration) {
+        if (/inspirad[oa]/i.test(inspiration)) {
+          segments.push(`${inspiration}.`);
+        } else {
+          segments.push(`Inspirado en ${inspiration}.`);
+        }
       }
     }
 
@@ -540,9 +546,9 @@
     return `Su pirámide olfativa combina ${formatList(fragments)}.`;
   }
 
-  function getFeatureValue(features, label) {
-    if (!Array.isArray(features)) return '';
-    const found = features.find(feature => feature.label === label);
+  function getDetailValue(details, label) {
+    if (!Array.isArray(details)) return '';
+    const found = details.find(detail => detail.label === label);
     return found?.value || '';
   }
 
@@ -580,71 +586,6 @@
     return `${cleaned.slice(0, -1).join(', ')} y ${cleaned[cleaned.length - 1]}`;
   }
 
-  function inferConcentration(perfume) {
-    const haystack = [perfume?.fragancia, perfume?.nombre, perfume?.descripcion]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
-
-    if (haystack.includes('extrait')) return 'Extrait de Parfum';
-    if (haystack.includes('parfum')) return 'Eau de Parfum';
-    if (haystack.includes('toilette')) return 'Eau de Toilette';
-    if (haystack.includes('cologne')) return 'Eau de Cologne';
-    if (perfume?.volumen) return perfume.volumen;
-    return 'No especificado';
-  }
-
-  function inferLongevity(concentration) {
-    const value = concentration.toLowerCase();
-    if (value.includes('extrait')) return 'Muy alta (8-12 hs)';
-    if (value.includes('parfum')) return 'Alta (6-8 hs)';
-    if (value.includes('toilette')) return 'Media (4-6 hs)';
-    if (value.includes('cologne')) return 'Ligera (2-4 hs)';
-    return 'Variable según piel (4-6 hs)';
-  }
-
-  function inferProjection(concentration) {
-    const value = concentration.toLowerCase();
-    if (value.includes('extrait')) return 'Intensa y envolvente';
-    if (value.includes('parfum')) return 'Amplia y persistente';
-    if (value.includes('toilette')) return 'Moderada y equilibrada';
-    if (value.includes('cologne')) return 'Suave y cercana';
-    return 'Moderada';
-  }
-
-  function inferSeason(perfume) {
-    const notes = [perfume?.notasPrincipales, perfume?.salida, perfume?.corazon, perfume?.fondo]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
-
-    if (notes.match(/cítrico|citrico|marino|herbal|verde/)) {
-      return 'Primavera / Verano';
-    }
-    if (notes.match(/ámbar|ambar|madera|cuero|especia/)) {
-      return 'Otoño / Invierno';
-    }
-    if (notes.match(/floral|rosa|jazmín|jasmin/)) {
-      return 'Primavera';
-    }
-    return 'Todo el año';
-  }
-
-  function inferOccasion(perfume) {
-    const text = [perfume?.descripcion, perfume?.fragancia]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
-
-    if (text.includes('noche') || text.includes('night')) {
-      return 'Eventos nocturnos';
-    }
-    if (text.includes('oficina') || text.includes('día') || text.includes('dia')) {
-      return 'Uso diario';
-    }
-    return 'Ocasiones versátiles';
-  }
-
   function extractFlavorList(data) {
     if (!Array.isArray(data?.sabores) || !data.sabores.length) {
       if (data?.sabores instanceof Set && data.sabores.size > 0) {
@@ -669,11 +610,13 @@
     const transferText = document.querySelector('[data-product-transfer]');
     const stockElement = document.querySelector('[data-product-stock]');
     const descriptionElement = document.querySelector('[data-description-text]');
-    const featuresContainer = document.querySelector('[data-features]');
-    const featuresList = document.querySelector('[data-features-list]');
+    const detailsCard = document.querySelector('[data-details-card]');
+    const detailsTitle = document.querySelector('[data-details-title]');
+    const detailsList = document.querySelector('[data-details-list]');
     const pyramidTop = document.querySelector('[data-pyramid-top]');
     const pyramidHeart = document.querySelector('[data-pyramid-heart]');
     const pyramidBase = document.querySelector('[data-pyramid-base]');
+    const pyramidCard = document.querySelector('[data-pyramid]');
     const flavorsSection = document.querySelector('[data-product-flavors]');
     const flavorsList = document.querySelector('[data-flavors-list]');
     const addButton = document.querySelector('.product-detail__add');
@@ -736,19 +679,32 @@
     }
 
     if (descriptionElement) {
-      descriptionElement.textContent = product.description || 'Este producto todavía no cuenta con una descripción detallada.';
+      descriptionElement.textContent = product.originalDescription || product.description || 'Este producto todavía no cuenta con una descripción detallada.';
     }
 
-    if (featuresContainer && featuresList) {
-      featuresList.innerHTML = '';
-      product.features.forEach(feature => {
+    if (detailsCard && detailsList) {
+      if (detailsTitle) {
+        if (product.type === 'vape') {
+          detailsTitle.textContent = 'Detalles del vape';
+        } else if (product.type === 'decant') {
+          detailsTitle.textContent = 'Ficha del decant';
+        } else {
+          detailsTitle.textContent = 'Ficha del perfume';
+        }
+      }
+
+      detailsList.innerHTML = '';
+      const details = Array.isArray(product.details) ? product.details : [];
+      details.forEach(detail => {
         const dt = document.createElement('dt');
-        dt.textContent = feature.label;
+        dt.textContent = detail.label;
         const dd = document.createElement('dd');
-        dd.textContent = feature.value || 'No especificado';
-        featuresList.appendChild(dt);
-        featuresList.appendChild(dd);
+        dd.textContent = detail.value ? detail.value : 'No disponible';
+        detailsList.appendChild(dt);
+        detailsList.appendChild(dd);
       });
+
+      detailsCard.hidden = !details.length;
     }
 
     if (pyramidTop) {
@@ -761,9 +717,13 @@
       pyramidBase.textContent = product.pyramid.fondo || 'No disponible';
     }
 
+    if (pyramidCard) {
+      pyramidCard.hidden = product.type === 'vape';
+    }
+
     if (flavorsSection && flavorsList) {
       flavorsList.innerHTML = '';
-      if (product.flavors.length) {
+      if (product.type === 'vape' && product.flavors.length) {
         product.flavors.slice(0, 6).forEach(flavor => {
           const li = document.createElement('li');
           li.textContent = flavor;
@@ -1217,12 +1177,6 @@
       currency: 'ARS',
       minimumFractionDigits: 0
     }).format(number);
-  }
-
-  function capitalize(value) {
-    if (!value) return '';
-    const normalized = value.toString().toLowerCase();
-    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
   }
 
   const shippingForm = document.querySelector('[data-shipping-form]');

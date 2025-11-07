@@ -218,16 +218,17 @@
           <h2 id="description-title">Descripción del Producto</h2>
         </div>
         <div class="product-description__content">
-          <div class="product-description__main">
+          <article class="product-description__card product-summary" data-description-card>
+            <h3>Descripción</h3>
             <p class="product-description__text" data-description-text>Estamos cargando la descripción del producto...</p>
-            <div class="product-description__card product-features" data-features>
-              <h3>Características clave</h3>
-              <dl class="product-features__list" data-features-list>
-                <!-- Características -->
-              </dl>
-            </div>
-          </div>
-          <aside class="product-description__card product-pyramid" data-pyramid>
+          </article>
+          <article class="product-description__card product-details" data-details-card>
+            <h3 data-details-title>Ficha del producto</h3>
+            <dl class="product-details__list" data-details-list>
+              <!-- Detalles -->
+            </dl>
+          </article>
+          <article class="product-description__card product-pyramid" data-pyramid>
             <h3>Pirámide olfativa</h3>
             <div class="product-pyramid__grid">
               <div class="product-pyramid__note product-pyramid__note--top">
@@ -243,11 +244,11 @@
                 <p data-pyramid-base>No disponible</p>
               </div>
             </div>
-          </aside>
-        </div>
-        <div class="product-description__card product-flavors" data-product-flavors hidden>
-          <h3>Sabores destacados</h3>
-          <ul data-flavors-list></ul>
+          </article>
+          <article class="product-description__card product-flavors" data-product-flavors hidden>
+            <h3>Sabores destacados</h3>
+            <ul data-flavors-list></ul>
+          </article>
         </div>
       </section>
 
