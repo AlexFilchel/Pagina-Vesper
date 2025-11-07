@@ -6,6 +6,7 @@
   <title>Vesper - Detalle de producto</title>
   <meta name="description" content="Descubrí el detalle completo de nuestras fragancias, vapes y decants premium.">
   <link rel="stylesheet" href="../Frontend/css/style.css">
+  <link rel="stylesheet" href="../Frontend/css/producto.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <link rel="icon" href="img/vesper_logo_sin_fondo.png" type="image/x-icon">
@@ -213,35 +214,38 @@
       </section>
 
       <section class="product-description" aria-labelledby="description-title" data-product-description>
-        <h2 id="description-title">Descripción</h2>
-        <p data-description-text>Estamos cargando la descripción del producto...</p>
-
-        <div class="product-features" data-features>
-          <h3>Características clave</h3>
-          <dl class="product-features__list" data-features-list>
-            <!-- Características -->
-          </dl>
+        <div class="product-description__header">
+          <h2 id="description-title">Descripción del Producto</h2>
         </div>
-
-        <div class="product-pyramid" data-pyramid>
-          <h3>Pirámide olfativa</h3>
-          <div class="product-pyramid__grid">
-            <div>
-              <h4>Salida</h4>
-              <p data-pyramid-top>No disponible</p>
-            </div>
-            <div>
-              <h4>Corazón</h4>
-              <p data-pyramid-heart>No disponible</p>
-            </div>
-            <div>
-              <h4>Fondo</h4>
-              <p data-pyramid-base>No disponible</p>
+        <div class="product-description__content">
+          <div class="product-description__main">
+            <p class="product-description__text" data-description-text>Estamos cargando la descripción del producto...</p>
+            <div class="product-description__card product-features" data-features>
+              <h3>Características clave</h3>
+              <dl class="product-features__list" data-features-list>
+                <!-- Características -->
+              </dl>
             </div>
           </div>
+          <aside class="product-description__card product-pyramid" data-pyramid>
+            <h3>Pirámide olfativa</h3>
+            <div class="product-pyramid__grid">
+              <div class="product-pyramid__note product-pyramid__note--top">
+                <h4>Notas de salida</h4>
+                <p data-pyramid-top>No disponible</p>
+              </div>
+              <div class="product-pyramid__note product-pyramid__note--heart">
+                <h4>Notas de corazón</h4>
+                <p data-pyramid-heart>No disponible</p>
+              </div>
+              <div class="product-pyramid__note product-pyramid__note--base">
+                <h4>Notas de fondo</h4>
+                <p data-pyramid-base>No disponible</p>
+              </div>
+            </div>
+          </aside>
         </div>
-
-        <div class="product-flavors" data-product-flavors hidden>
+        <div class="product-description__card product-flavors" data-product-flavors hidden>
           <h3>Sabores destacados</h3>
           <ul data-flavors-list></ul>
         </div>
@@ -259,22 +263,30 @@
     </div>
   </main>
 
-  <footer class="site-footer">
-    <div class="container site-footer__grid">
-      <div class="footer-brand">
-        <img src="img/vesper_logo_sin_fondo.png" alt="Vesper" class="footer-logo">
-        <p>Fragancias y tecnología premium seleccionadas con curaduría boutique.</p>
-      </div>
+  <footer class="main-footer" role="contentinfo">
+    <div class="container footer-inner">
 
-      <div class="footer-links">
-        <h4>Vesper</h4>
+      <!-- 🔹 Categorías -->
+      <div class="footer-links footer-categories">
+        <h4>Categorías</h4>
         <ul>
-          <li><a href="index.html">Inicio</a></li>
-          <li><a href="productos.html">Catálogo</a></li>
-          <li><a href="checkout-entrega.html">Checkout</a></li>
+          <li><a href="productos.html?categoria=perfumes">Perfumes</a></li>
+          <li><a href="productos.html?categoria=vapes">Vapes</a></li>
+          <li><a href="productos.html?categoria=decants">Decants</a></li>
         </ul>
       </div>
 
+      <!-- 🔹 Enlaces útiles -->
+      <div class="footer-links">
+        <h4>Enlaces útiles</h4>
+        <ul>
+          <li><a href="#faq-envio">Preguntas Frecuentes</a></li>
+          <li><a href="#faq-pago">Métodos de Pago</a></li>
+          <li><a href="#faq-decant">Sobre Decants</a></li>
+        </ul>
+      </div>
+
+      <!-- 🔹 Contacto -->
       <div class="footer-contact">
         <h4>Contacto</h4>
         <address>
@@ -284,6 +296,7 @@
         </address>
       </div>
 
+      <!-- 🔹 Seguinos en -->
       <div class="footer-social">
         <h4>Seguinos en</h4>
         <div class="social-icons">
@@ -295,6 +308,7 @@
           </a>
         </div>
       </div>
+
     </div>
   </footer>
 

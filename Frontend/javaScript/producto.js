@@ -303,6 +303,16 @@
     const pyramid = buildPyramid(data);
     const features = buildFeatureList(data, type);
     const flavors = extractFlavorList(data);
+    const description = buildDescriptionCopy({
+      rawDescription: data?.descripcion,
+      type,
+      name: data?.nombre,
+      brand: data?.marca,
+      pyramid,
+      features,
+      flavors,
+      rawData: data
+    });
 
     return {
       id: data?.id ? String(data.id) : reference.id || '',
@@ -310,7 +320,8 @@
       type,
       brand: data?.marca || '',
       name: data?.nombre || 'Producto',
-      description: data?.descripcion || '',
+      description,
+      originalDescription: data?.descripcion || '',
       price,
       previousPrice: discountData.previousPrice,
       discountPercentage: discountData.percentage,
@@ -418,6 +429,155 @@
       { label: 'Temporada', value: season },
       { label: 'Ocasión', value: occasion }
     ];
+  }
+
+  function buildDescriptionCopy({ rawDescription, type, name, brand, pyramid, features, flavors, rawData }) {
+    const segments = [];
+    const baseDescription = sanitizeSnippet(rawDescription);
+    const cleanedName = sanitizeSnippet(name);
+    const productName = cleanedName || 'este producto';
+    const productBrand = sanitizeSnippet(brand);
+
+    if (baseDescription) {
+      segments.push(baseDescription);
+    }
+
+    if (type === 'vape') {
+      if (!baseDescription) {
+        const brandText = productBrand ? ` de ${productBrand}` : '';
+        segments.push(`Descubrí ${productName}${brandText}, un vape listo para disfrutar desde el primer momento.`);
+      }
+
+      const extras = [];
+      const puffCount = Number.isFinite(rawData?.pitadas) ? `${rawData.pitadas} puffs` : '';
+      if (puffCount) {
+        extras.push(`Ofrece aproximadamente ${puffCount} para acompañarte durante días.`);
+      } else {
+        extras.push('Su batería está optimizada para vapear durante horas.');
+      }
+
+      const modes = sanitizeSnippet(rawData?.modos);
+      if (modes) {
+        extras.push(`Incluye modos ${modes} para personalizar cada calada.`);
+      }
+
+      const flavorPreview = formatList((flavors || []).slice(0, 3));
+      if (flavorPreview) {
+        extras.push(`Experimentá sabores como ${flavorPreview}.`);
+      }
+
+      extras.push('Produce un vapor abundante y suave en cada calada.');
+      segments.push(extras.filter(Boolean).join(' '));
+    } else {
+      if (!baseDescription) {
+        const descriptor = type === 'decant' ? 'decant inspirado en la fragancia original' : 'fragancia';
+        const brandText = productBrand ? ` de ${productBrand}` : '';
+        segments.push(`Descubrí ${productName}${brandText}, ${descriptor} creada para realzar cada ocasión.`);
+      }
+
+      const pyramidSentence = buildPyramidSentence(pyramid);
+      if (pyramidSentence) {
+        segments.push(pyramidSentence);
+      }
+
+      const concentration = sanitizeSnippet(getFeatureValue(features, 'Concentración'));
+      const longevity = sanitizeSnippet(getFeatureValue(features, 'Duración'));
+      const projection = sanitizeSnippet(getFeatureValue(features, 'Proyección'));
+      const season = sanitizeSnippet(getFeatureValue(features, 'Temporada'));
+      const occasion = sanitizeSnippet(getFeatureValue(features, 'Ocasión'));
+
+      const highlightParts = [];
+      if (concentration && !/no especificado/i.test(concentration)) {
+        highlightParts.push(`concentración ${concentration}`);
+      }
+      if (longevity && !/no especificado/i.test(longevity)) {
+        highlightParts.push(`duración ${longevity}`);
+      }
+      if (projection && !/no especificado/i.test(projection)) {
+        highlightParts.push(`proyección ${projection.toLowerCase()}`);
+      }
+      if (highlightParts.length) {
+        segments.push(`Destaca por su ${highlightParts.join(', ')}.`);
+      }
+
+      const ambience = [];
+      if (season && !/no especificado/i.test(season)) {
+        ambience.push(season.toLowerCase());
+      }
+      if (occasion && !/no especificado/i.test(occasion)) {
+        ambience.push(occasion.toLowerCase());
+      }
+      if (ambience.length) {
+        segments.push(`Ideal para ${formatList(ambience)}.`);
+      }
+    }
+
+    const description = segments.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+    return description || 'Estamos preparando una descripción detallada para este producto.';
+  }
+
+  function buildPyramidSentence(pyramid) {
+    if (!pyramid) return '';
+    const fragments = [];
+    const salida = sanitizeNotes(pyramid?.salida);
+    const corazon = sanitizeNotes(pyramid?.corazon);
+    const fondo = sanitizeNotes(pyramid?.fondo);
+
+    if (salida) {
+      fragments.push(`notas de salida ${salida}`);
+    }
+    if (corazon) {
+      fragments.push(`notas de corazón ${corazon}`);
+    }
+    if (fondo) {
+      fragments.push(`notas de fondo ${fondo}`);
+    }
+
+    if (!fragments.length) {
+      return '';
+    }
+
+    return `Su pirámide olfativa combina ${formatList(fragments)}.`;
+  }
+
+  function getFeatureValue(features, label) {
+    if (!Array.isArray(features)) return '';
+    const found = features.find(feature => feature.label === label);
+    return found?.value || '';
+  }
+
+  function sanitizeSnippet(value) {
+    if (typeof value !== 'string') return '';
+    return value.replace(/\s+/g, ' ').trim().replace(/\s+([.,;:])/g, '$1');
+  }
+
+  function sanitizeNotes(value) {
+    const text = sanitizeSnippet(value);
+    return text.replace(/[.;,]+$/g, '').trim();
+  }
+
+  function formatList(items) {
+    if (!Array.isArray(items) || !items.length) {
+      return '';
+    }
+
+    const cleaned = items
+      .map(item => sanitizeSnippet(item))
+      .filter(Boolean);
+
+    if (!cleaned.length) {
+      return '';
+    }
+
+    if (cleaned.length === 1) {
+      return cleaned[0];
+    }
+
+    if (cleaned.length === 2) {
+      return `${cleaned[0]} y ${cleaned[1]}`;
+    }
+
+    return `${cleaned.slice(0, -1).join(', ')} y ${cleaned[cleaned.length - 1]}`;
   }
 
   function inferConcentration(perfume) {
@@ -1000,7 +1160,11 @@
     document.title = `${product.name} – Vesper`;
     const descriptionMeta = document.querySelector('meta[name="description"]');
     if (descriptionMeta) {
-      descriptionMeta.setAttribute('content', product.description || `Descubrí ${product.name} de ${product.brand} en Vesper.`);
+      const metaContent =
+        sanitizeSnippet(product.description) ||
+        sanitizeSnippet(product.originalDescription) ||
+        `Descubrí ${product.name} de ${product.brand} en Vesper.`;
+      descriptionMeta.setAttribute('content', metaContent);
     }
   }
 
