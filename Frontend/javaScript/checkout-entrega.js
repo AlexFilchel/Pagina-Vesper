@@ -1,8 +1,9 @@
 (function () {
   const API_BASE_URL = window.__VESPER_API_BASE__ || 'http://localhost:8080';
-  const urlParams = new URLSearchParams(window.location.search);
+  const USER_ID_STORAGE_KEY = 'vesper.usuarioId';
+  const USER_READY_EVENT = 'vesper:user-ready';
   function getUserId() {
-    return window.localStorage.getItem('vesper.usuarioId');
+    return window.localStorage.getItem(USER_ID_STORAGE_KEY);
   }
 
   const state = {
@@ -42,6 +43,7 @@
     addressEmptyState: document.querySelector('[data-empty-address]'),
     confirmAddressButton: document.querySelector('[data-action="confirm-address"]'),
     addressForm: document.querySelector('.address-form'),
+    addressSubmitButton: document.querySelector('.address-form button[type="submit"]'),
     formFeedback: document.querySelector('.form-feedback'),
     loadingIndicator: document.querySelector('[data-loading]'),
     alerts: document.querySelector('[data-alerts]'),
@@ -133,7 +135,46 @@
     return `${domicilio.calle} ${domicilio.numero}${piso}${departamento}${torre}\n${domicilio.entreCalles}\n${domicilio.localidad}, ${domicilio.provincia} (${domicilio.codigoPostal})${observaciones}`;
   }
 
+  function refreshUserIdFromStorage() {
+    const storedId = getUserId();
+    if (storedId !== state.userId) {
+      updateUserState(storedId);
+    }
+    return state.userId;
+  }
+
+  function updateUserState(userId) {
+    state.userId = userId ? String(userId) : null;
+    updateAuthDependentUi();
+  }
+
+  function updateAuthDependentUi() {
+    const requiresAuth = [selectors.addressSubmitButton];
+    requiresAuth.forEach((element) => {
+      if (!element) return;
+      const shouldDisable = !state.userId;
+      if (shouldDisable) {
+        element.disabled = true;
+        element.setAttribute('aria-disabled', 'true');
+      } else {
+        element.disabled = false;
+        element.removeAttribute('disabled');
+        element.removeAttribute('aria-disabled');
+      }
+    });
+  }
+
+  function handleAuthReady(userId) {
+    const effectiveUserId = userId ?? getUserId();
+    if (!effectiveUserId) return;
+    updateUserState(effectiveUserId);
+    if (state.metodoEntrega === 'domicilio') {
+      fetchDomicilios(state.domicilioSeleccionado?.id);
+    }
+  }
+
   async function fetchDomicilios(preferSelectedId) {
+    refreshUserIdFromStorage();
     if (!state.userId) {
       pushAlert('Necesitás iniciar sesión para guardar tus direcciones.', 'error');
       return;
@@ -355,6 +396,7 @@
   async function handleFormSubmit(event) {
     event.preventDefault();
     if (!selectors.addressForm || !selectors.formFeedback) return;
+    refreshUserIdFromStorage();
     if (!state.userId) {
       pushAlert('Necesitamos tu usuario para guardar el domicilio. Iniciá sesión.', 'error');
       return;
@@ -583,7 +625,7 @@
   }
 
   function init() {
-    state.userId = getUserId();
+    updateUserState(getUserId());
     renderSummaryItems();
     updateSummary();
     attachEvents();
@@ -593,6 +635,15 @@
       pushAlert('Para guardar tus domicilios necesitás iniciar sesión.', 'error');
     }
   }
+
+  window.addEventListener(USER_READY_EVENT, (event) => {
+    handleAuthReady(event.detail?.userId);
+  });
+
+  window.addEventListener('storage', (event) => {
+    if (event.key !== USER_ID_STORAGE_KEY || !event.newValue) return;
+    handleAuthReady(event.newValue);
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

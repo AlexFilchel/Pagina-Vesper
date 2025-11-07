@@ -3,6 +3,21 @@
 
   let auth0Client = null;
   const REDIRECT_URI = window.location.origin + window.location.pathname;
+  const USER_ID_STORAGE_KEY = 'vesper.usuarioId';
+  const USER_READY_EVENT = 'vesper:user-ready';
+
+  function notifyUserReady(userId) {
+    if (!userId) return;
+    try {
+      window.dispatchEvent(
+        new CustomEvent(USER_READY_EVENT, {
+          detail: { userId: String(userId) },
+        })
+      );
+    } catch (error) {
+      console.warn('⚠️ No se pudo notificar el estado de autenticación:', error);
+    }
+  }
 
   // ============================================================
   // 🔹 Cargar SDK de Auth0 dinámicamente
@@ -63,11 +78,6 @@
     const accountButton = document.getElementById("account-button");
     const accountLabel = accountButton?.querySelector(".site-header__action-label");
 
-    if (!accountButton || !accountLabel) {
-      console.warn("⚠️ Elementos del header no encontrados");
-      return;
-    }
-
     const isAuth = await auth0Client.isAuthenticated();
     console.log("🔐 Autenticado:", isAuth);
 
@@ -77,6 +87,11 @@
 
       // 🟢 Registrar automáticamente en la base de datos
       await registerUserIfNeeded(user);
+
+      if (!accountButton || !accountLabel) {
+        console.warn("⚠️ Elementos del header no encontrados");
+        return;
+      }
 
       // 🔹 Actualizar UI con el nombre del usuario
       const username = user.nickname || user.username || user.given_name || user.name || "Usuario";
@@ -95,6 +110,11 @@
         }
       };
     } else {
+      if (!accountButton || !accountLabel) {
+        console.warn("⚠️ Elementos del header no encontrados");
+        return;
+      }
+
       // 🔹 Si no está logueado → mostrar botón de login
       accountLabel.textContent = "Mi cuenta";
       accountButton.setAttribute("aria-haspopup", "false");
@@ -114,11 +134,13 @@
   // 🔹 Registrar el usuario autenticado en tu backend (una vez)
   // ============================================================
   async function registerUserIfNeeded(user) {
-    if (!user || !user.sub) return;
+    if (!user || !user.sub) return null;
 
-    if (localStorage.getItem('vesper.usuarioId')) {
-      console.log(`ℹ️ ID de usuario ya existe en localStorage: ${localStorage.getItem('vesper.usuarioId')}`);
-      return;
+    const existingUserId = localStorage.getItem(USER_ID_STORAGE_KEY);
+    if (existingUserId) {
+      console.log(`ℹ️ ID de usuario ya existe en localStorage: ${existingUserId}`);
+      notifyUserReady(existingUserId);
+      return existingUserId;
     }
 
     console.log("ℹ️ No se encontró ID de usuario en localStorage, sincronizando con el backend...");
@@ -133,18 +155,21 @@
       if (response.ok) {
         const registeredUser = await response.json();
         if (registeredUser && registeredUser.id) {
-          localStorage.setItem('vesper.usuarioId', registeredUser.id);
+          localStorage.setItem(USER_ID_STORAGE_KEY, registeredUser.id);
           const storageKey = `vesper:user-registered:${user.sub}`;
           localStorage.setItem(storageKey, 'true');
           console.log(`✅ Usuario sincronizado. ID guardado: ${registeredUser.id}`);
-        } else {
-          console.warn('⚠️ La respuesta del backend no contenía un ID de usuario.');
+          notifyUserReady(registeredUser.id);
+          return registeredUser.id;
         }
+        console.warn('⚠️ La respuesta del backend no contenía un ID de usuario.');
       } else {
         console.warn('⚠️ Falló la sincronización de usuario:', await response.text());
       }
     } catch (error) {
       console.error('❌ Error sincronizando usuario:', error);
     }
+
+    return null;
   }
 })();
