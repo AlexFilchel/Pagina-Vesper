@@ -12,6 +12,9 @@
     domicilioSeleccionado: null,
     metodoPago: null,
     shippingCost: 0,
+    userId: null,
+    isAuthenticated: false,
+    addressError: '',
   };
 
   const cartState = {
@@ -135,16 +138,9 @@
     return `${domicilio.calle} ${domicilio.numero}${piso}${departamento}${torre}\n${domicilio.entreCalles}\n${domicilio.localidad}, ${domicilio.provincia} (${domicilio.codigoPostal})${observaciones}`;
   }
 
-  function refreshUserIdFromStorage() {
-    const storedId = getUserId();
-    if (storedId !== state.userId) {
-      updateUserState(storedId);
-    }
-    return state.userId;
-  }
-
   function updateUserState(userId) {
     state.userId = userId ? String(userId) : null;
+    state.isAuthenticated = Boolean(state.userId);
     updateAuthDependentUi();
   }
 
@@ -152,7 +148,7 @@
     const requiresAuth = [selectors.addressSubmitButton];
     requiresAuth.forEach((element) => {
       if (!element) return;
-      const shouldDisable = !state.userId;
+      const shouldDisable = !state.isAuthenticated;
       if (shouldDisable) {
         element.disabled = true;
         element.setAttribute('aria-disabled', 'true');
@@ -173,127 +169,236 @@
     }
   }
 
-  async function fetchDomicilios(preferSelectedId) {
-    refreshUserIdFromStorage();
-    if (!state.userId) {
-      pushAlert('Necesitás iniciar sesión para guardar tus direcciones.', 'error');
-      return;
+  let authClientPromise = null;
+
+  function waitForAuthClient(timeoutMs = 10000) {
+    if (window.auth0Client) return Promise.resolve(window.auth0Client);
+    if (authClientPromise) return authClientPromise;
+    authClientPromise = new Promise((resolve, reject) => {
+      const start = Date.now();
+      const checkClient = () => {
+        if (window.auth0Client) {
+          resolve(window.auth0Client);
+          authClientPromise = null;
+          return;
+        }
+        if (Date.now() - start >= timeoutMs) {
+          reject(new Error('Auth0 no está disponible.'));
+          authClientPromise = null;
+          return;
+        }
+        setTimeout(checkClient, 100);
+      };
+      checkClient();
+    });
+    return authClientPromise;
+  }
+
+  function redirectToLogin(authClient) {
+    if (authClient && typeof authClient.loginWithRedirect === 'function') {
+      authClient.loginWithRedirect({
+        authorizationParams: {
+          redirect_uri: window.location.href,
+        },
+      });
+    } else {
+      window.location.assign('/');
     }
+  }
+
+  async function ensureAuthenticatedSession() {
+    const authClient = await waitForAuthClient().catch((error) => {
+      console.error('No se pudo obtener el cliente de Auth0:', error);
+      return null;
+    });
+
+    if (!authClient) {
+      throw new Error('No pudimos iniciar la autenticación. Intentá nuevamente.');
+    }
+
+    let isAuthenticated = false;
+    try {
+      isAuthenticated = await authClient.isAuthenticated();
+    } catch (error) {
+      console.error('No se pudo verificar el estado de autenticación:', error);
+    }
+
+    if (!isAuthenticated) {
+      redirectToLogin(authClient);
+      throw new Error('Necesitás iniciar sesión para continuar.');
+    }
+
+    try {
+      const token = await authClient.getTokenSilently();
+      state.isAuthenticated = true;
+      updateAuthDependentUi();
+      return { authClient, token };
+    } catch (error) {
+      console.error('Error al obtener el token de acceso:', error);
+      redirectToLogin(authClient);
+      throw new Error('Necesitás iniciar sesión para continuar.');
+    }
+  }
+
+  async function fetchDomicilios(preferSelectedId) {
     toggleLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${state.userId}/domicilios`);
-      if (!response.ok) {
-        throw new Error('No pudimos obtener tus direcciones guardadas.');
+      const { authClient, token } = await ensureAuthenticatedSession();
+      const response = await fetch(`${API_BASE_URL}/api/user/domicilios`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        redirectToLogin(authClient);
+        state.addressError = 'No pudimos cargar los domicilios.';
+        state.domicilios = [];
+        state.domicilioSeleccionado = null;
+        renderAddressList();
+        return;
       }
+
+      if (!response.ok) {
+        throw new Error('No pudimos cargar los domicilios.');
+      }
+
       const data = await response.json();
       data.sort((a, b) => a.id - b.id);
       const previousId = preferSelectedId ?? state.domicilioSeleccionado?.id ?? null;
       state.domicilios = data;
+      state.addressError = '';
       state.domicilioSeleccionado = previousId
         ? state.domicilios.find((item) => item.id === previousId) || null
         : null;
+      if (!state.domicilioSeleccionado && state.domicilios.length) {
+        state.domicilioSeleccionado = state.domicilios[0];
+      }
       renderAddressList();
     } catch (error) {
       console.error(error);
+      state.addressError = error.message || 'No pudimos cargar los domicilios.';
+      state.domicilios = [];
+      state.domicilioSeleccionado = null;
+      renderAddressList();
       pushAlert(error.message || 'Ocurrió un error al obtener los domicilios.', 'error');
+      if (error.message && error.message.includes('Necesitás iniciar sesión')) {
+        state.isAuthenticated = false;
+        updateAuthDependentUi();
+      }
     } finally {
       toggleLoading(false);
     }
   }
 
   function renderAddressList() {
-  if (!selectors.addressList) return;
-  const emptyState = selectors.addressEmptyState;
-  selectors.addressList.querySelectorAll('.address-card').forEach((card) => card.remove());
+    if (!selectors.addressList) return;
 
-  if (!state.domicilios.length) {
-    if (emptyState) emptyState.classList.remove('hidden');
-    if (selectors.confirmAddressButton) selectors.confirmAddressButton.disabled = true;
-    return;
-  }
+    const emptyState = selectors.addressEmptyState;
+    selectors.addressList.innerHTML = '';
 
-  if (emptyState) emptyState.classList.add('hidden');
-
-  state.domicilios.forEach((domicilio) => {
-    const card = document.createElement('article');
-    card.className = 'address-card';
-    card.dataset.addressId = String(domicilio.id);
-    if (state.domicilioSeleccionado?.id === domicilio.id) {
-      card.classList.add('is-selected');
+    if (state.addressError) {
+      const message = document.createElement('p');
+      message.className = 'address-message address-message--error';
+      message.textContent = state.addressError;
+      selectors.addressList.append(message);
+      if (selectors.confirmAddressButton) selectors.confirmAddressButton.disabled = true;
+      if (emptyState) emptyState.classList.add('hidden');
+      return;
     }
 
-    // ===== HEADER =====
-    const header = document.createElement('div');
-    header.className = 'address-card__header';
-
-    const info = document.createElement('div');
-    info.className = 'address-card__info';
-
-    const title = document.createElement('h3');
-    title.textContent = `${domicilio.nombre || ''} ${domicilio.apellido || ''}`.trim();
-
-    const addressLine = document.createElement('p');
-    addressLine.textContent = `${domicilio.calle || ''} ${domicilio.numero || ''}`.trim();
-
-    const detailLine = document.createElement('p');
-    detailLine.textContent = `${domicilio.localidad || ''}, ${domicilio.provincia || ''} (${domicilio.codigoPostal || ''})`;
-
-    const contacts = document.createElement('p');
-    contacts.textContent = `Tel: ${domicilio.telefono || '-'} · DNI: ${domicilio.dni || '-'}`;
-
-    info.append(title, addressLine, detailLine, contacts);
-    header.append(info);
-
-    // ===== ACTIONS =====
-    const actions = document.createElement('div');
-    actions.className = 'address-card__actions';
-
-    const selectBtn = document.createElement('button');
-    selectBtn.type = 'button';
-    selectBtn.className = 'btn btn-primary';
-    selectBtn.textContent = state.domicilioSeleccionado?.id === domicilio.id
-      ? 'Seleccionado'
-      : 'Usar este domicilio';
-    selectBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      selectAddress(domicilio.id);
-    });
-
-    actions.append(selectBtn);
-    header.append(actions);
-
-    // ===== BODY (ahora seguro) =====
-    const body = document.createElement('div');
-    body.className = 'address-card__body';
-
-    const entreCallesP = document.createElement('p');
-    entreCallesP.textContent = `Entre calles: ${domicilio.entreCalles || '-'}`;
-    body.appendChild(entreCallesP);
-
-    if (domicilio.observaciones) {
-      const observacionesP = document.createElement('p');
-      observacionesP.textContent = `Observaciones: ${domicilio.observaciones}`;
-      body.appendChild(observacionesP);
+    if (!state.domicilios.length) {
+      const message = document.createElement('p');
+      message.className = 'address-message';
+      message.textContent = 'No tenés domicilios guardados todavía';
+      selectors.addressList.append(message);
+      if (selectors.confirmAddressButton) selectors.confirmAddressButton.disabled = true;
+      if (emptyState) emptyState.classList.add('hidden');
+      return;
     }
 
-    // ===== FINALIZAR CARD =====
-    card.append(header, body);
-    card.addEventListener('click', () => selectAddress(domicilio.id));
-    card.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        selectAddress(domicilio.id);
+    if (emptyState) emptyState.classList.add('hidden');
+
+    state.domicilios.forEach((domicilio) => {
+      const card = document.createElement('article');
+      card.className = 'address-card';
+      card.dataset.addressId = String(domicilio.id);
+      if (state.domicilioSeleccionado?.id === domicilio.id) {
+        card.classList.add('is-selected');
       }
+
+      // ===== HEADER =====
+      const header = document.createElement('div');
+      header.className = 'address-card__header';
+
+      const info = document.createElement('div');
+      info.className = 'address-card__info';
+
+      const title = document.createElement('h3');
+      title.textContent = `${domicilio.nombre || ''} ${domicilio.apellido || ''}`.trim();
+
+      const addressLine = document.createElement('p');
+      addressLine.textContent = `${domicilio.calle || ''} ${domicilio.numero || ''}`.trim();
+
+      const detailLine = document.createElement('p');
+      detailLine.textContent = `${domicilio.localidad || ''}, ${domicilio.provincia || ''} (${domicilio.codigoPostal || ''})`;
+
+      const contacts = document.createElement('p');
+      contacts.textContent = `Tel: ${domicilio.telefono || '-'} · DNI: ${domicilio.dni || '-'}`;
+
+      info.append(title, addressLine, detailLine, contacts);
+      header.append(info);
+
+      // ===== ACTIONS =====
+      const actions = document.createElement('div');
+      actions.className = 'address-card__actions';
+
+      const selectBtn = document.createElement('button');
+      selectBtn.type = 'button';
+      selectBtn.className = 'btn btn-primary';
+      selectBtn.textContent = state.domicilioSeleccionado?.id === domicilio.id
+        ? 'Dirección seleccionada'
+        : 'Continuar con esta dirección';
+      selectBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        selectAddress(domicilio.id);
+      });
+
+      actions.append(selectBtn);
+      header.append(actions);
+
+      // ===== BODY (ahora seguro) =====
+      const body = document.createElement('div');
+      body.className = 'address-card__body';
+
+      const entreCallesP = document.createElement('p');
+      entreCallesP.textContent = `Entre calles: ${domicilio.entreCalles || '-'}`;
+      body.appendChild(entreCallesP);
+
+      if (domicilio.observaciones) {
+        const observacionesP = document.createElement('p');
+        observacionesP.textContent = `Observaciones: ${domicilio.observaciones}`;
+        body.appendChild(observacionesP);
+      }
+
+      // ===== FINALIZAR CARD =====
+      card.append(header, body);
+      card.addEventListener('click', () => selectAddress(domicilio.id));
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          selectAddress(domicilio.id);
+        }
+      });
+      card.tabIndex = 0;
+
+      selectors.addressList.append(card);
     });
-    card.tabIndex = 0;
 
-    selectors.addressList.append(card);
-  });
-
-  if (selectors.confirmAddressButton) {
-    selectors.confirmAddressButton.disabled = !state.domicilioSeleccionado;
+    if (selectors.confirmAddressButton) {
+      selectors.confirmAddressButton.disabled = !state.domicilioSeleccionado;
+    }
   }
-}
 
 
   function selectAddress(id) {
@@ -396,11 +501,6 @@
   async function handleFormSubmit(event) {
     event.preventDefault();
     if (!selectors.addressForm || !selectors.formFeedback) return;
-    refreshUserIdFromStorage();
-    if (!state.userId) {
-      pushAlert('Necesitamos tu usuario para guardar el domicilio. Iniciá sesión.', 'error');
-      return;
-    }
     if (!selectors.addressForm.reportValidity()) {
       setFormFeedback('Revisá los campos marcados en rojo.', 'error');
       return;
@@ -424,19 +524,7 @@
     toggleLoading(true);
 
     try {
-      const authClient = window.auth0Client;
-      if (!authClient || typeof authClient.getTokenSilently !== 'function') {
-        throw new Error('No pudimos autenticar tu sesión. Iniciá sesión e intentá nuevamente.');
-      }
-
-      let token;
-      try {
-        token = await authClient.getTokenSilently();
-      } catch (tokenError) {
-        console.error('Error al obtener el token de acceso:', tokenError);
-        throw new Error('No pudimos autenticar tu sesión. Iniciá sesión e intentá nuevamente.');
-      }
-
+      const { authClient, token } = await ensureAuthenticatedSession();
       const response = await fetch(`${API_BASE_URL}/api/user/domicilios`, {
         method: 'POST',
         headers: {
@@ -445,6 +533,11 @@
         },
         body: JSON.stringify(payload),
       });
+
+      if (response.status === 401 || response.status === 403) {
+        redirectToLogin(authClient);
+        throw new Error('Necesitás iniciar sesión para continuar.');
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -478,6 +571,10 @@
       console.error('Fallo al guardar el domicilio:', error);
       setFormFeedback(error.message || 'Ocurrió un error al guardar el domicilio.', 'error');
       pushAlert(error.message || 'Ocurrió un error al guardar el domicilio.', 'error');
+      if (error.message && error.message.includes('Necesitás iniciar sesión')) {
+        state.isAuthenticated = false;
+        updateAuthDependentUi();
+      }
     } finally {
       toggleLoading(false);
     }
@@ -670,7 +767,7 @@
     attachEvents();
     showStep('method');
 
-    if (!state.userId) {
+    if (!state.isAuthenticated) {
       pushAlert('Para guardar tus domicilios necesitás iniciar sesión.', 'error');
     }
   }
