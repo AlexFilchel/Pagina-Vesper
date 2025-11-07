@@ -16,6 +16,13 @@ import java.util.List;
 @SuperBuilder
 public class Venta {
 
+    /**
+     * Estados posibles de una venta.
+     */
+    public enum EstadoVenta {
+        PENDIENTE, COMPLETADA, CANCELADA,RECHAZADA
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,6 +33,10 @@ public class Venta {
     @Column(name = "usuario_email", nullable = false)
     private String usuarioEmail;
 
+    @Column(name="estado")
+    private String estado;
+
+    @Column(name="fecha")
     @Builder.Default
     private LocalDateTime fecha = LocalDateTime.now();
 
@@ -35,4 +46,8 @@ public class Venta {
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<DetalleVenta> detalles = new ArrayList<>();
+
+    @OneToOne(mappedBy = "venta")
+    @ToString.Exclude
+    private RegistroPago registroPago;
 }

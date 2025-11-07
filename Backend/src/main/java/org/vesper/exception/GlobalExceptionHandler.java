@@ -1,5 +1,7 @@
 package org.vesper.exception;
 
+import com.mercadopago.exceptions.MPApiException;
+import com.mercadopago.exceptions.MPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -85,6 +87,45 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Maneja errores específicos de la API de Mercado Pago.
+     * Por ejemplo, un 404 si el pago no se encuentra.
+     *
+     * @param ex La excepción de la API de Mercado Pago.
+     * @return ResponseEntity con el error y status 502 (Bad Gateway).
+     */
+    @ExceptionHandler(MPApiException.class)
+    public ResponseEntity<Map<String, Object>> handleMpApiException(MPApiException ex) {
+        String apiError = ex.getApiResponse() != null ? ex.getApiResponse().getContent() : ex.getMessage();
+        logger.error("Error de API de Mercado Pago (status {}): {}", ex.getStatusCode(), apiError, ex);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_GATEWAY.value());
+        response.put("error", "Error en la comunicación con Mercado Pago");
+        response.put("details", apiError);
+
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);
+    }
+
+    /**
+     * Maneja errores generales de la librería de Mercado Pago (ej. problemas de conexión).
+     *
+     * @param ex La excepción de Mercado Pago.
+     * @return ResponseEntity con el error y status 502 (Bad Gateway).
+     */
+    @ExceptionHandler(MPException.class)
+    public ResponseEntity<Map<String, Object>> handleMpException(MPException ex) {
+        logger.error("Fallo en la librería de Mercado Pago: {}", ex.getMessage(), ex);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_GATEWAY.value());
+        response.put("error", "No fue posible comunicarse con el procesador de pagos.");
+
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);
+    }
+
+    /**
      * Maneja cualquier excepción no controlada.
      *
      * @param ex La excepción genérica lanzada.
@@ -117,6 +158,8 @@ public class GlobalExceptionHandler {
             return HttpStatus.UNAUTHORIZED;
         } else if (ex instanceof UnauthorizedException) {
             return HttpStatus.FORBIDDEN;
+        } else if (ex instanceof MercadoPagoIntegrationException) {
+            return HttpStatus.BAD_GATEWAY;
         } else {
             return HttpStatus.BAD_REQUEST;
         }
