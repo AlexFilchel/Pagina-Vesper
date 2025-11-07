@@ -1,5 +1,6 @@
 package org.vesper.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.HashSet;
@@ -32,6 +33,9 @@ public class Usuario {
     
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
+    @JsonManagedReference("usuario-domicilios")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<Domicilio> domicilios = new HashSet<>();
 
     public void agregarDomicilio(Domicilio domicilio) {

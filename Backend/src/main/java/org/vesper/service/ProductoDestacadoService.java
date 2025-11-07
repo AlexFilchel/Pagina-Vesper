@@ -31,7 +31,7 @@ public class ProductoDestacadoService {
     private final ProductoRepository productoRepository;
 
     public List<ProductoDestacadoResponse> listarDestacados() {
-        return productoDestacadoRepository.findAllByOrderByIdAsc()
+        return productoDestacadoRepository.findAllConProductoCompleto()
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());

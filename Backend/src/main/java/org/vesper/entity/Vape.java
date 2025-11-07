@@ -3,6 +3,7 @@ package org.vesper.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,7 +23,9 @@ public class Vape extends Producto {
     private String modos;
     @OneToMany(mappedBy = "vape", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
+    @BatchSize(size = 50)
     @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<VapeSabor> vapeSabores = new HashSet<>();
 
     @Builder.Default
@@ -32,6 +35,9 @@ public class Vape extends Producto {
             joinColumns = @JoinColumn(name = "vape_id"),
             inverseJoinColumns = @JoinColumn(name = "imagen_id")
     )
+    @BatchSize(size = 50)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<Imagen> imagenes = new ArrayList<>();
 
     public void addVapeSabor(VapeSabor vapeSabor) {
