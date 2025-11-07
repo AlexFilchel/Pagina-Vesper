@@ -1,8 +1,8 @@
 package org.vesper.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.ProductoDestacadoResponse;
 import org.vesper.entity.Imagen;
@@ -17,7 +17,9 @@ import org.vesper.repo.ProductoRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,8 +32,9 @@ public class ProductoDestacadoService {
     private final ProductoDestacadoRepository productoDestacadoRepository;
     private final ProductoRepository productoRepository;
 
+    @Transactional(readOnly = true)
     public List<ProductoDestacadoResponse> listarDestacados() {
-        return productoDestacadoRepository.findAllConProductoCompleto()
+        return obtenerDestacadosConProducto()
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -64,6 +67,14 @@ public class ProductoDestacadoService {
             throw new ResourceNotFoundException("Producto destacado no encontrado con id: " + destacadoId);
         }
         productoDestacadoRepository.deleteById(destacadoId);
+    }
+
+    private List<ProductoDestacado> obtenerDestacadosConProducto() {
+        List<ProductoDestacado> destacados = new ArrayList<>();
+        destacados.addAll(productoDestacadoRepository.findAllConVape());
+        destacados.addAll(productoDestacadoRepository.findAllConPerfume());
+        destacados.sort(Comparator.comparing(ProductoDestacado::getId));
+        return destacados;
     }
 
     private ProductoDestacadoResponse toResponse(ProductoDestacado destacado) {
