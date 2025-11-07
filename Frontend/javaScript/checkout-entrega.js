@@ -406,26 +406,65 @@
       return;
     }
 
-    const formData = new FormData(selectors.addressForm);
-    const payload = Object.fromEntries(formData.entries());
+    const form = selectors.addressForm;
+    const valueOrEmpty = (name) => (form.elements[name]?.value || '').trim();
+    const payload = {
+      calle: valueOrEmpty('calle'),
+      numero: valueOrEmpty('numero'),
+      piso: valueOrEmpty('piso'),
+      departamento: valueOrEmpty('departamento'),
+      torre: valueOrEmpty('torre'),
+      entreCalles: valueOrEmpty('entreCalles'),
+      provincia: valueOrEmpty('provincia'),
+      localidad: valueOrEmpty('localidad'),
+      codigoPostal: valueOrEmpty('codigoPostal'),
+      observaciones: valueOrEmpty('observaciones'),
+    };
     setFormFeedback('Guardando dirección...', 'info');
     toggleLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${state.userId}/domicilios`, {
+      const authClient = window.auth0Client;
+      if (!authClient || typeof authClient.getTokenSilently !== 'function') {
+        throw new Error('No pudimos autenticar tu sesión. Iniciá sesión e intentá nuevamente.');
+      }
+
+      let token;
+      try {
+        token = await authClient.getTokenSilently();
+      } catch (tokenError) {
+        console.error('Error al obtener el token de acceso:', tokenError);
+        throw new Error('No pudimos autenticar tu sesión. Iniciá sesión e intentá nuevamente.');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/user/domicilios`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const errorBody = await safeJson(response);
-        const details = errorBody?.details;
-        const message = details
-          ? Object.values(details).join(' \u2022 ')
-          : errorBody?.error || 'No pudimos guardar el domicilio.';
+        const errorText = await response.text();
+        let errorBody = null;
+        try {
+          errorBody = errorText ? JSON.parse(errorText) : null;
+        } catch (parseError) {
+          // ignoramos el error de parseo para quedarnos con el texto plano
+        }
+        console.error('Error al guardar el domicilio:', response.status, errorText);
+        const detailValues = errorBody?.details && typeof errorBody.details === 'object'
+          ? Object.values(errorBody.details).flatMap((value) => {
+              if (Array.isArray(value)) return value;
+              if (value && typeof value === 'object') return Object.values(value);
+              return value ? [String(value)] : [];
+            })
+          : [];
+        const message = detailValues.length
+          ? detailValues.join(' \u2022 ')
+          : errorBody?.message || errorBody?.error || 'No pudimos guardar el domicilio.';
         throw new Error(message);
       }
 
@@ -436,7 +475,7 @@
       await fetchDomicilios(created.id);
       showStep('address-list');
     } catch (error) {
-      console.error(error);
+      console.error('Fallo al guardar el domicilio:', error);
       setFormFeedback(error.message || 'Ocurrió un error al guardar el domicilio.', 'error');
       pushAlert(error.message || 'Ocurrió un error al guardar el domicilio.', 'error');
     } finally {
