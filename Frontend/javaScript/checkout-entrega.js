@@ -153,9 +153,24 @@
     requiresAuth.forEach((element) => {
       if (!element) return;
       const shouldDisable = !state.userId;
-      element.disabled = shouldDisable;
-      element.setAttribute('aria-disabled', shouldDisable ? 'true' : 'false');
+      if (shouldDisable) {
+        element.disabled = true;
+        element.setAttribute('aria-disabled', 'true');
+      } else {
+        element.disabled = false;
+        element.removeAttribute('disabled');
+        element.removeAttribute('aria-disabled');
+      }
     });
+  }
+
+  function handleAuthReady(userId) {
+    const effectiveUserId = userId ?? getUserId();
+    if (!effectiveUserId) return;
+    updateUserState(effectiveUserId);
+    if (state.metodoEntrega === 'domicilio') {
+      fetchDomicilios(state.domicilioSeleccionado?.id);
+    }
   }
 
   async function fetchDomicilios(preferSelectedId) {
@@ -622,12 +637,12 @@
   }
 
   window.addEventListener(USER_READY_EVENT, (event) => {
-    const authenticatedUserId = event.detail?.userId;
-    if (!authenticatedUserId) return;
-    updateUserState(authenticatedUserId);
-    if (state.metodoEntrega === 'domicilio') {
-      fetchDomicilios(state.domicilioSeleccionado?.id);
-    }
+    handleAuthReady(event.detail?.userId);
+  });
+
+  window.addEventListener('storage', (event) => {
+    if (event.key !== USER_ID_STORAGE_KEY || !event.newValue) return;
+    handleAuthReady(event.newValue);
   });
 
   if (document.readyState === 'loading') {
