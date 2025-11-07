@@ -320,7 +320,17 @@ body.filters-open {
 .productos-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: clamp(36px, 5vw, 56px);
+  column-gap: clamp(24px, 4vw, 36px);
+  row-gap: clamp(28px, 4.5vw, 40px);
+}
+
+.productos-grid .product-card {
+  margin-bottom: clamp(48px, 6vw, 64px);
+  transform-origin: top center;
+}
+
+.productos-grid .product-card__body {
+  padding-bottom: clamp(34px, 5vw, 42px);
 }
 
 @media (min-width: 640px) {
