@@ -164,7 +164,7 @@ public class VapeService {
         return vape;
     }
 
-    private VapeResponse toResponse(Vape vape) {
+    public VapeResponse toResponse(Vape vape) {
         Set<VapeSaborResponse> sabores = Optional.ofNullable(vape.getVapeSabores())
                 .orElseGet(Collections::emptySet)
                 .stream()

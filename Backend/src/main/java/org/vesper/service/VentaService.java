@@ -21,6 +21,7 @@ import org.vesper.exception.UnauthorizedException;
 import org.vesper.repo.PerfumeRepository;
 import org.vesper.repo.VapeRepository;
 import org.vesper.repo.VentaRepository;
+import org.vesper.entity.Venta.EstadoVenta;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,6 +46,7 @@ public class VentaService {
         Venta venta = Venta.builder()
                 .usuarioAuth0Id(usuarioAuth0Id)
                 .usuarioEmail(usuarioEmail)
+                .estado(EstadoVenta.COMPLETADA.toString()) // O el estado final que corresponda
                 .build();
 
         List<DetalleVenta> detalles = new ArrayList<>();
@@ -111,6 +113,60 @@ public class VentaService {
         return toResponse(guardada);
     }
 
+    /**
+     * Crea una entidad Venta con estado PENDIENTE.
+     * Esta es la primera etapa del proceso de compra, antes de ir al proveedor de pago.
+     * No descuenta stock, ya que la venta no está confirmada.
+     */
+    @Transactional
+    public Venta crearVentaPendiente(VentaRequest request, Jwt jwt) {
+        String usuarioAuth0Id = obtenerClaim(jwt, "sub");
+        String usuarioEmail = obtenerClaim(jwt, "email");
+
+        Venta venta = Venta.builder()
+                .usuarioAuth0Id(usuarioAuth0Id)
+                .usuarioEmail(usuarioEmail)
+                .estado(EstadoVenta.PENDIENTE.toString())
+                .build();
+
+        List<DetalleVenta> detalles = new ArrayList<>();
+        double total = 0.0;
+
+        for (DetalleVentaRequest detalleRequest : request.getDetalles()) {
+            Producto producto = findProductoById(detalleRequest.getProductoId());
+
+            // ❗ Nueva validación: verificar stock antes de crear la venta pendiente.
+            if (producto.getStock() == null || producto.getStock() < detalleRequest.getCantidad()) {
+                throw new AlreadyExistsException("Stock insuficiente para el producto: " + producto.getNombre());
+            }
+
+            // Nota: El stock se descuenta solo cuando el pago es aprobado.
+            Integer cantidad = detalleRequest.getCantidad();
+            Double precioUnitario = producto.getPrecio();
+            double subtotal = precioUnitario * cantidad;
+
+            DetalleVenta.DetalleVentaBuilder detalleBuilder = DetalleVenta.builder()
+                    .cantidad(cantidad)
+                    .precioUnitario(precioUnitario)
+                    .subtotal(subtotal);
+
+            if (producto instanceof Perfume) {
+                detalleBuilder.perfume((Perfume) producto);
+            } else if (producto instanceof Vape) {
+                detalleBuilder.vape((Vape) producto);
+            }
+
+            DetalleVenta detalleVenta = detalleBuilder.build();
+            detalleVenta.setVenta(venta);
+            detalles.add(detalleVenta);
+            total += subtotal;
+        }
+
+        venta.setTotal(total);
+        venta.setDetalles(detalles);
+        return ventaRepository.save(venta);
+    }
+
     @Transactional(readOnly = true)
     public List<VentaResponse> listarTodas() {
         return ventaRepository.findAll().stream()
@@ -143,6 +199,14 @@ public class VentaService {
     // 🔧 Métodos auxiliares
     // =========================================================
 
+    private Producto findProductoById(Long productoId) {
+        return perfumeRepository.findById(productoId)
+                .<Producto>map(p -> p)
+                .orElseGet(() -> vapeRepository.findById(productoId)
+                        .<Producto>map(v -> v)
+                        .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + productoId)));
+    }
+
     private VentaResponse toResponse(Venta venta) {
         List<DetalleVentaResponse> detalles = venta.getDetalles() == null
                 ? Collections.emptyList()
@@ -155,6 +219,7 @@ public class VentaService {
                 .fecha(venta.getFecha())
                 .total(venta.getTotal())
                 .usuarioEmail(venta.getUsuarioEmail())
+                .estado(venta.getEstado())
                 .detalles(detalles)
                 .build();
     }
@@ -200,4 +265,3 @@ public class VentaService {
         }
     }
 }
-

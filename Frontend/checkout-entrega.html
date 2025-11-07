@@ -207,11 +207,7 @@
             </button>
           </div>
           <div class="address-list" data-address-list>
-            <div class="empty-state" data-empty-address>
-              <span class="material-symbols-outlined empty-state__icon">home_pin</span>
-              <p>No tenés direcciones guardadas.</p>
-              <button class="btn btn-primary" data-action="add-address">Agregar dirección</button>
-            </div>
+            <!--Aca van las direcciones-->
           </div>
           <div class="address-footer">
             <button class="btn btn-primary" data-action="confirm-address" disabled>Continuar con este domicilio</button>
@@ -226,21 +222,6 @@
           <form class="address-form" novalidate>
             <div class="form-grid">
               <label class="form-field">
-                <span>Nombre *</span>
-                <input name="nombre" type="text" required autocomplete="given-name">
-              </label>
-              <label class="form-field">
-                <span>Apellido *</span>
-                <input name="apellido" type="text" required autocomplete="family-name">
-              </label>
-              <label class="form-field">
-                <span>Teléfono *</span>
-                <input name="telefono" type="tel" inputmode="numeric" pattern="\\d{7,15}" required>
-              </label>
-              <label class="form-field">
-                <span>DNI *</span>
-                <input name="dni" type="text" inputmode="numeric" pattern="\\d{7,8}" required>
-              </label>
               <label class="form-field form-field--wide">
                 <span>Calle *</span>
                 <input name="calle" type="text" required autocomplete="address-line1">
@@ -263,7 +244,7 @@
               </label>
               <label class="form-field form-field--wide">
                 <span>Entre calles *</span>
-                <input name="entreCalles" type="text" required>
+                <input name="entreCalles" type="text">
               </label>
               <label class="form-field">
                 <span>Código Postal *</span>

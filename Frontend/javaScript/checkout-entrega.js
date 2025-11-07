@@ -1,14 +1,11 @@
 (function () {
   const API_BASE_URL = window.__VESPER_API_BASE__ || 'http://localhost:8080';
   const urlParams = new URLSearchParams(window.location.search);
-  const storedUserId = window.localStorage.getItem('vesper.usuarioId');
-  const userId = urlParams.get('usuarioId') || storedUserId || null;
-  if (userId && userId !== storedUserId) {
-    window.localStorage.setItem('vesper.usuarioId', userId);
+  function getUserId() {
+    return window.localStorage.getItem('vesper.usuarioId');
   }
 
   const state = {
-    userId,
     metodoEntrega: null,
     domicilios: [],
     domicilioSeleccionado: null,
@@ -586,6 +583,7 @@
   }
 
   function init() {
+    state.userId = getUserId();
     renderSummaryItems();
     updateSummary();
     attachEvents();

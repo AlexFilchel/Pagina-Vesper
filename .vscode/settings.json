@@ -1,4 +1,5 @@
 {
     "java.configuration.updateBuildConfiguration": "interactive",
-    "liveServer.settings.port": 5500
+    "liveServer.settings.port": 5500,
+    "java.compile.nullAnalysis.mode": "disabled"
 }

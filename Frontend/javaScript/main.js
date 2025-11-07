@@ -2208,6 +2208,11 @@ document.addEventListener("DOMContentLoaded", () => {
       search: ''
     };
 
+    const desktopProductsSearchInput = document.getElementById('search-input');
+    const mobileProductsSearchInput = document.getElementById('mobile-search-input');
+    const searchInputs = [desktopProductsSearchInput, mobileProductsSearchInput].filter(Boolean);
+    let searchSequence = 0;
+
     const showMessage = (message) => {
       productsContainer.innerHTML = '';
       const paragraph = document.createElement('p');
@@ -2270,6 +2275,40 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     };
 
+    const filterProductsByState = (items, options = {}) => {
+      const { includeSearch = true } = options;
+      let filtered = items.slice();
+
+      if (filters.types.size) {
+        filtered = filtered.filter((item) => filters.types.has(item.type));
+      }
+
+      if (filters.genders.size) {
+        filtered = filtered.filter((item) => {
+          if (!item.genero) return false;
+          return filters.genders.has(item.genero);
+        });
+      }
+
+      if (filters.brands.size) {
+        filtered = filtered.filter((item) => {
+          const brandKey = item.brand?.toLowerCase() ?? '';
+          return filters.brands.has(brandKey);
+        });
+      }
+
+      if (Number.isFinite(filters.maxPrice)) {
+        filtered = filtered.filter((item) => (item.price ?? 0) <= filters.maxPrice);
+      }
+
+      if (includeSearch && filters.search) {
+        const query = filters.search.toLowerCase();
+        filtered = filtered.filter((item) => item.searchText.includes(query));
+      }
+
+      return filtered;
+    };
+
     const renderBrandGroup = (container, brandMap, type) => {
       if (!container) return;
       container.innerHTML = '';
@@ -2288,6 +2327,7 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
             filters.brands.delete(key);
           }
+          searchSequence += 1;
           applyFilters();
         });
         labelElement.appendChild(input);
@@ -2324,35 +2364,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const applyFilters = () => {
-      let filtered = state.items.slice();
-
-      if (filters.types.size) {
-        filtered = filtered.filter((item) => filters.types.has(item.type));
-      }
-
-      if (filters.genders.size) {
-        filtered = filtered.filter((item) => {
-          if (!item.genero) return false;
-          return filters.genders.has(item.genero);
-        });
-      }
-
-      if (filters.brands.size) {
-        filtered = filtered.filter((item) => {
-          const brandKey = item.brand?.toLowerCase() ?? '';
-          return filters.brands.has(brandKey);
-        });
-      }
-
-      if (Number.isFinite(filters.maxPrice)) {
-        filtered = filtered.filter((item) => (item.price ?? 0) <= filters.maxPrice);
-      }
-
-      if (filters.search) {
-        const query = filters.search.toLowerCase();
-        filtered = filtered.filter((item) => item.searchText.includes(query));
-      }
-
+      const filtered = filterProductsByState(state.items);
       state.filtered = filtered;
       renderProducts(filtered, filters.search);
       updateBrandGroupVisibility();
@@ -2408,6 +2420,93 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     };
 
+    const handleSearch = async (rawValue) => {
+      const rawInputValue = typeof rawValue === 'string' ? rawValue : '';
+      const searchTerm = rawInputValue.trim();
+      searchSequence += 1;
+      const currentSequence = searchSequence;
+
+      filters.search = searchTerm;
+      setSearchInputsValue(rawInputValue);
+
+      if (!searchTerm) {
+        productsContainer.removeAttribute('aria-busy');
+        applyFilters();
+        return;
+      }
+
+      if (searchTerm.length < 3) {
+        productsContainer.removeAttribute('aria-busy');
+        applyFilters();
+        return;
+      }
+
+      if (!window.apiClient || typeof window.apiClient.buscarProductos !== 'function') {
+        console.warn('Cliente de API para buscar productos no disponible.');
+        applyFilters();
+        return;
+      }
+
+      updateUrlParams();
+
+      const loadingMessage = document.createElement('p');
+      loadingMessage.textContent = 'Buscando productos...';
+      productsContainer.innerHTML = '';
+      productsContainer.appendChild(loadingMessage);
+      productsContainer.setAttribute('aria-busy', 'true');
+
+      try {
+        const results = await window.apiClient.buscarProductos(searchTerm);
+        if (currentSequence !== searchSequence) {
+          return;
+        }
+
+        const normalizedResults = Array.isArray(results)
+          ? results
+              .map((producto) => {
+                const tipo = typeof producto?.tipoProducto === 'string'
+                  ? producto.tipoProducto.toLowerCase()
+                  : '';
+                if (tipo === 'perfume') {
+                  return normalizePerfume(producto);
+                }
+                if (tipo === 'vape') {
+                  return normalizeVape(producto);
+                }
+                return null;
+              })
+              .filter(Boolean)
+          : [];
+
+        if (!normalizedResults.length) {
+          state.filtered = [];
+          showMessage('No encontramos productos que coincidan con tu búsqueda.');
+          return;
+        }
+
+        const filteredResults = filterProductsByState(normalizedResults, { includeSearch: false });
+        if (!filteredResults.length) {
+          state.filtered = [];
+          showMessage('No encontramos productos que coincidan con tu búsqueda usando los filtros seleccionados.');
+          return;
+        }
+
+        state.filtered = filteredResults;
+        renderProducts(filteredResults, searchTerm);
+      } catch (error) {
+        if (currentSequence === searchSequence) {
+          console.error('Error al buscar productos:', error);
+          showMessage('No se pudo completar la búsqueda. Intentalo nuevamente.');
+        }
+      } finally {
+        if (currentSequence === searchSequence) {
+          productsContainer.removeAttribute('aria-busy');
+        }
+      }
+    };
+
+    const debouncedHandleSearch = debounce(handleSearch, 300);
+
     productsContainer.innerHTML = '';
     const loading = document.createElement('p');
     loading.textContent = 'Cargando productos...';
@@ -2422,6 +2521,9 @@ document.addEventListener("DOMContentLoaded", () => {
         applyFiltersFromQuery();
         updateBrandFilters(state.items);
         applyFilters();
+        if (filters.search && filters.search.length >= 3) {
+          handleSearch(filters.search);
+        }
       })
       .catch((error) => {
         console.error('Error al cargar el catálogo:', error);
@@ -2431,6 +2533,24 @@ document.addEventListener("DOMContentLoaded", () => {
         productsContainer.removeAttribute('aria-busy');
       });
 
+    if (searchInputs.length) {
+      const syncSearchInputs = (source, value) => {
+        searchInputs.forEach((input) => {
+          if (input !== source && input.value !== value) {
+            input.value = value;
+          }
+        });
+      };
+
+      searchInputs.forEach((input) => {
+        input.addEventListener('input', (event) => {
+          const value = typeof event.target.value === 'string' ? event.target.value : '';
+          syncSearchInputs(input, value);
+          debouncedHandleSearch(value);
+        });
+      });
+    }
+
     typeInputs.forEach((input) => {
       input.addEventListener('change', () => {
         const value = input.value.toLowerCase();
@@ -2439,6 +2559,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           filters.types.delete(value);
         }
+        searchSequence += 1;
         updateBrandGroupVisibility();
         applyFilters();
       });
@@ -2452,6 +2573,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           filters.genders.delete(value);
         }
+        searchSequence += 1;
         applyFilters();
       });
     });
@@ -2460,12 +2582,15 @@ document.addEventListener("DOMContentLoaded", () => {
       priceRangeInput.addEventListener('input', () => {
         const value = Number.parseFloat(priceRangeInput.value);
         filters.maxPrice = Number.isFinite(value) ? value : defaultMaxPrice;
+        searchSequence += 1;
         updatePriceLabel(filters.maxPrice);
         applyFilters();
       });
     }
 
     clearButton?.addEventListener('click', () => {
+      searchSequence += 1;
+      productsContainer.removeAttribute('aria-busy');
       filters.types.clear();
       filters.genders.clear();
       filters.brands.clear();
@@ -2483,10 +2608,28 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function debounce(func, delay = 300) {
+    let timeoutId;
+    return (...args) => {
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        func(...args);
+      }, delay);
+    };
+  }
+
   const featuredGrid = document.getElementById("featured-products-grid");
   if (featuredGrid) {
     renderFeaturedProductsSection(featuredGrid);
   }
 
   initializeProductsPage();
+
+  /**
+   * Crea una versión "debounced" de una función que retrasa su ejecución
+   * hasta que haya pasado un tiempo de espera sin que se vuelva a llamar.
+   * @param {Function} func La función a "debounce".
+   * @param {number} delay El tiempo de espera en milisegundos.
+   * @returns {Function} La nueva función "debounced".*/
+
 });

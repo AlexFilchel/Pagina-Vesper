@@ -167,6 +167,9 @@
     async updateUserProfile(payload) {
       return withAuthenticatedRequest('/user/perfil', 'PUT', payload);
     }
+    ,async buscarProductos(termino) {
+      return request(`/public/productos/buscar?q=${encodeURIComponent(termino)}`);
+    },
   };
 
   window.apiClient = apiClient;
