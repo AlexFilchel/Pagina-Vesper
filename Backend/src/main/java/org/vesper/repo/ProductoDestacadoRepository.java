@@ -17,12 +17,17 @@ public interface ProductoDestacadoRepository extends JpaRepository<ProductoDesta
 
     @Query("""
             SELECT DISTINCT pd FROM ProductoDestacado pd
-            LEFT JOIN FETCH pd.producto p
-            LEFT JOIN FETCH TREAT(p AS Perfume).imagenes
-            LEFT JOIN FETCH TREAT(p AS Vape).imagenes
-            LEFT JOIN FETCH TREAT(p AS Vape).vapeSabores vs
-            LEFT JOIN FETCH vs.sabor
+            JOIN FETCH pd.producto p
+            WHERE TYPE(p) = Vape
             ORDER BY pd.id ASC
             """)
-    List<ProductoDestacado> findAllConProductoCompleto();
+    List<ProductoDestacado> findAllConVape();
+
+    @Query("""
+            SELECT DISTINCT pd FROM ProductoDestacado pd
+            JOIN FETCH pd.producto p
+            WHERE TYPE(p) = Perfume
+            ORDER BY pd.id ASC
+            """)
+    List<ProductoDestacado> findAllConPerfume();
 }
