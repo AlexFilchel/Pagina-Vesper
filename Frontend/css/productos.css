@@ -321,17 +321,24 @@ body.filters-open {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
   column-gap: clamp(24px, 4vw, 36px);
-  row-gap: clamp(28px, 4.5vw, 40px);
+  row-gap: clamp(30px, 4.5vw, 40px);
 }
 
 .productos-grid .product-card {
-  margin-bottom: clamp(48px, 6vw, 64px);
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
   transform-origin: top center;
+  transition: all 0.35s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .productos-grid .product-card__body {
-  padding-bottom: clamp(34px, 5vw, 42px);
+  padding-bottom: 50px;
 }
+
 
 @media (min-width: 640px) {
   .productos-grid {
@@ -433,4 +440,44 @@ body.filters-open {
     align-items: center;
     justify-content: center;
   }
+}
+
+/* ==========================
+   Ajuste: botón más abajo sin agrandar la tarjeta
+========================== */
+
+/* Ocultamos el botón inicialmente */
+.productos-grid .product-card .btn-agregar {
+  position: absolute;
+  bottom: 10px; /* posición final más abajo */
+  left: 50%;
+  transform: translate(-50%, 60%); /* comienza oculto debajo */
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+
+/* ==========================
+   Botón más abajo sin agrandar la tarjeta
+========================== */
+
+/* Hacemos que el cuerpo del producto sea el marco de referencia */
+.productos-grid .product-card__body {
+  position: relative;
+}
+
+/* Estilo y posición del botón */
+.productos-grid .product-card__body .btn {
+  position: absolute;
+  bottom: 12px; /* 🔸 más abajo */
+  left: 50%;
+  transform: translate(-50%, 400%); /* empieza más abajo, fuera de vista */
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+/* Cuando se hace hover en la tarjeta */
+.productos-grid .product-card:hover .btn {
+  opacity: 1;
+  transform: translate(-50%, 60%); /* sube suavemente */
 }

@@ -582,6 +582,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const CART_STORAGE_KEY = "vesper.cart.v1";
   const FALLBACK_IMAGE_URL = "img/logo_vesper.jpg";
 
+  function toAbsoluteUrl(url) {
+    if (typeof url !== "string" || !url.trim()) return null;
+    const trimmed = url.trim();
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    if (trimmed.startsWith("//")) return window.location.protocol + trimmed;
+    if (trimmed.startsWith("/")) return window.location.origin + trimmed;
+    return trimmed;
+  }
+
   function parsePriceValue(value) {
     if (typeof value === "number") return value;
     if (typeof value !== "string") return 0;
@@ -718,7 +727,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function getPrimaryImage(imagenes) {
     const pickFromValue = (value) => {
       if (typeof value === "string" && value.trim().length > 0) {
-        return value.trim();
+        return toAbsoluteUrl(value.trim());
       }
       if (value && typeof value === "object") {
         const candidates = [
@@ -731,7 +740,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ];
         for (const candidate of candidates) {
           if (typeof candidate === "string" && candidate.trim().length > 0) {
-            return candidate.trim();
+            return toAbsoluteUrl(candidate.trim());
           }
         }
         const nested = value.imagen ?? value.image ?? value.source;
@@ -850,7 +859,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const brand = typeof destacado?.marca === "string" ? destacado.marca.trim() : "";
     const name = typeof destacado?.nombre === "string" ? destacado.nombre.trim() : "";
 
-    const imageSource = destacado?.imagenes ?? destacado?.producto?.imagenes ?? destacado?.productoImagenes ?? null;
+    // Try multiple shapes for images coming from different DTOs
+    const imageSource =
+      destacado?.imagenes ??
+      destacado?.imagenesUrl ??
+      destacado?.producto?.imagenes ??
+      destacado?.producto?.imagenesUrl ??
+      destacado?.productoImagenes ??
+      destacado?.productoImagenesUrl ??
+      destacado?.imagen ??
+      destacado?.imagenUrl ??
+      destacado?.producto?.imagen ??
+      destacado?.producto?.imagenUrl ??
+      null;
 
     return {
       key: `destacado-${destacado?.id ?? window.crypto?.randomUUID?.() ?? Date.now()}`,
@@ -1984,9 +2005,34 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const response = await window.apiClient.fetchFeaturedPublic();
-      const destacados = Array.isArray(response)
-        ? response.slice(0, 8).map(normalizeFeaturedProduct)
-        : [];
+      const destacadosRaw = Array.isArray(response) ? response.slice(0, 8) : [];
+
+      // Prefer product images coming from the full catalog (same source as productos.html)
+      let catalog = null;
+      try { catalog = await fetchCatalogData(); } catch (_) { catalog = null; }
+
+      const perfumeMap = new Map((catalog?.perfumes || []).map(p => [p.id, p]));
+      const vapeMap = new Map((catalog?.vapes || []).map(v => [v.id, v]));
+
+      const destacados = destacadosRaw.map((d) => {
+        const type = (d?.tipo || "").toLowerCase();
+        const id = d?.productoId;
+        // Try by declared type first
+        if (type === "perfume" && perfumeMap.has(id)) {
+          return normalizePerfume(perfumeMap.get(id));
+        }
+        if (type === "vape" && vapeMap.has(id)) {
+          return normalizeVape(vapeMap.get(id));
+        }
+        // If type is unknown or mismatched, try id on both maps
+        if (perfumeMap.has(id)) {
+          return normalizePerfume(perfumeMap.get(id));
+        }
+        if (vapeMap.has(id)) {
+          return normalizeVape(vapeMap.get(id));
+        }
+        return normalizeFeaturedProduct(d);
+      });
 
       if (!destacados.length) {
         const empty = document.createElement("p");
@@ -1995,13 +2041,89 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      const needsHydration = [];
+
       destacados.forEach((item) => {
         const card = buildProductCardElement(item, {
           badge: "Destacado",
           showMeta: false
         });
         container.appendChild(card);
+
+        if (!item?.image || item.image === FALLBACK_IMAGE_URL) {
+          needsHydration.push({ card, item });
+        }
       });
+
+      // First attempt: resolve from catalog lists (same data used in productos.html)
+      try {
+        if (needsHydration.length) {
+          const catalog = await fetchCatalogData().catch(() => null);
+          if (catalog && (Array.isArray(catalog.perfumes) || Array.isArray(catalog.vapes))) {
+            const perfumeMap = new Map((catalog.perfumes || []).map(p => [p.id, p]));
+            const vapeMap = new Map((catalog.vapes || []).map(v => [v.id, v]));
+            for (const entry of needsHydration) {
+              const { card, item } = entry;
+              const type = (item?.type || "").toLowerCase();
+              const id = item?.productId;
+              if (!id) continue;
+              const fromCatalog = type === "perfume" ? perfumeMap.get(id) : (type === "vape" ? vapeMap.get(id) : null);
+              if (fromCatalog) {
+                const src = getPrimaryImage(fromCatalog?.imagenes ?? fromCatalog?.imagenesUrl ?? null);
+                if (src && src !== FALLBACK_IMAGE_URL) {
+                  const img = card.querySelector(".product-card__figure img");
+                  if (img) img.src = src;
+                  card.dataset.productImage = src;
+                  const addBtn = card.querySelector("[data-action='add-to-cart']");
+                  if (addBtn) addBtn.dataset.productImage = src;
+                  entry.resolved = true;
+                }
+              }
+            }
+          }
+        }
+      } catch (_) { /* ignore */ }
+
+      // Second attempt: hydrate missing images by fetching product detail endpoints
+      for (const entry of needsHydration.filter(e => !e.resolved)) {
+        try {
+          const { card, item } = entry;
+          const type = (item?.type || "").toLowerCase();
+          const id = item?.productId;
+          if (!id) continue;
+
+          let detail = null;
+          if (type === "perfume" && typeof window.apiClient.fetchPerfume === "function") {
+            detail = await window.apiClient.fetchPerfume(id);
+          } else if (type === "vape" && typeof window.apiClient.fetchVape === "function") {
+            detail = await window.apiClient.fetchVape(id);
+          } else {
+            // Unknown type: try both
+            if (typeof window.apiClient.fetchPerfume === "function") {
+              try { detail = await window.apiClient.fetchPerfume(id); } catch (_) { detail = null; }
+            }
+            if (!detail && typeof window.apiClient.fetchVape === "function") {
+              try { detail = await window.apiClient.fetchVape(id); } catch (_) { detail = null; }
+            }
+          }
+
+          if (detail) {
+            const src = getPrimaryImage(detail?.imagenes ?? detail?.imagenesUrl ?? null);
+            if (src && src !== FALLBACK_IMAGE_URL) {
+              const img = card.querySelector(".product-card__figure img");
+              if (img) {
+                img.src = src;
+              }
+              // Keep dataset in sync for cart actions
+              card.dataset.productImage = src;
+              const addBtn = card.querySelector("[data-action='add-to-cart']");
+              if (addBtn) addBtn.dataset.productImage = src;
+            }
+          }
+        } catch (e) {
+          // Silently ignore hydration errors to avoid breaking UI
+        }
+      }
     } catch (error) {
       console.error("Error al cargar los destacados:", error);
       const message = document.createElement("p");
@@ -2012,7 +2134,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function setupProductsScrollArea(scrollArea) {
+    function setupProductsScrollArea(scrollArea) {
     if (!scrollArea || scrollArea.dataset.scrollBehaviorAttached === "true") {
       return;
     }
@@ -2037,37 +2159,52 @@ document.addEventListener("DOMContentLoaded", () => {
       return Math.min(context.maxScroll, Math.max(0, value));
     };
 
+    // ⚙️ Manejo del scroll con rueda
     const handleWheel = (event) => {
-      if (!event || event.defaultPrevented || typeof event.deltaY !== "number") {
+      if (!event || event.defaultPrevented || typeof event.deltaY !== "number") return;
+
+      // 🔒 Evitar interferir con overlays o modales
+      if (
+        document.body.classList.contains("filters-open") ||
+        document.body.classList.contains("modal-open") ||
+        document.body.classList.contains("is-cart-open")
+      ) {
         return;
       }
 
+      // Ignorar si el evento no viene del área de productos
+      if (!event.target.closest(".productos")) return;
+
       const { deltaY } = event;
       const metrics = getScrollMetrics();
-      if (metrics.maxScroll <= 0) {
-        return;
-      }
-      if ((deltaY < 0 && metrics.atTop) || (deltaY > 0 && metrics.atBottom)) {
-        return;
-      }
+      if (metrics.maxScroll <= 0) return;
+      if ((deltaY < 0 && metrics.atTop) || (deltaY > 0 && metrics.atBottom)) return;
 
       event.preventDefault();
       scrollArea.scrollTop = clampScrollTop(metrics.scrollTop + deltaY, metrics);
     };
 
+    // ⚙️ Manejo táctil
     let touchStartY = 0;
 
     const handleTouchStart = (event) => {
-      if (!event.touches || event.touches.length !== 1) {
-        return;
-      }
+      if (!event.touches || event.touches.length !== 1) return;
       touchStartY = event.touches[0].clientY;
     };
 
     const handleTouchMove = (event) => {
-      if (!event.touches || event.touches.length !== 1) {
+      if (!event.touches || event.touches.length !== 1) return;
+
+      // 🔒 Evitar si hay overlay o modal activo
+      if (
+        document.body.classList.contains("filters-open") ||
+        document.body.classList.contains("modal-open") ||
+        document.body.classList.contains("is-cart-open")
+      ) {
         return;
       }
+
+      if (!event.target.closest(".productos")) return;
 
       const currentY = event.touches[0].clientY;
       const delta = touchStartY - currentY;
@@ -2087,18 +2224,25 @@ document.addEventListener("DOMContentLoaded", () => {
       touchStartY = currentY;
     };
 
+    // ⚙️ Manejo con teclado
     const handleKeydown = (event) => {
-      if (!event || event.defaultPrevented) {
+      if (!event || event.defaultPrevented) return;
+
+      // 🔒 Evitar si hay overlay o modal activo
+      if (
+        document.body.classList.contains("filters-open") ||
+        document.body.classList.contains("modal-open") ||
+        document.body.classList.contains("is-cart-open")
+      ) {
         return;
       }
 
+      if (!event.target.closest(".productos")) return;
+
       const target = event.target;
-      if (target) {
-        const tagName = target.tagName ? target.tagName.toLowerCase() : "";
-        const isEditable = target.isContentEditable;
-        if (isEditable || tagName === "input" || tagName === "textarea" || tagName === "select" || tagName === "button") {
-          return;
-        }
+      const tagName = target?.tagName?.toLowerCase() ?? "";
+      if (target.isContentEditable || ["input", "textarea", "select", "button"].includes(tagName)) {
+        return;
       }
 
       const actionableKeys = [
@@ -2111,14 +2255,10 @@ document.addEventListener("DOMContentLoaded", () => {
         "Space"
       ];
 
-      if (!actionableKeys.includes(event.key)) {
-        return;
-      }
+      if (!actionableKeys.includes(event.key)) return;
 
       const metrics = getScrollMetrics();
-      if (metrics.maxScroll <= 0) {
-        return;
-      }
+      if (metrics.maxScroll <= 0) return;
       let delta = 0;
 
       switch (event.key) {
@@ -2143,27 +2283,22 @@ document.addEventListener("DOMContentLoaded", () => {
         case "Space":
           delta = event.shiftKey ? -metrics.clientHeight : metrics.clientHeight;
           break;
-        default:
-          break;
       }
 
-      if (delta === 0) {
-        return;
-      }
-
-      if ((delta < 0 && metrics.atTop) || (delta > 0 && metrics.atBottom)) {
-        return;
-      }
+      if (delta === 0) return;
+      if ((delta < 0 && metrics.atTop) || (delta > 0 && metrics.atBottom)) return;
 
       event.preventDefault();
       scrollArea.scrollTop = clampScrollTop(metrics.scrollTop + delta, metrics);
     };
 
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    window.addEventListener("keydown", handleKeydown, { passive: false });
+    // ✅ Listeners limitados al área de productos
+    scrollArea.addEventListener("wheel", handleWheel, { passive: false });
+    scrollArea.addEventListener("touchstart", handleTouchStart, { passive: true });
+    scrollArea.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("keydown", handleKeydown, { passive: false });
   }
+
 
   function initializeProductsPage() {
     const productsContainer = document.getElementById("productos-lista");
