@@ -2590,3 +2590,19 @@ body.is-cart-open {
   pointer-events: auto;
   transform: translateY(0);
 }
+
+/* =======================
+   Footer - Corrección de color en Contacto
+======================= */
+.footer-contact,
+.footer-contact a,
+.footer-contact address {
+  color: #ffffff;
+  text-decoration: none;
+  font-style: normal;
+}
+
+.footer-contact a:hover {
+  color: #d1e0ff; /* tono más claro en hover */
+  text-decoration: underline;
+}

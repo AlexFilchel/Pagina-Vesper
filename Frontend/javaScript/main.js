@@ -2012,7 +2012,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function setupProductsScrollArea(scrollArea) {
+    function setupProductsScrollArea(scrollArea) {
     if (!scrollArea || scrollArea.dataset.scrollBehaviorAttached === "true") {
       return;
     }
@@ -2037,37 +2037,52 @@ document.addEventListener("DOMContentLoaded", () => {
       return Math.min(context.maxScroll, Math.max(0, value));
     };
 
+    // ⚙️ Manejo del scroll con rueda
     const handleWheel = (event) => {
-      if (!event || event.defaultPrevented || typeof event.deltaY !== "number") {
+      if (!event || event.defaultPrevented || typeof event.deltaY !== "number") return;
+
+      // 🔒 Evitar interferir con overlays o modales
+      if (
+        document.body.classList.contains("filters-open") ||
+        document.body.classList.contains("modal-open") ||
+        document.body.classList.contains("is-cart-open")
+      ) {
         return;
       }
 
+      // Ignorar si el evento no viene del área de productos
+      if (!event.target.closest(".productos")) return;
+
       const { deltaY } = event;
       const metrics = getScrollMetrics();
-      if (metrics.maxScroll <= 0) {
-        return;
-      }
-      if ((deltaY < 0 && metrics.atTop) || (deltaY > 0 && metrics.atBottom)) {
-        return;
-      }
+      if (metrics.maxScroll <= 0) return;
+      if ((deltaY < 0 && metrics.atTop) || (deltaY > 0 && metrics.atBottom)) return;
 
       event.preventDefault();
       scrollArea.scrollTop = clampScrollTop(metrics.scrollTop + deltaY, metrics);
     };
 
+    // ⚙️ Manejo táctil
     let touchStartY = 0;
 
     const handleTouchStart = (event) => {
-      if (!event.touches || event.touches.length !== 1) {
-        return;
-      }
+      if (!event.touches || event.touches.length !== 1) return;
       touchStartY = event.touches[0].clientY;
     };
 
     const handleTouchMove = (event) => {
-      if (!event.touches || event.touches.length !== 1) {
+      if (!event.touches || event.touches.length !== 1) return;
+
+      // 🔒 Evitar si hay overlay o modal activo
+      if (
+        document.body.classList.contains("filters-open") ||
+        document.body.classList.contains("modal-open") ||
+        document.body.classList.contains("is-cart-open")
+      ) {
         return;
       }
+
+      if (!event.target.closest(".productos")) return;
 
       const currentY = event.touches[0].clientY;
       const delta = touchStartY - currentY;
@@ -2087,18 +2102,25 @@ document.addEventListener("DOMContentLoaded", () => {
       touchStartY = currentY;
     };
 
+    // ⚙️ Manejo con teclado
     const handleKeydown = (event) => {
-      if (!event || event.defaultPrevented) {
+      if (!event || event.defaultPrevented) return;
+
+      // 🔒 Evitar si hay overlay o modal activo
+      if (
+        document.body.classList.contains("filters-open") ||
+        document.body.classList.contains("modal-open") ||
+        document.body.classList.contains("is-cart-open")
+      ) {
         return;
       }
 
+      if (!event.target.closest(".productos")) return;
+
       const target = event.target;
-      if (target) {
-        const tagName = target.tagName ? target.tagName.toLowerCase() : "";
-        const isEditable = target.isContentEditable;
-        if (isEditable || tagName === "input" || tagName === "textarea" || tagName === "select" || tagName === "button") {
-          return;
-        }
+      const tagName = target?.tagName?.toLowerCase() ?? "";
+      if (target.isContentEditable || ["input", "textarea", "select", "button"].includes(tagName)) {
+        return;
       }
 
       const actionableKeys = [
@@ -2111,14 +2133,10 @@ document.addEventListener("DOMContentLoaded", () => {
         "Space"
       ];
 
-      if (!actionableKeys.includes(event.key)) {
-        return;
-      }
+      if (!actionableKeys.includes(event.key)) return;
 
       const metrics = getScrollMetrics();
-      if (metrics.maxScroll <= 0) {
-        return;
-      }
+      if (metrics.maxScroll <= 0) return;
       let delta = 0;
 
       switch (event.key) {
@@ -2143,27 +2161,22 @@ document.addEventListener("DOMContentLoaded", () => {
         case "Space":
           delta = event.shiftKey ? -metrics.clientHeight : metrics.clientHeight;
           break;
-        default:
-          break;
       }
 
-      if (delta === 0) {
-        return;
-      }
-
-      if ((delta < 0 && metrics.atTop) || (delta > 0 && metrics.atBottom)) {
-        return;
-      }
+      if (delta === 0) return;
+      if ((delta < 0 && metrics.atTop) || (delta > 0 && metrics.atBottom)) return;
 
       event.preventDefault();
       scrollArea.scrollTop = clampScrollTop(metrics.scrollTop + delta, metrics);
     };
 
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    window.addEventListener("keydown", handleKeydown, { passive: false });
+    // ✅ Listeners limitados al área de productos
+    scrollArea.addEventListener("wheel", handleWheel, { passive: false });
+    scrollArea.addEventListener("touchstart", handleTouchStart, { passive: true });
+    scrollArea.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("keydown", handleKeydown, { passive: false });
   }
+
 
   function initializeProductsPage() {
     const productsContainer = document.getElementById("productos-lista");
