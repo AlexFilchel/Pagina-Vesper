@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const SELECTED_PRODUCT_STORAGE_KEY = "vesper:selected-product";
   /* ===========================
      🔹 Carrusel Hero
   =========================== */
@@ -922,6 +923,20 @@ document.addEventListener("DOMContentLoaded", () => {
     card.dataset.productOriginalPrice = String(product?.originalPrice ?? product?.price ?? 0);
     card.dataset.productType = product?.type ?? "producto";
     card.dataset.productImage = product?.image ?? FALLBACK_IMAGE_URL;
+    if (product?.productId != null) {
+      card.dataset.productDetailId = String(product.productId);
+    }
+    if (product?.type) {
+      card.dataset.productDetailType = product.type;
+    }
+    const detailPayload = buildProductDetailPayload(product);
+    if (detailPayload) {
+      try {
+        card.dataset.productDetail = JSON.stringify(detailPayload);
+      } catch (error) {
+        console.warn("No se pudo serializar el detalle del producto", error);
+      }
+    }
     if (subtitleText) {
       card.dataset.productSubtitle = subtitleText;
     }
@@ -1009,6 +1024,7 @@ document.addEventListener("DOMContentLoaded", () => {
     button.dataset.productType = product?.type ?? "producto";
     button.dataset.productSubtitle = subtitleText;
     button.dataset.productImage = product?.image ?? FALLBACK_IMAGE_URL;
+    button.dataset.productQuantity = "1";
     button.textContent = "Agregar al carrito";
     actions.appendChild(button);
 
@@ -1060,6 +1076,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const image = data.productImage || data.image || context?.querySelector?.("img")?.getAttribute?.("src") || "";
     const rawType = data.productType || data.type || data.category || context?.dataset?.productType || "";
     const type = typeof rawType === "string" && rawType.trim() ? rawType.trim() : "Producto";
+    let quantity = Number.parseInt(data.productQuantity || data.quantity || "", 10);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      quantity = 1;
+    }
+    quantity = Math.min(quantity, 10);
 
     return {
       id: idBase,
@@ -1068,7 +1089,8 @@ document.addEventListener("DOMContentLoaded", () => {
       price,
       originalPrice,
       image,
-      type
+      type,
+      quantity
     };
   }
 
@@ -1306,8 +1328,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function addToCart(product) {
     const existing = cartState.items.find(item => item.id === product.id);
+    const quantityToAdd = Number.isFinite(product.quantity) && product.quantity > 0 ? product.quantity : 1;
     if (existing) {
-      existing.quantity += 1;
+      existing.quantity += quantityToAdd;
     } else {
       cartState.items.push({
         id: product.id,
@@ -1317,13 +1340,13 @@ document.addEventListener("DOMContentLoaded", () => {
         originalPrice: product.originalPrice,
         image: product.image || "",
         type: product.type || "Producto",
-        quantity: 1
+        quantity: quantityToAdd
       });
     }
 
     renderCart();
     persistCart();
-    showCartToast(product);
+    showCartToast({ ...product, quantity: quantityToAdd });
   }
 
   function removeFromCart(productId) {
@@ -1417,10 +1440,13 @@ document.addEventListener("DOMContentLoaded", () => {
     toast.className = "cart-toast";
 
     const typeLabel = product.type ? product.type.charAt(0).toUpperCase() + product.type.slice(1) : "Producto";
+    const quantity = Number.isFinite(product.quantity) && product.quantity > 0 ? product.quantity : 1;
+    const totalPrice = product.price * quantity;
+    const quantityLabel = quantity > 1 ? `${quantity} × ${typeLabel}` : typeLabel;
     toast.innerHTML = `
-      <p class="cart-toast__label">Agregaste ${typeLabel}</p>
+      <p class="cart-toast__label">Agregaste ${quantityLabel}</p>
       <strong>${product.name}</strong>
-      <span>${formatPrice(product.price)}</span>
+      <span>${formatPrice(totalPrice)}</span>
     `;
 
     toastLayer.appendChild(toast);
@@ -1482,6 +1508,96 @@ document.addEventListener("DOMContentLoaded", () => {
         changeQuantity(qtyButton.dataset.id, -1);
       }
     }
+  });
+
+  function buildProductDetailPayload(product) {
+    if (!product) return null;
+    try {
+      const images = [];
+      const sourceImages = product?.raw?.imagenes ?? product?.raw?.imagenesUrl ?? product?.imagenes ?? [];
+      if (Array.isArray(sourceImages)) {
+        sourceImages.forEach((img) => {
+          if (!img) return;
+          if (typeof img === "string" && img.trim()) {
+            images.push(toAbsoluteUrl(img.trim()));
+            return;
+          }
+          if (typeof img === "object") {
+            const candidates = [img.url, img.imageUrl, img.imagenUrl, img.secureUrl, img.secure_url, img.link];
+            const picked = candidates.find((candidate) => typeof candidate === "string" && candidate.trim());
+            if (picked) {
+              images.push(toAbsoluteUrl(picked.trim()));
+            }
+          }
+        });
+      }
+
+      const payload = {
+        id: product?.productId ?? null,
+        key: product?.key ?? product?.id ?? null,
+        type: product?.type ?? null,
+        name: product?.name ?? "",
+        brand: product?.brand ?? "",
+        description: product?.description ?? product?.raw?.descripcion ?? "",
+        price: Number.isFinite(product?.price) ? product.price : null,
+        originalPrice: Number.isFinite(product?.originalPrice) ? product.originalPrice : null,
+        discountPrice: Number.isFinite(product?.discountPrice) ? product.discountPrice : null,
+        genero: product?.genero ?? product?.raw?.genero ?? "",
+        notasPrincipales: product?.raw?.notasPrincipales ?? product?.notasPrincipales ?? "",
+        salida: product?.raw?.salida ?? "",
+        corazon: product?.raw?.corazon ?? "",
+        fondo: product?.raw?.fondo ?? "",
+        fragancia: product?.raw?.fragancia ?? "",
+        inspiracion: product?.raw?.inspiracion ?? "",
+        ml: product?.ml ?? product?.raw?.ml ?? null,
+        pitadas: product?.pitadas ?? product?.raw?.pitadas ?? null,
+        stock: product?.stock ?? product?.raw?.stock ?? null,
+        decant: Boolean(product?.decant ?? product?.raw?.decant),
+        imagenes: images,
+        raw: product?.raw ?? null
+      };
+
+      return payload;
+    } catch (error) {
+      console.warn("No se pudo construir el payload del producto", error);
+      return null;
+    }
+  }
+
+  document.addEventListener("click", (event) => {
+    const card = event.target.closest?.(".product-card");
+    if (!card) return;
+    if (event.defaultPrevented) return;
+    const interactiveTarget = event.target.closest?.("button, a, [role='button']");
+    if (interactiveTarget && interactiveTarget.matches?.("[data-action='add-to-cart']")) {
+      return;
+    }
+
+    const storedDetailRaw = card.dataset.productDetail;
+    if (storedDetailRaw) {
+      try {
+        sessionStorage.setItem(SELECTED_PRODUCT_STORAGE_KEY, storedDetailRaw);
+      } catch (error) {
+        console.warn("No se pudo guardar el detalle del producto seleccionado", error);
+      }
+    }
+
+    const type = card.dataset.productDetailType || card.dataset.productType || "";
+    const id = card.dataset.productDetailId || "";
+    const key = card.dataset.productId || card.dataset.productKey || "";
+
+    const params = new URLSearchParams();
+    if (type) {
+      params.set("type", type);
+    }
+    if (id) {
+      params.set("id", id);
+    } else if (key) {
+      params.set("key", key);
+    }
+
+    const detailUrl = `producto.html${params.toString() ? `?${params.toString()}` : ""}`;
+    window.location.href = detailUrl;
   });
 
   document.addEventListener("click", (event) => {
@@ -2753,5 +2869,13 @@ document.addEventListener("DOMContentLoaded", () => {
    * @param {Function} func La función a "debounce".
    * @param {number} delay El tiempo de espera en milisegundos.
    * @returns {Function} La nueva función "debounced".*/
+
+  window.VesperProductUtils = {
+    buildProductDetailPayload,
+    FALLBACK_IMAGE_URL,
+    calculateTransferPrice,
+    toAbsoluteUrl,
+    formatPrice
+  };
 
 });
