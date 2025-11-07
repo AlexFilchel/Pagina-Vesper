@@ -467,20 +467,16 @@
         segments.push(`Descubrí ${productName}${brandText}, un vape listo para disfrutar desde el primer momento.`);
       }
 
-      const puffDetail = sanitizeSnippet(getDetailValue(details, 'Cantidad de pitadas'));
+      const puffDetail = sanitizeDetailValue(getDetailValue(details, 'Cantidad de pitadas'));
       if (puffDetail) {
         segments.push(`Disfrutá de ${puffDetail} sin recargas.`);
       }
 
-      const modesDetail = sanitizeSnippet(getDetailValue(details, 'Modos disponibles'));
+      const modesDetail = sanitizeDetailValue(getDetailValue(details, 'Modos disponibles'));
       if (modesDetail) {
         segments.push(`Personalizá cada calada con ${modesDetail}.`);
       }
 
-      const flavorPreview = formatList((flavors || []).slice(0, 3));
-      if (flavorPreview) {
-        segments.push(`Sabores destacados: ${flavorPreview}.`);
-      }
     } else {
       if (!baseDescription) {
         const descriptor = type === 'decant' ? 'decant inspirado en la fragancia original' : 'fragancia';
@@ -488,17 +484,17 @@
         segments.push(`Descubrí ${productName}${brandText}, ${descriptor} creada para realzar cada ocasión.`);
       }
 
-      const mlDetail = sanitizeSnippet(getDetailValue(details, 'Mililitros'));
+      const mlDetail = sanitizeDetailValue(getDetailValue(details, 'Mililitros'));
       if (mlDetail) {
         segments.push(`Presentación de ${mlDetail}.`);
       }
 
-      const mainNotes = sanitizeSnippet(getDetailValue(details, 'Notas principales'));
+      const mainNotes = sanitizeDetailValue(getDetailValue(details, 'Notas principales'));
       if (mainNotes) {
         segments.push(`Notas principales: ${mainNotes}.`);
       }
 
-      const family = sanitizeSnippet(getDetailValue(details, 'Familia olfativa'));
+      const family = sanitizeDetailValue(getDetailValue(details, 'Familia olfativa'));
       if (family) {
         segments.push(`Familia olfativa: ${family}.`);
       }
@@ -508,7 +504,7 @@
         segments.push(pyramidSentence);
       }
 
-      const inspiration = sanitizeSnippet(getDetailValue(details, 'Inspiración'));
+      const inspiration = sanitizeDetailValue(getDetailValue(details, 'Inspiración'));
       if (inspiration) {
         if (/inspirad[oa]/i.test(inspiration)) {
           segments.push(`${inspiration}.`);
@@ -609,7 +605,7 @@
     const oldPriceElement = document.querySelector('[data-product-old-price]');
     const transferText = document.querySelector('[data-product-transfer]');
     const stockElement = document.querySelector('[data-product-stock]');
-    const descriptionElement = document.querySelector('[data-description-text]');
+    const descriptionCard = document.querySelector('[data-description-card]');
     const detailsCard = document.querySelector('[data-details-card]');
     const detailsTitle = document.querySelector('[data-details-title]');
     const detailsList = document.querySelector('[data-details-list]');
@@ -617,14 +613,13 @@
     const pyramidHeart = document.querySelector('[data-pyramid-heart]');
     const pyramidBase = document.querySelector('[data-pyramid-base]');
     const pyramidCard = document.querySelector('[data-pyramid]');
-    const flavorsSection = document.querySelector('[data-product-flavors]');
-    const flavorsList = document.querySelector('[data-flavors-list]');
     const addButton = document.querySelector('.product-detail__add');
     const galleryMain = document.querySelector('[data-main-image] img');
     const thumbnailContainer = document.querySelector('[data-thumbnails]');
 
     if (page) {
       page.dataset.productLoaded = 'true';
+      page.dataset.productType = product.type;
     }
 
     if (brand) {
@@ -678,9 +673,7 @@
       }
     }
 
-    if (descriptionElement) {
-      descriptionElement.textContent = product.originalDescription || product.description || 'Este producto todavía no cuenta con una descripción detallada.';
-    }
+    populateDescriptionCard(product, descriptionCard);
 
     if (detailsCard && detailsList) {
       if (detailsTitle) {
@@ -721,20 +714,6 @@
       pyramidCard.hidden = product.type === 'vape';
     }
 
-    if (flavorsSection && flavorsList) {
-      flavorsList.innerHTML = '';
-      if (product.type === 'vape' && product.flavors.length) {
-        product.flavors.slice(0, 6).forEach(flavor => {
-          const li = document.createElement('li');
-          li.textContent = flavor;
-          flavorsList.appendChild(li);
-        });
-        flavorsSection.hidden = false;
-      } else {
-        flavorsSection.hidden = true;
-      }
-    }
-
     if (galleryMain) {
       galleryMain.src = product.primaryImage;
       galleryMain.alt = `Imagen principal de ${product.name}`;
@@ -768,6 +747,57 @@
     }
 
     setupQuantitySelector(addButton, product);
+  }
+
+  function populateDescriptionCard(product, descriptionCard) {
+    if (!descriptionCard) {
+      return;
+    }
+
+    const descriptionElement = descriptionCard.querySelector('[data-description-text]');
+    if (!descriptionElement) {
+      return;
+    }
+
+    const baseDescription = getPrimaryDescriptionText(product);
+    descriptionElement.textContent = baseDescription || 'Estamos preparando una descripción detallada para este producto.';
+
+    let extraWrapper = descriptionCard.querySelector('[data-description-extra]');
+    if (!extraWrapper) {
+      extraWrapper = document.createElement('div');
+      extraWrapper.dataset.descriptionExtra = 'true';
+      extraWrapper.className = 'product-description__extra';
+      descriptionCard.appendChild(extraWrapper);
+    }
+
+    extraWrapper.innerHTML = '';
+
+    if (product.type === 'vape') {
+      const detailItems = [
+        { label: 'Cantidad de pitadas', value: sanitizeDetailValue(getDetailValue(product.details, 'Cantidad de pitadas')) },
+        { label: 'Modos disponibles', value: sanitizeDetailValue(getDetailValue(product.details, 'Modos disponibles')) }
+      ].filter(item => item.value);
+
+      appendDefinitionList(extraWrapper, 'Detalles del vape', detailItems);
+
+      if (product.flavors.length) {
+        appendFlavorList(extraWrapper, product.flavors);
+      }
+    } else {
+      const detailItems = [
+        { label: 'Mililitros', value: sanitizeDetailValue(getDetailValue(product.details, 'Mililitros')) },
+        { label: 'Notas principales', value: sanitizeDetailValue(getDetailValue(product.details, 'Notas principales')) },
+        { label: 'Familia olfativa', value: sanitizeDetailValue(getDetailValue(product.details, 'Familia olfativa')) },
+        { label: 'Inspiración', value: sanitizeDetailValue(getDetailValue(product.details, 'Inspiración')) }
+      ].filter(item => item.value);
+
+      appendDefinitionList(extraWrapper, product.type === 'decant' ? 'Detalles del decant' : 'Detalles de la fragancia', detailItems);
+      appendPyramidSummary(extraWrapper, product.pyramid);
+    }
+
+    if (!extraWrapper.children.length) {
+      extraWrapper.remove();
+    }
   }
 
   function updateMainImage(images, selectedIndex) {
@@ -840,6 +870,176 @@
     return Math.min(MAX_QUANTITY, Math.max(MIN_QUANTITY, value));
   }
 
+  function getPrimaryDescriptionText(product) {
+    const original = sanitizeSnippet(product.originalDescription);
+    if (original) {
+      return original;
+    }
+
+    if (product.type === 'vape') {
+      const segments = [];
+      const productName = sanitizeSnippet(product.name) || 'este vape';
+      const brand = sanitizeSnippet(product.brand);
+      const intro = brand ? `${productName} de ${brand}` : productName;
+      segments.push(`Descubrí ${intro}, un vape listo para disfrutar desde el primer momento.`);
+
+      const puffDetail = sanitizeDetailValue(getDetailValue(product.details, 'Cantidad de pitadas'));
+      if (puffDetail) {
+        segments.push(`Disfrutá de ${puffDetail} sin recargas.`);
+      }
+
+      const modesDetail = sanitizeDetailValue(getDetailValue(product.details, 'Modos disponibles'));
+      if (modesDetail) {
+        segments.push(`Personalizá cada calada con ${modesDetail}.`);
+      }
+
+      return segments.join(' ');
+    }
+
+    const segments = [];
+    const productName = sanitizeSnippet(product.name) || 'esta fragancia';
+    const brand = sanitizeSnippet(product.brand);
+    const descriptor = product.type === 'decant' ? 'decant inspirado en la fragancia original' : 'fragancia';
+    const intro = brand ? `${productName} de ${brand}` : productName;
+    segments.push(`Descubrí ${intro}, ${descriptor} creada para realzar cada ocasión.`);
+
+    const mlDetail = sanitizeDetailValue(getDetailValue(product.details, 'Mililitros'));
+    if (mlDetail) {
+      segments.push(`Presentación de ${mlDetail}.`);
+    }
+
+    const notesDetail = sanitizeDetailValue(getDetailValue(product.details, 'Notas principales'));
+    if (notesDetail) {
+      segments.push(`Notas principales: ${notesDetail}.`);
+    }
+
+    const familyDetail = sanitizeDetailValue(getDetailValue(product.details, 'Familia olfativa'));
+    if (familyDetail) {
+      segments.push(`Familia olfativa: ${familyDetail}.`);
+    }
+
+    const pyramidSentence = buildPyramidSentence(product.pyramid);
+    if (pyramidSentence) {
+      segments.push(pyramidSentence);
+    }
+
+    const inspirationDetail = sanitizeDetailValue(getDetailValue(product.details, 'Inspiración'));
+    if (inspirationDetail) {
+      if (/inspirad[oa]/i.test(inspirationDetail)) {
+        segments.push(`${inspirationDetail}.`);
+      } else {
+        segments.push(`Inspirado en ${inspirationDetail}.`);
+      }
+    }
+
+    return segments.join(' ');
+  }
+
+  function appendDefinitionList(container, title, items) {
+    if (!container || !Array.isArray(items) || !items.length) {
+      return;
+    }
+
+    const block = document.createElement('section');
+    block.className = 'product-description__info';
+
+    if (title) {
+      const heading = document.createElement('h4');
+      heading.textContent = title;
+      block.appendChild(heading);
+    }
+
+    const list = document.createElement('dl');
+    list.className = 'product-description__dl';
+
+    items.forEach(item => {
+      const dt = document.createElement('dt');
+      dt.textContent = item.label;
+      const dd = document.createElement('dd');
+      dd.textContent = item.value || 'No disponible';
+      list.appendChild(dt);
+      list.appendChild(dd);
+    });
+
+    block.appendChild(list);
+    container.appendChild(block);
+  }
+
+  function appendFlavorList(container, flavors) {
+    const validFlavors = Array.isArray(flavors) ? flavors.filter(Boolean) : [];
+    if (!container || !validFlavors.length) {
+      return;
+    }
+
+    const block = document.createElement('section');
+    block.className = 'product-description__flavors-inline';
+
+    const heading = document.createElement('h4');
+    heading.textContent = 'Sabores destacados';
+    block.appendChild(heading);
+
+    const list = document.createElement('ul');
+    validFlavors.slice(0, 8).forEach(flavor => {
+      const item = document.createElement('li');
+      item.textContent = sanitizeSnippet(flavor) || flavor;
+      list.appendChild(item);
+    });
+
+    block.appendChild(list);
+    container.appendChild(block);
+  }
+
+  function sanitizeDetailValue(value) {
+    const cleaned = sanitizeSnippet(value);
+    if (!cleaned) {
+      return '';
+    }
+    if (cleaned.toLowerCase() === 'no disponible') {
+      return '';
+    }
+    return cleaned;
+  }
+
+  function appendPyramidSummary(container, pyramid) {
+    if (!container || !pyramid) {
+      return;
+    }
+
+    const notes = [
+      { label: 'Notas de salida', value: sanitizeDetailValue(pyramid.salida) },
+      { label: 'Notas de corazón', value: sanitizeDetailValue(pyramid.corazon) },
+      { label: 'Notas de fondo', value: sanitizeDetailValue(pyramid.fondo) }
+    ].filter(item => item.value);
+
+    if (!notes.length) {
+      return;
+    }
+
+    const block = document.createElement('section');
+    block.className = 'product-description__pyramid-summary';
+
+    const heading = document.createElement('h4');
+    heading.textContent = 'Pirámide olfativa';
+    block.appendChild(heading);
+
+    const list = document.createElement('ul');
+    notes.forEach(note => {
+      const item = document.createElement('li');
+      item.innerHTML = `<strong>${note.label}:</strong> ${note.value}`;
+      list.appendChild(item);
+    });
+
+    block.appendChild(list);
+    container.appendChild(block);
+  }
+
+  function isSameBrand(brandA, brandB) {
+    if (!brandA || !brandB) {
+      return false;
+    }
+    return brandA.trim().toLowerCase() === brandB.trim().toLowerCase();
+  }
+
   function renderRelatedProducts(product) {
     const grid = document.querySelector('[data-related-grid]');
     if (!grid) return;
@@ -894,24 +1094,16 @@
       candidates = normalizedPerfumes.filter(item => item.type === 'perfume');
     }
 
-    if (candidates.length < 4 && product.type !== 'vape') {
-      const extra = normalizedPerfumes.filter(item => item.type !== product.type);
-      candidates = candidates.concat(extra);
+    const sameBrandCandidates = candidates.filter(item => isSameBrand(product.brand, item.brand));
+    if (!sameBrandCandidates.length) {
+      return [];
     }
 
-    const scored = candidates
+    return sameBrandCandidates
       .map(candidate => ({ candidate, score: computeSimilarityScore(product, candidate) }))
-      .sort((a, b) => b.score - a.score);
-
-    const top = scored.slice(0, 4).map(item => item.candidate);
-    if (top.length < 4) {
-      const fallback = [...normalizedPerfumes, ...normalizedVapes]
-        .filter(item => item.id !== product.id && !top.some(existing => existing.id === item.id))
-        .slice(0, 4 - top.length);
-      return [...top, ...fallback];
-    }
-
-    return top;
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4)
+      .map(item => item.candidate);
   }
 
   function normalizePerfumeSummary(perfume) {
@@ -1056,11 +1248,8 @@
     const subtitle = document.createElement('p');
     subtitle.className = 'product-card__subtitle';
     if (product.type === 'vape') {
-      const parts = [];
-      if (product.pitadas) {
-        parts.push(`${product.pitadas} puffs`);
-      }
-      subtitle.textContent = parts.join(' • ');
+      const puffSubtitle = formatPuffCount(product.pitadas);
+      subtitle.textContent = puffSubtitle;
     } else if (product.ml) {
       subtitle.textContent = `${product.ml} ml`;
     }
@@ -1121,8 +1310,9 @@
     const descriptionMeta = document.querySelector('meta[name="description"]');
     if (descriptionMeta) {
       const metaContent =
-        sanitizeSnippet(product.description) ||
         sanitizeSnippet(product.originalDescription) ||
+        sanitizeSnippet(product.description) ||
+        sanitizeSnippet(getPrimaryDescriptionText(product)) ||
         `Descubrí ${product.name} de ${product.brand} en Vesper.`;
       descriptionMeta.setAttribute('content', metaContent);
     }

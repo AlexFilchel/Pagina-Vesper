@@ -58,18 +58,18 @@
   border: 1px solid rgba(15, 23, 42, 0.06);
   border-radius: 24px;
   padding: clamp(12px, 2.8vw, 24px);
-  aspect-ratio: 1;
   width: min(100%, 520px);
   margin: 0 auto;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
 .product-detail__image img {
   width: 100%;
-  height: 100%;
+  height: auto;
+  max-height: min(520px, 70vh);
   object-fit: contain;
   display: block;
 }
@@ -336,6 +336,76 @@
   line-height: 1.7;
 }
 
+.product-description__extra {
+  display: grid;
+  gap: clamp(12px, 2vw, 18px);
+}
+
+.product-description__info,
+.product-description__pyramid-summary,
+.product-description__flavors-inline {
+  display: grid;
+  gap: 10px;
+}
+
+.product-description__info h4,
+.product-description__pyramid-summary h4,
+.product-description__flavors-inline h4 {
+  font-size: 0.95rem;
+  color: #4338ca;
+  margin: 0;
+}
+
+.product-description__dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px 16px;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.product-description__dl dt {
+  font-weight: 600;
+  color: #1e3a8a;
+}
+
+.product-description__dl dd {
+  margin: 0;
+}
+
+.product-description__pyramid-summary ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.product-description__pyramid-summary li strong {
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.product-description__flavors-inline ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.product-description__flavors-inline li {
+  background: rgba(99, 102, 241, 0.12);
+  color: #4338ca;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 .product-description__card {
   background: linear-gradient(180deg, #f8faff 0%, #ffffff 100%);
   border: 1px solid rgba(99, 102, 241, 0.1);
@@ -456,8 +526,20 @@
 
 .related-products__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: clamp(16px, 3vw, 28px);
+  gap: clamp(24px, 4vw, 40px);
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .related-products__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .related-products__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .related-products__empty {
