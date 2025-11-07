@@ -3,6 +3,7 @@ package org.vesper.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,5 +57,8 @@ public class Perfume extends Producto {
             joinColumns = @JoinColumn(name = "perfume_id"),
             inverseJoinColumns = @JoinColumn(name = "imagen_id")
     )
+    @BatchSize(size = 50)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<Imagen> imagenes = new ArrayList<>();
 }
