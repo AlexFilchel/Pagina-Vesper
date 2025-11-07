@@ -21,7 +21,7 @@ public class ProductoService {
 
     @Transactional(readOnly = true)
     public List<ProductoResponse> buscarProductos(String termino) {
-        List<Producto> productos = productoRepository.buscarPorTerminoGeneral(termino);
+        List<Producto> productos = productoRepository.buscarPorTerminoGeneralConDetalles(termino);
         return productos.stream()
                 .map(this::toProductoResponse)
                 .collect(Collectors.toList());
