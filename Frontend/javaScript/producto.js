@@ -9,6 +9,36 @@
 
   const initialPath = window.location.pathname;
   const basePath = initialPath.slice(0, initialPath.lastIndexOf('/') + 1) || '/';
+  const scriptBasePath = (() => {
+    const ensureTrailingSlash = (value) => {
+      if (!value) return '/';
+      return value.endsWith('/') ? value : `${value}/`;
+    };
+
+    const current = document.currentScript;
+    if (current && current.src) {
+      try {
+        const scriptUrl = new URL(current.src, window.location.href);
+        const normalizedPath = scriptUrl.pathname.replace(/javaScript\/producto\.js$/i, '');
+        return ensureTrailingSlash(normalizedPath);
+      } catch (error) {
+        console.warn('No se pudo determinar la ruta base del script:', error);
+      }
+    }
+
+    const script = Array.from(document.querySelectorAll('script[src]')).find((element) => /javaScript\/producto\.js$/i.test(element.src));
+    if (script && script.src) {
+      try {
+        const scriptUrl = new URL(script.src, window.location.href);
+        const normalizedPath = scriptUrl.pathname.replace(/javaScript\/producto\.js$/i, '');
+        return ensureTrailingSlash(normalizedPath);
+      } catch (error) {
+        console.warn('No se pudo normalizar la ruta base alternativa del script:', error);
+      }
+    }
+
+    return ensureTrailingSlash(basePath);
+  })();
   const catalogCache = {
     perfumes: null,
     vapes: null,
@@ -339,11 +369,46 @@
   }
 
   function toAbsoluteUrl(path) {
-    if (!path) return '';
+    if (typeof path !== 'string') {
+      return resolveWithFallback();
+    }
+
+    const trimmed = path.trim();
+    if (!trimmed) {
+      return resolveWithFallback();
+    }
+
+    if (/^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+
+    if (trimmed.startsWith('//')) {
+      return `${window.location.protocol}${trimmed}`;
+    }
+
+    if (trimmed.startsWith('/')) {
+      return `${window.location.origin}${trimmed}`;
+    }
+
     try {
-      return new URL(path, window.location.origin + basePath).href;
+      const baseUrl = new URL('.', `${window.location.origin}${scriptBasePath}`);
+      return new URL(trimmed, baseUrl).href;
     } catch (error) {
-      return path;
+      console.warn('No se pudo resolver la URL', path, error);
+      return resolveWithFallback(trimmed);
+    }
+  }
+
+  function resolveWithFallback(candidate) {
+    if (candidate && /^data:/i.test(candidate)) {
+      return candidate;
+    }
+
+    try {
+      const baseUrl = new URL('.', `${window.location.origin}${scriptBasePath}`);
+      return new URL(FALLBACK_IMAGE_URL, baseUrl).href;
+    } catch (error) {
+      return FALLBACK_IMAGE_URL;
     }
   }
 
