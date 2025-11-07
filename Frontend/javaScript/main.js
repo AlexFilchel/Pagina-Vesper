@@ -582,6 +582,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const CART_STORAGE_KEY = "vesper.cart.v1";
   const FALLBACK_IMAGE_URL = "img/logo_vesper.jpg";
 
+  function toAbsoluteUrl(url) {
+    if (typeof url !== "string" || !url.trim()) return null;
+    const trimmed = url.trim();
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    if (trimmed.startsWith("//")) return window.location.protocol + trimmed;
+    if (trimmed.startsWith("/")) return window.location.origin + trimmed;
+    return trimmed;
+  }
+
   function parsePriceValue(value) {
     if (typeof value === "number") return value;
     if (typeof value !== "string") return 0;
@@ -718,7 +727,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function getPrimaryImage(imagenes) {
     const pickFromValue = (value) => {
       if (typeof value === "string" && value.trim().length > 0) {
-        return value.trim();
+        return toAbsoluteUrl(value.trim());
       }
       if (value && typeof value === "object") {
         const candidates = [
@@ -731,7 +740,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ];
         for (const candidate of candidates) {
           if (typeof candidate === "string" && candidate.trim().length > 0) {
-            return candidate.trim();
+            return toAbsoluteUrl(candidate.trim());
           }
         }
         const nested = value.imagen ?? value.image ?? value.source;
@@ -850,7 +859,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const brand = typeof destacado?.marca === "string" ? destacado.marca.trim() : "";
     const name = typeof destacado?.nombre === "string" ? destacado.nombre.trim() : "";
 
-    const imageSource = destacado?.imagenes ?? destacado?.producto?.imagenes ?? destacado?.productoImagenes ?? null;
+    // Try multiple shapes for images coming from different DTOs
+    const imageSource =
+      destacado?.imagenes ??
+      destacado?.imagenesUrl ??
+      destacado?.producto?.imagenes ??
+      destacado?.producto?.imagenesUrl ??
+      destacado?.productoImagenes ??
+      destacado?.productoImagenesUrl ??
+      destacado?.imagen ??
+      destacado?.imagenUrl ??
+      destacado?.producto?.imagen ??
+      destacado?.producto?.imagenUrl ??
+      null;
 
     return {
       key: `destacado-${destacado?.id ?? window.crypto?.randomUUID?.() ?? Date.now()}`,
@@ -1984,9 +2005,34 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const response = await window.apiClient.fetchFeaturedPublic();
-      const destacados = Array.isArray(response)
-        ? response.slice(0, 8).map(normalizeFeaturedProduct)
-        : [];
+      const destacadosRaw = Array.isArray(response) ? response.slice(0, 8) : [];
+
+      // Prefer product images coming from the full catalog (same source as productos.html)
+      let catalog = null;
+      try { catalog = await fetchCatalogData(); } catch (_) { catalog = null; }
+
+      const perfumeMap = new Map((catalog?.perfumes || []).map(p => [p.id, p]));
+      const vapeMap = new Map((catalog?.vapes || []).map(v => [v.id, v]));
+
+      const destacados = destacadosRaw.map((d) => {
+        const type = (d?.tipo || "").toLowerCase();
+        const id = d?.productoId;
+        // Try by declared type first
+        if (type === "perfume" && perfumeMap.has(id)) {
+          return normalizePerfume(perfumeMap.get(id));
+        }
+        if (type === "vape" && vapeMap.has(id)) {
+          return normalizeVape(vapeMap.get(id));
+        }
+        // If type is unknown or mismatched, try id on both maps
+        if (perfumeMap.has(id)) {
+          return normalizePerfume(perfumeMap.get(id));
+        }
+        if (vapeMap.has(id)) {
+          return normalizeVape(vapeMap.get(id));
+        }
+        return normalizeFeaturedProduct(d);
+      });
 
       if (!destacados.length) {
         const empty = document.createElement("p");
@@ -1995,13 +2041,89 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      const needsHydration = [];
+
       destacados.forEach((item) => {
         const card = buildProductCardElement(item, {
           badge: "Destacado",
           showMeta: false
         });
         container.appendChild(card);
+
+        if (!item?.image || item.image === FALLBACK_IMAGE_URL) {
+          needsHydration.push({ card, item });
+        }
       });
+
+      // First attempt: resolve from catalog lists (same data used in productos.html)
+      try {
+        if (needsHydration.length) {
+          const catalog = await fetchCatalogData().catch(() => null);
+          if (catalog && (Array.isArray(catalog.perfumes) || Array.isArray(catalog.vapes))) {
+            const perfumeMap = new Map((catalog.perfumes || []).map(p => [p.id, p]));
+            const vapeMap = new Map((catalog.vapes || []).map(v => [v.id, v]));
+            for (const entry of needsHydration) {
+              const { card, item } = entry;
+              const type = (item?.type || "").toLowerCase();
+              const id = item?.productId;
+              if (!id) continue;
+              const fromCatalog = type === "perfume" ? perfumeMap.get(id) : (type === "vape" ? vapeMap.get(id) : null);
+              if (fromCatalog) {
+                const src = getPrimaryImage(fromCatalog?.imagenes ?? fromCatalog?.imagenesUrl ?? null);
+                if (src && src !== FALLBACK_IMAGE_URL) {
+                  const img = card.querySelector(".product-card__figure img");
+                  if (img) img.src = src;
+                  card.dataset.productImage = src;
+                  const addBtn = card.querySelector("[data-action='add-to-cart']");
+                  if (addBtn) addBtn.dataset.productImage = src;
+                  entry.resolved = true;
+                }
+              }
+            }
+          }
+        }
+      } catch (_) { /* ignore */ }
+
+      // Second attempt: hydrate missing images by fetching product detail endpoints
+      for (const entry of needsHydration.filter(e => !e.resolved)) {
+        try {
+          const { card, item } = entry;
+          const type = (item?.type || "").toLowerCase();
+          const id = item?.productId;
+          if (!id) continue;
+
+          let detail = null;
+          if (type === "perfume" && typeof window.apiClient.fetchPerfume === "function") {
+            detail = await window.apiClient.fetchPerfume(id);
+          } else if (type === "vape" && typeof window.apiClient.fetchVape === "function") {
+            detail = await window.apiClient.fetchVape(id);
+          } else {
+            // Unknown type: try both
+            if (typeof window.apiClient.fetchPerfume === "function") {
+              try { detail = await window.apiClient.fetchPerfume(id); } catch (_) { detail = null; }
+            }
+            if (!detail && typeof window.apiClient.fetchVape === "function") {
+              try { detail = await window.apiClient.fetchVape(id); } catch (_) { detail = null; }
+            }
+          }
+
+          if (detail) {
+            const src = getPrimaryImage(detail?.imagenes ?? detail?.imagenesUrl ?? null);
+            if (src && src !== FALLBACK_IMAGE_URL) {
+              const img = card.querySelector(".product-card__figure img");
+              if (img) {
+                img.src = src;
+              }
+              // Keep dataset in sync for cart actions
+              card.dataset.productImage = src;
+              const addBtn = card.querySelector("[data-action='add-to-cart']");
+              if (addBtn) addBtn.dataset.productImage = src;
+            }
+          }
+        } catch (e) {
+          // Silently ignore hydration errors to avoid breaking UI
+        }
+      }
     } catch (error) {
       console.error("Error al cargar los destacados:", error);
       const message = document.createElement("p");
