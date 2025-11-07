@@ -78,11 +78,6 @@
     const accountButton = document.getElementById("account-button");
     const accountLabel = accountButton?.querySelector(".site-header__action-label");
 
-    if (!accountButton || !accountLabel) {
-      console.warn("⚠️ Elementos del header no encontrados");
-      return;
-    }
-
     const isAuth = await auth0Client.isAuthenticated();
     console.log("🔐 Autenticado:", isAuth);
 
@@ -92,6 +87,11 @@
 
       // 🟢 Registrar automáticamente en la base de datos
       await registerUserIfNeeded(user);
+
+      if (!accountButton || !accountLabel) {
+        console.warn("⚠️ Elementos del header no encontrados");
+        return;
+      }
 
       // 🔹 Actualizar UI con el nombre del usuario
       const username = user.nickname || user.username || user.given_name || user.name || "Usuario";
@@ -110,6 +110,11 @@
         }
       };
     } else {
+      if (!accountButton || !accountLabel) {
+        console.warn("⚠️ Elementos del header no encontrados");
+        return;
+      }
+
       // 🔹 Si no está logueado → mostrar botón de login
       accountLabel.textContent = "Mi cuenta";
       accountButton.setAttribute("aria-haspopup", "false");
