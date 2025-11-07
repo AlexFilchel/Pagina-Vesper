@@ -625,6 +625,39 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/^-+|-+$/g, "");
   }
 
+  function buildProductDetailUrl(dataset = {}) {
+    const base = new URL("producto.html", window.location.href);
+    const catalogId = dataset.catalogId || dataset.productCatalogId;
+    const catalogType = dataset.catalogType || dataset.productType;
+    const productName = dataset.productName || dataset.name;
+    const catalogKey = dataset.catalogKey || dataset.productKey;
+    const slug = dataset.productSlug || (typeof productName === "string" ? slugify(productName) : "");
+
+    if (catalogId) {
+      base.searchParams.set("id", catalogId);
+    }
+    if (catalogType) {
+      base.searchParams.set("type", catalogType);
+    }
+    if (catalogKey) {
+      base.searchParams.set("key", catalogKey);
+    }
+    if (slug) {
+      base.searchParams.set("slug", slug);
+    }
+    if (productName) {
+      base.searchParams.set("name", productName);
+    }
+
+    return base.toString();
+  }
+
+  function navigateToProductDetail(target) {
+    if (!target) return;
+    const url = buildProductDetailUrl(target.dataset || {});
+    window.location.href = url;
+  }
+
   function escapeRegExp(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
@@ -901,6 +934,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } = options;
 
     const cartId = String(product?.key ?? `${product?.type ?? "producto"}-${product?.productId ?? Date.now()}`);
+    const productSlug = slugify(product?.name ?? "");
     const subtitleParts = [];
     if (Number.isFinite(product?.ml)) {
       subtitleParts.push(`${product.ml} ml`);
@@ -922,6 +956,19 @@ document.addEventListener("DOMContentLoaded", () => {
     card.dataset.productOriginalPrice = String(product?.originalPrice ?? product?.price ?? 0);
     card.dataset.productType = product?.type ?? "producto";
     card.dataset.productImage = product?.image ?? FALLBACK_IMAGE_URL;
+    if (product?.productId != null) {
+      card.dataset.catalogId = String(product.productId);
+    }
+    card.dataset.catalogType = product?.decant ? "decant" : (product?.type ?? "producto");
+    if (product?.key) {
+      card.dataset.catalogKey = product.key;
+    }
+    if (productSlug) {
+      card.dataset.productSlug = productSlug;
+    }
+    card.tabIndex = 0;
+    card.setAttribute("role", "link");
+    card.setAttribute("aria-label", `Ver detalles de ${product?.name ?? "producto"}`);
     if (subtitleText) {
       card.dataset.productSubtitle = subtitleText;
     }
@@ -1009,6 +1056,17 @@ document.addEventListener("DOMContentLoaded", () => {
     button.dataset.productType = product?.type ?? "producto";
     button.dataset.productSubtitle = subtitleText;
     button.dataset.productImage = product?.image ?? FALLBACK_IMAGE_URL;
+    button.dataset.productQuantity = "1";
+    if (product?.productId != null) {
+      button.dataset.catalogId = String(product.productId);
+    }
+    button.dataset.catalogType = product?.decant ? "decant" : (product?.type ?? "producto");
+    if (product?.key) {
+      button.dataset.catalogKey = product.key;
+    }
+    if (productSlug) {
+      button.dataset.productSlug = productSlug;
+    }
     button.textContent = "Agregar al carrito";
     actions.appendChild(button);
 
@@ -1061,6 +1119,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const rawType = data.productType || data.type || data.category || context?.dataset?.productType || "";
     const type = typeof rawType === "string" && rawType.trim() ? rawType.trim() : "Producto";
 
+    let quantity = Number.parseInt(data.productQuantity || data.quantity || trigger.getAttribute("data-quantity") || "", 10);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      quantity = 1;
+    }
+    quantity = Math.min(10, Math.max(1, quantity));
+
     return {
       id: idBase,
       name,
@@ -1068,7 +1132,8 @@ document.addEventListener("DOMContentLoaded", () => {
       price,
       originalPrice,
       image,
-      type
+      type,
+      quantity
     };
   }
 
@@ -1305,9 +1370,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function addToCart(product) {
+    const quantityToAdd = Number.isFinite(product?.quantity) ? Math.min(10, Math.max(1, product.quantity)) : 1;
     const existing = cartState.items.find(item => item.id === product.id);
     if (existing) {
-      existing.quantity += 1;
+      existing.quantity += quantityToAdd;
     } else {
       cartState.items.push({
         id: product.id,
@@ -1317,7 +1383,7 @@ document.addEventListener("DOMContentLoaded", () => {
         originalPrice: product.originalPrice,
         image: product.image || "",
         type: product.type || "Producto",
-        quantity: 1
+        quantity: quantityToAdd
       });
     }
 
@@ -1417,10 +1483,12 @@ document.addEventListener("DOMContentLoaded", () => {
     toast.className = "cart-toast";
 
     const typeLabel = product.type ? product.type.charAt(0).toUpperCase() + product.type.slice(1) : "Producto";
+    const quantityLabel = product.quantity > 1 ? ` x${product.quantity}` : "";
+    const totalPrice = formatPrice((product.price ?? 0) * (product.quantity ?? 1));
     toast.innerHTML = `
-      <p class="cart-toast__label">Agregaste ${typeLabel}</p>
+      <p class="cart-toast__label">Agregaste ${typeLabel}${quantityLabel}</p>
       <strong>${product.name}</strong>
-      <span>${formatPrice(product.price)}</span>
+      <span>${totalPrice}</span>
     `;
 
     toastLayer.appendChild(toast);
@@ -1492,6 +1560,28 @@ document.addEventListener("DOMContentLoaded", () => {
     if (product) {
       addToCart(product);
     }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (event.defaultPrevented) return;
+    const card = event.target.closest?.(".product-card");
+    if (!card) return;
+    if (event.target.closest?.("[data-action='add-to-cart']")) {
+      return;
+    }
+    navigateToProductDetail(card);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const card = event.target.closest?.(".product-card");
+    if (!card) return;
+    const tagName = event.target.tagName?.toLowerCase() ?? "";
+    if (["button", "a", "input", "textarea", "select", "label"].includes(tagName)) {
+      return;
+    }
+    event.preventDefault();
+    navigateToProductDetail(card);
   });
 
   document.addEventListener("keydown", (event) => {
