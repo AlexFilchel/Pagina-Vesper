@@ -473,7 +473,7 @@ body.filters-open {
   left: 50%;
   transform: translate(-50%, 400%); /* empieza más abajo, fuera de vista */
   opacity: 0;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 /* Cuando se hace hover en la tarjeta */
