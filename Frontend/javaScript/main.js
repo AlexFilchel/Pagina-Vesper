@@ -2012,11 +2012,167 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function setupProductsScrollArea(scrollArea) {
+    if (!scrollArea || scrollArea.dataset.scrollBehaviorAttached === "true") {
+      return;
+    }
+
+    scrollArea.dataset.scrollBehaviorAttached = "true";
+
+    const getScrollMetrics = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollArea;
+      const maxScroll = Math.max(0, scrollHeight - clientHeight);
+      return {
+        scrollTop,
+        scrollHeight,
+        clientHeight,
+        maxScroll,
+        atTop: scrollTop <= 0,
+        atBottom: scrollTop >= maxScroll - 1
+      };
+    };
+
+    const clampScrollTop = (value, metrics) => {
+      const context = metrics ?? getScrollMetrics();
+      return Math.min(context.maxScroll, Math.max(0, value));
+    };
+
+    const handleWheel = (event) => {
+      if (!event || event.defaultPrevented || typeof event.deltaY !== "number") {
+        return;
+      }
+
+      const { deltaY } = event;
+      const metrics = getScrollMetrics();
+      if (metrics.maxScroll <= 0) {
+        return;
+      }
+      if ((deltaY < 0 && metrics.atTop) || (deltaY > 0 && metrics.atBottom)) {
+        return;
+      }
+
+      event.preventDefault();
+      scrollArea.scrollTop = clampScrollTop(metrics.scrollTop + deltaY, metrics);
+    };
+
+    let touchStartY = 0;
+
+    const handleTouchStart = (event) => {
+      if (!event.touches || event.touches.length !== 1) {
+        return;
+      }
+      touchStartY = event.touches[0].clientY;
+    };
+
+    const handleTouchMove = (event) => {
+      if (!event.touches || event.touches.length !== 1) {
+        return;
+      }
+
+      const currentY = event.touches[0].clientY;
+      const delta = touchStartY - currentY;
+      const metrics = getScrollMetrics();
+      if (metrics.maxScroll <= 0) {
+        touchStartY = currentY;
+        return;
+      }
+
+      if ((delta < 0 && metrics.atTop) || (delta > 0 && metrics.atBottom)) {
+        touchStartY = currentY;
+        return;
+      }
+
+      event.preventDefault();
+      scrollArea.scrollTop = clampScrollTop(metrics.scrollTop + delta, metrics);
+      touchStartY = currentY;
+    };
+
+    const handleKeydown = (event) => {
+      if (!event || event.defaultPrevented) {
+        return;
+      }
+
+      const target = event.target;
+      if (target) {
+        const tagName = target.tagName ? target.tagName.toLowerCase() : "";
+        const isEditable = target.isContentEditable;
+        if (isEditable || tagName === "input" || tagName === "textarea" || tagName === "select" || tagName === "button") {
+          return;
+        }
+      }
+
+      const actionableKeys = [
+        "ArrowDown",
+        "ArrowUp",
+        "PageDown",
+        "PageUp",
+        "Home",
+        "End",
+        "Space"
+      ];
+
+      if (!actionableKeys.includes(event.key)) {
+        return;
+      }
+
+      const metrics = getScrollMetrics();
+      if (metrics.maxScroll <= 0) {
+        return;
+      }
+      let delta = 0;
+
+      switch (event.key) {
+        case "ArrowDown":
+          delta = 40;
+          break;
+        case "ArrowUp":
+          delta = -40;
+          break;
+        case "PageDown":
+          delta = metrics.clientHeight;
+          break;
+        case "PageUp":
+          delta = -metrics.clientHeight;
+          break;
+        case "Home":
+          delta = -metrics.scrollTop;
+          break;
+        case "End":
+          delta = metrics.scrollHeight - metrics.clientHeight - metrics.scrollTop;
+          break;
+        case "Space":
+          delta = event.shiftKey ? -metrics.clientHeight : metrics.clientHeight;
+          break;
+        default:
+          break;
+      }
+
+      if (delta === 0) {
+        return;
+      }
+
+      if ((delta < 0 && metrics.atTop) || (delta > 0 && metrics.atBottom)) {
+        return;
+      }
+
+      event.preventDefault();
+      scrollArea.scrollTop = clampScrollTop(metrics.scrollTop + delta, metrics);
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("keydown", handleKeydown, { passive: false });
+  }
+
   function initializeProductsPage() {
     const productsContainer = document.getElementById("productos-lista");
     if (!productsContainer) {
       return;
     }
+
+    const scrollArea = document.querySelector('.productos');
+    setupProductsScrollArea(scrollArea);
 
     const typeInputs = document.querySelectorAll('input[name="filter-type"]');
     const genderInputs = document.querySelectorAll('input[name="filter-gender"]');

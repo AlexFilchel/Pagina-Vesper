@@ -2452,12 +2452,14 @@ body.is-cart-open {
   overflow: hidden;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   min-height: 100%;
+  transform-origin: center;
 }
 
 .product-card:hover,
 .product-card:focus-within {
-  transform: translateY(-6px);
+  transform: translateY(-6px) scale(1.03);
   box-shadow: 0 30px 60px -30px rgba(0, 74, 173, 0.35);
+  z-index: 2;
 }
 
 .product-card__figure {
@@ -2480,7 +2482,8 @@ body.is-cart-open {
 
 
 .product-card__body {
-  padding: 18px clamp(16px, 3vw, 22px) clamp(20px, 3vw, 24px);
+  position: relative;
+  padding: 18px clamp(16px, 3vw, 22px) clamp(80px, 10vw, 96px);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -2568,17 +2571,17 @@ body.is-cart-open {
 }
 
 .product-card__actions {
+  position: absolute;
+  left: clamp(16px, 3vw, 22px);
+  right: clamp(16px, 3vw, 22px);
+  bottom: clamp(24px, 3vw, 30px);
   display: flex;
   justify-content: center;
-  width: 100%;
+  width: auto;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(12px);
-  transition: opacity 0.2s ease, transform 0.2s ease, margin-top 0.2s ease, max-height 0.2s ease;
-  max-height: 0;
-  overflow: hidden;
-  margin-top: 0;
-  padding-top: 0;
+  transform: translateY(16px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .product-card:hover .product-card__actions,
@@ -2586,7 +2589,4 @@ body.is-cart-open {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
-  max-height: 80px;
-  margin-top: 14px;
-  padding-top: 6px;
 }
