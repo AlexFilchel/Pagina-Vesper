@@ -1,0 +1,254 @@
+package org.vesper.service.payment;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.vesper.dto.PreferenciaResponseDTO;
+import org.vesper.dto.VentaRequest;
+import org.vesper.entity.DetalleVenta;
+import org.vesper.entity.Producto;
+import org.vesper.entity.RegistroPago;
+import org.vesper.entity.Venta;
+import org.vesper.exception.MercadoPagoIntegrationException;
+import org.vesper.exception.ResourceNotFoundException;
+import org.vesper.repo.ProductoRepository;
+import org.vesper.repo.RegistroPagoRepository;
+import org.vesper.repo.VentaRepository;
+import org.vesper.service.VentaService;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mercadopago.client.payment.PaymentClient;
+import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
+import com.mercadopago.client.preference.PreferenceClient;
+import com.mercadopago.client.preference.PreferenceItemRequest;
+import com.mercadopago.client.preference.PreferenceRequest;
+import com.mercadopago.exceptions.MPApiException;
+import com.mercadopago.exceptions.MPException;
+import com.mercadopago.resources.payment.Payment;
+import com.mercadopago.resources.preference.Preference;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class MercadoPagoService implements IPaymentStrategy<String> {
+
+    private final VentaRepository ventaRepository;
+    private final VentaService ventaService;
+    private final RegistroPagoRepository registroPagoRepository;
+    private final ProductoRepository productoRepository;
+    private final ObjectMapper objectMapper;
+
+    @Value("${mercadopago.base.url}")
+    private String baseUrl;
+
+    /**
+     * Orquesta la creación de una venta y su correspondiente preferencia de pago en Mercado Pago.
+     * 1. Registra la Venta en la base de datos con estado PENDIENTE.
+     * 2. Usa el ID de la Venta como referencia externa para Mercado Pago.
+     * 3. Crea la preferencia de pago y devuelve el link para que el usuario pague.
+     *
+     * @param ventaRequest Los detalles de los productos a comprar.
+     * @param jwt          El token del usuario autenticado.
+     * @return Un DTO con el ID de la venta y la URL de pago.
+     */
+    @Override
+    @Transactional
+    public PreferenciaResponseDTO crearOrdenDePago(VentaRequest ventaRequest, Jwt jwt) {
+        // 1. Crear la Venta usando la lógica de VentaService
+        Venta venta = ventaService.crearVentaPendiente(ventaRequest, jwt);
+
+        try {
+            // 2. Preparar datos para Mercado Pago
+            String externalRef = String.valueOf(venta.getId());
+            String notificationUrl = baseUrl + "/api/public/payments/webhook-mp";
+
+            List<PreferenceItemRequest> items = new ArrayList<>();
+            for (DetalleVenta detalle : venta.getDetalles()) {
+                PreferenceItemRequest item = PreferenceItemRequest.builder()
+                        .id(detalle.getProductoId().toString())
+                        .title(detalle.getNombreProducto())
+                        .quantity(detalle.getCantidad())
+                        .unitPrice(BigDecimal.valueOf(detalle.getPrecioUnitario()))
+                        .currencyId("ARS")
+                        .build();
+                items.add(item);
+            }
+
+            // URLs de retorno
+            PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
+                    .success(baseUrl + "/api/public/payments/success")
+                    .failure(baseUrl + "/api/public/payments/failure")
+                    .pending(baseUrl + "/api/public/payments/pending")
+                    .build();
+
+            // Construcción de la preferencia
+            PreferenceRequest request = PreferenceRequest.builder()
+                    .items(items)
+                    .externalReference(externalRef) // ID de la Venta
+                    .notificationUrl(notificationUrl)
+                    .backUrls(backUrls)
+                    .autoReturn("approved")
+                    .build();
+
+            PreferenceClient client = new PreferenceClient();
+            // 3. Crear la preferencia en Mercado Pago
+            Preference preference = client.create(request);
+
+            // 4. Devolver el ID de la preferencia y la URL de pago
+            return new PreferenciaResponseDTO(preference.getId(), preference.getInitPoint());
+        } catch (MPApiException e) {
+            String apiError = e.getApiResponse() != null ? e.getApiResponse().getContent() : e.getMessage();
+            //logger.error("Error de API de Mercado Pago (status {}): {}", e.getStatusCode(), apiError, e);
+            throw new MercadoPagoIntegrationException("Mercado Pago rechazó la solicitud: " + apiError);
+        } catch (MPException e) {
+            //logger.error("Fallo al comunicarse con Mercado Pago: {}", e.getMessage(), e);
+            throw new MercadoPagoIntegrationException("No fue posible comunicarse con Mercado Pago. Intente nuevamente.");
+        }
+    }
+
+    /**
+     * Procesa una notificación de webhook de Mercado Pago.
+     * Extrae el ID del pago, obtiene el estado actualizado desde la API de MP,
+     * y actualiza la venta y el registro de pago correspondientes.
+     * Si el pago es aprobado, descuenta el stock de los productos.
+     *
+     * @param data El cuerpo JSON de la notificación.
+     * @throws MPException  Si hay un error al comunicarse con Mercado Pago.
+     * @throws IOException    Si hay un error al parsear el JSON.
+     * @throws MPApiException
+     */
+    @Override
+    @Transactional
+    public void procesarWebhook(String data) throws IOException, MPApiException {
+        //logger.info("📦 Webhook recibido: {}", rawPayload);
+
+        // 1️⃣ Parsear el JSON flexible
+        Map<String, Object> payload = objectMapper.readValue(data, new TypeReference<>() {
+        });
+        Long paymentId = null;
+
+        // 🔹 Caso A: estructura moderna con "data.id"
+        if (payload.containsKey("data")) {
+            Map<?, ?> dataMap = (Map<?, ?>) payload.get("data");
+            if (dataMap != null && dataMap.get("id") != null) {
+                paymentId = Long.valueOf(dataMap.get("id").toString());
+            }
+        }
+
+        // 🔹 Caso B: estructura simplificada con "id" en la raíz
+        if (paymentId == null && payload.get("id") != null) {
+            paymentId = Long.valueOf(payload.get("id").toString());
+        }
+
+        // 🔹 Caso C: formato legacy con "resource" (ej. {"resource":"131049990968","topic":"payment"})
+        if (paymentId == null && payload.get("resource") != null) {
+            String resource = payload.get("resource").toString();
+            // Si el resource es solo el número (a veces es URL completa)
+            if (resource.matches("\\d+")) {
+                paymentId = Long.valueOf(resource);
+            } else if (resource.contains("/")) {
+                // Extraer el último número de la URL (por ejemplo, /v1/payments/131049990968)
+                try {
+                    String idPart = resource.substring(resource.lastIndexOf('/') + 1);
+                    paymentId = Long.valueOf(idPart);
+                } catch (NumberFormatException ex) {
+                    //logger.warn("⚠️ No se pudo extraer un número válido de 'resource': {}", resource);
+                }
+            }
+        }
+
+        if (paymentId == null) {
+            throw new IllegalArgumentException("Estructura de webhook inesperada: falta 'data.id', 'id' o 'resource'");
+        }
+
+        //logger.info("🔍 Procesando notificación de pago con ID {}", paymentId);
+
+        // 2️⃣ Obtener el estado actualizado del pago desde la API de Mercado Pago
+        Payment payment;
+        try {
+            PaymentClient paymentClient = new PaymentClient();
+            payment = paymentClient.get(paymentId);
+        } catch (MPApiException e) {
+            //logger.error("❌ Error API Mercado Pago (status {}): {}", e.getStatusCode(), e.getMessage());
+            throw e;
+        } catch (MPException e) {
+            //logger.error("🌐 Fallo al comunicarse con MP para pago {}: {}", paymentId, e.getMessage(), e);
+            throw new MercadoPagoIntegrationException("No fue posible obtener los detalles del pago desde Mercado Pago.");
+        }
+
+        // 3️⃣ Buscar la venta asociada
+        Long ventaId = Long.valueOf(payment.getExternalReference());
+        Venta venta = ventaRepository.findById(ventaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con id: " + ventaId));
+
+        // 4️⃣ Crear o actualizar registro del pago
+        RegistroPago registro = registroPagoRepository.findByMpPaymentId(String.valueOf(paymentId))
+                .orElseGet(RegistroPago::new);
+
+        registro.setMpPaymentId(String.valueOf(paymentId));
+        registro.setStatus(payment.getStatus());
+        registro.setStatusDetail(payment.getStatusDetail());
+        registro.setAmount(payment.getTransactionAmount().floatValue());
+        registro.setPaymentMethod(payment.getPaymentMethodId());
+        if (payment.getDateApproved() != null) {
+            registro.setDateApproved(payment.getDateApproved().toLocalDateTime());
+        }
+        registro.setVenta(venta);
+        registroPagoRepository.save(registro);
+
+        // 5️⃣ Actualizar venta y stock
+        actualizarEstadoVentaYStock(venta, payment.getStatus());
+
+        //logger.info("✅ Webhook procesado correctamente. Venta {} actualizada a estado '{}'.",
+        //venta.getId(), payment.getStatus();
+    }
+
+
+    //METODOS AUXILIARES
+
+    private void actualizarEstadoVentaYStock(Venta venta, String estadoPago) {
+        String estadoAnterior = venta.getEstado();
+
+        switch (estadoPago) {
+            case "approved":
+                venta.setEstado(Venta.EstadoVenta.COMPLETADA.toString());
+                // Solo descontar stock si la venta no estaba ya completada
+                if (!Venta.EstadoVenta.COMPLETADA.toString().equals(estadoAnterior)) {
+                    descontarStock(venta);
+                }
+                break;
+            case "in_process":
+            case "pending":
+                venta.setEstado(Venta.EstadoVenta.PENDIENTE.toString());
+                break;
+            case "rejected":
+                venta.setEstado(Venta.EstadoVenta.RECHAZADA.toString());
+                break;
+            default:
+                venta.setEstado("DESCONOCIDO");
+                //logger.warn("Estado de pago desconocido '{}' para la venta {}", estadoPago, venta.getId());
+                break;
+        }
+        ventaRepository.save(venta);
+    }
+
+    private void descontarStock(Venta venta) {
+        for (DetalleVenta detalle : venta.getDetalles()) {
+            Producto producto = productoRepository.findById(detalle.getProductoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + detalle.getProductoId()));
+            producto.setStock(producto.getStock() - detalle.getCantidad());
+            productoRepository.save(producto);
+        }
+        //logger.info("Stock descontado para la venta completada #{}", venta.getId());
+    }
+
+}

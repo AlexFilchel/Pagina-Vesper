@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Pendiente - Vesper</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link rel="icon" href="img/vesper_logo_sin_fondo.png" type="image/x-icon">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pago.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="site-header" role="banner">
+      <div class="container site-header__top">
+        <a href="index.html" class="site-header__logo" aria-label="Vesper - Página de inicio">
+          <img src="img/vesper_logo_sin_fondo.png" alt="Logo Vesper" class="img-fluid logo">
+        </a>
+      </div>
+    </header>
+
+    <main>
+        <div class="payment-status-container">
+            <div class="payment-status-icon payment-status-icon--pending">...</div>
+            <h1>Tu pago está pendiente</h1>
+            <p>Tu pago está siendo procesado. Te notificaremos por correo electrónico cuando se complete.</p>
+            <a href="index.html" class="btn btn--primary">Volver a la tienda</a>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer" role="contentinfo">
+      <div class="container footer-inner">
+        
+        <div class="footer-links footer-categories">
+          <h4>Categorías</h4>
+          <ul>
+            <li><a href="productos.html?categoria=perfumes">Perfumes</a></li>
+            <li><a href="productos.html?categoria=decants">Decants</a></li>
+          </ul>
+        </div>
+    
+        <div class="footer-links">
+          <h4>Enlaces útiles</h4>
+          <ul>
+            <li><a href="#faq-envio">Preguntas Frecuentes</a></li>
+            <li><a href="#faq-pago">Métodos de Pago</a></li>
+            <li><a href="#faq-decant">Sobre Decants</a></li>
+          </ul>
+        </div>
+    
+        <div class="footer-contact">
+          <h4>Contacto</h4>
+          <address>
+            📧 <a href="mailto:info@vesper.com">info@vesper.com</a><br>
+            📞 <a href="tel:+541112345678">+54 11 1234-5678</a><br>
+            📍 Mendoza, Argentina
+          </address>
+        </div>
+    
+        <div class="footer-social">
+          <h4>Seguinos en</h4>
+          <div class="social-icons">
+            <a href="https://www.instagram.com/vesper.arr/" target="_blank" aria-label="Instagram">
+              <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://www.tiktok.com/@vesper.arr" target="_blank" aria-label="TikTok">
+              <i class="fa-brands fa-tiktok"></i>
+            </a>
+          </div>
+        </div>
+    
+      </div>
+    </footer>
+
+    <script>
+    // Define la estructura de un carrito vacío
+    const carritoVacio = {
+      items: []
+    };
+    
+    // Escribe el carrito vacío en localStorage, "limpiándolo"
+    window.localStorage.setItem('vesper.cart.v1', JSON.stringify(carritoVacio));
+  </script>
+</body>
+</html>

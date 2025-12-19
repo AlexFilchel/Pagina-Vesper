@@ -1,0 +1,68 @@
+services:
+  app:
+    container_name: vesper_app
+    build: .
+    ports:
+      - "80:8080" # Mapea puerto 80 (Host/VPS) a 8080 (Contenedor)
+    environment:
+      - TZ=America/Argentina/Buenos_Aires
+      # Configuración de Base de Datos
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      # Configuración de Cloudinary
+      - CLOUDINARY_URL=${CLOUDINARY_URL}
+      # Configuración de Auth0
+      - AUTH0_ISSUER_URI=${AUTH0_ISSUER_URI}
+      - AUTH0_AUDIENCE=${AUTH0_AUDIENCE}
+      # Configuración de CORS
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      # Configuración de la URL pública de la aplicación
+      - APP_PUBLIC_URL=${APP_PUBLIC_URL}
+      # Configuración de UALA
+      - UALA_USERNAME=${UALA_USERNAME}
+      - UALA_CLIENT_ID=${UALA_CLIENT_ID}
+      - UALA_CLIENT_SECRET=${UALA_CLIENT_SECRET}
+      # MERCADO PAGO
+      - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
+      - MP_BASE_URL=${MP_BASE_URL}
+      - MP_PUBLIC_KEY=${MP_PUBLIC_KEY}
+      - MP_WEBHOOK_SECRET=${MP_WEBHOOK_SECRET}
+      # URLS DE LA APP
+      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL}
+      - APP_PUBLIC_URL=${APP_PUBLIC_URL}
+    depends_on:
+        db:
+          condition: service_healthy # <--- Esto evita el error "Connection Refused"
+    networks:
+      - vesper-net
+
+  db:
+    container_name: vesper_db
+    image: mysql:8.0
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_DATABASE=vesper_db
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - TZ=America/Argentina/Buenos_Aires
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - vesper-net
+
+volumes:
+  # Volumen para persistencia de datos MySQL
+  db_data:
+
+networks:
+  # Red para comunicación interna entre contenedores
+  vesper-net:
+    driver: bridge

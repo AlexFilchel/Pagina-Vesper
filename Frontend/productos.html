@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productos - Vesper</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/productos.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link rel="icon" href="img/vesper_logo_sin_fondo.png" type="image/x-icon">
+</head>
+<body>
+
+  <!-- Banner superior -->
+ <aside class="top-banner" aria-label="Promociones vigentes">
+  <div class="banner-content">
+    <p>
+      💳 6 cuotas sin interés a partir de $30.000 &nbsp;&nbsp;&nbsp; 
+      🚚 Envío gratis en compras superiores a $50.000 &nbsp;&nbsp;&nbsp; 
+      💰 20% OFF pagando por transferencia
+    </p>
+  </div>
+</aside>
+
+
+<!-- Header -->
+<header class="site-header" role="banner">
+  <div class="container site-header__top">
+    <button class="menu-toggle" aria-label="Abrir menú">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <a href="index.html" class="site-header__logo" aria-label="Vesper - Página de inicio">
+      <img src="img/vesper_logo_sin_fondo.png"Logo Vesper" class="img-fluid logo">
+    </a>
+
+    <form class="site-header__search" role="search" aria-label="Buscador de productos">
+      <label class="visually-hidden" for="search-input">Buscar en Vesper</label>
+      <input type="search" id="search-input" name="search" placeholder="Buscá por productos, marcas y categorías" aria-label="Buscar perfumes y marcas">
+      <button type="submit" aria-label="Buscar">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+    </form>
+
+    <div class="site-header__actions">
+      <!-- Botón de búsqueda en mobile -->
+      <button class="search-toggle" aria-label="Abrir buscador">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+
+      <!-- Acción Mi cuenta -->
+      <div class="site-header__action site-header__action--account">
+        <button class="site-header__action-btn" type="button" id="account-button" aria-haspopup="false" aria-expanded="false">
+          <span class="site-header__action-icon">
+            <span class="material-symbols-outlined">person_outline</span>
+          </span>
+          <span class="site-header__action-label">Mi cuenta</span>
+        </button>
+      </div>
+
+
+      <a href="#" class="site-header__action" id="link-carrito" aria-haspopup="dialog">
+  <span class="site-header__action-icon">
+    <span class="material-symbols-outlined">shopping_cart</span>
+    <span class="cart-count-badge" id="cart-count" aria-live="polite">0</span>
+  </span>
+  <span class="site-header__action-label"></span>
+</a>
+    </div>
+  </div>
+</header>
+
+
+<!-- Navegación principal -->
+<nav class="site-header__bottom" aria-label="Categorías principales">
+  <div class="container">
+    <ul class="main-nav">
+
+      <!-- Perfumes -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Perfumes <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-perfumes" class="main-nav__dropdown" role="menu">
+          <ul class="main-nav__list">
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="FEMENINO">Femeninos</a></li>
+          </ul>
+        </div>
+      </li>
+
+      <!-- Decants -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Decants <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-decants" class="main-nav__dropdown" role="menu">
+          <ul class="main-nav__list">
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="FEMENINO">Femeninos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-tag="combo">Combos</a></li>
+          </ul>
+        </div>
+      </li>
+
+      <!-- Marcas -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Marcas <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-marcas" class="main-nav__dropdown main-nav__dropdown--columns" role="menu">
+          <div class="main-nav__column">
+            <h4 class="main-nav__column-title">Perfumes</h4>
+            <ul class="main-nav__list" data-brand-list="perfumes" aria-label="Marcas de perfumes"></ul>
+          </div>
+        </div>
+      </li>
+
+      <!-- Preguntas Frecuentes -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Preguntas Frecuentes <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-faq" class="main-nav__dropdown" role="menu">
+          <ul class="main-nav__list">
+            <li><a href="#faq-envio" role="menuitem">¿Cuánto tarda el envío?</a></li>
+            <li><a href="#faq-decant" role="menuitem">¿Qué es un decant?</a></li>
+            <li><a href="#faq-pago" role="menuitem">¿Puedo pagar contra entrega?</a></li>
+          </ul>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+</nav>
+
+  <!-- Buscador flotante para mobile -->
+  <div class="mobile-search-overlay" aria-hidden="true">
+    <form class="mobile-search-form" role="search" aria-label="Buscador de productos">
+      <label class="visually-hidden" for="mobile-search-input">Buscar en Vesper</label>
+      <input type="search" id="mobile-search-input" name="mobile-search" placeholder="Buscá por productos, marcas y categorías" autocomplete="off">
+      <button type="submit" aria-label="Buscar">
+        <span class="material-symbols-outlined" aria-hidden="true">search</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Contenido principal -->
+  <main class="container productos-page">
+    <aside class="filtros" id="filters-panel" aria-hidden="false">
+    <div class="filtros-header">
+        <h3>Filtros</h3>
+        <div class="filtros-header__actions">
+          <button class="filtros-limpiar" type="button">Limpiar todo</button>
+          <button class="filters-close" type="button" aria-label="Cerrar filtros">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          </button>
+        </div>
+    </div>
+
+    <div class="filtro" data-filter-group="type">
+        <h4>Tipo de Producto</h4>
+        <ul>
+          <li><label><input type="checkbox" name="filter-type" value="perfume">Perfume</label></li>
+          <li><label><input type="checkbox" name="filter-type" value="decant">Decant</label></li>
+        </ul>
+    </div>
+
+    <div class="filtro" data-filter-group="gender">
+        <h4>Género</h4>
+        <ul>
+          <li><label><input type="checkbox" name="filter-gender" value="MASCULINO">Masculino</label></li>
+          <li><label><input type="checkbox" name="filter-gender" value="FEMENINO">Femenino</label></li>
+          <li><label><input type="checkbox" name="filter-gender" value="UNISEX">Unisex</label></li>
+        </ul>
+    </div>
+
+    <div class="filtro filtro-marcas" data-filter-group="brand">
+        <h4>Marca</h4>
+        <div class="filtro-marcas__grupo" data-brand-group="perfume">
+          <h5>Perfumes</h5>
+          <ul aria-label="Marcas de perfumes"></ul>
+        </div>
+    </div>
+
+      <div class="filtro filtro-precio">
+        <h4>Rango de Precio</h4>
+        <input type="range" min="0" max="600000" step="1000" value="600000" id="filter-price">
+        <div class="precio-rango">
+          <span>$0</span> - <span id="filter-price-value">$600.000</span>
+        </div>
+      </div>
+    </aside>
+
+    <section class="productos">
+
+      <div class="productos-toolbar" aria-label="Herramientas de listado de productos">
+        <button class="filters-toggle" type="button" aria-controls="filters-panel" aria-expanded="false">
+          Filtros
+        </button>
+        <div class="sort-dropdown">
+          <button class="sort-button" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <span class="sort-button__label">Ordenar</span>
+            <span class="sort-button__icon" aria-hidden="true">↕</span>
+          </button>
+          <ul class="sort-options" role="listbox">
+            <li><button type="button" role="option" data-sort="price-asc">Precio: Menor a Mayor</button></li>
+            <li><button type="button" role="option" data-sort="price-desc">Precio: Mayor a Menor</button></li>
+            <li><button type="button" role="option" data-sort="name-asc">A - Z</button></li>
+            <li><button type="button" role="option" data-sort="name-desc">Z - A</button></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="productos-grid" id="productos-lista">
+        <!-- Aquí van los productos cargados desde la API con JS -->
+      </div>
+    </section>
+  </main>
+
+  <div class="filters-overlay" id="filters-overlay" aria-hidden="true"></div>
+
+  <!-- Footer -->
+  <footer class="main-footer" role="contentinfo">
+  <div class="container footer-inner">
+    
+    <!-- 🔹 Categorías -->
+    <div class="footer-links footer-categories">
+      <h4>Categorías</h4>
+      <ul>
+        <li><a href="productos.html?categoria=perfumes">Perfumes</a></li>
+        <li><a href="productos.html?categoria=decants">Decants</a></li>
+      </ul>
+    </div>
+
+    <!-- 🔹 Enlaces útiles -->
+    <div class="footer-links">
+      <h4>Enlaces útiles</h4>
+      <ul>
+        <li><a href="#faq-envio">Preguntas Frecuentes</a></li>
+        <li><a href="#faq-pago">Métodos de Pago</a></li>
+        <li><a href="#faq-decant">Sobre Decants</a></li>
+      </ul>
+    </div>
+
+    <!-- 🔹 Contacto -->
+    <div class="footer-contact">
+      <h4>Contacto</h4>
+      <address>
+        📧 <a href="mailto:info@vesper.com">info@vesper.com</a><br>
+        📞 <a href="tel:+541112345678">+54 11 1234-5678</a><br>
+        📍 Mendoza, Argentina
+      </address>
+    </div>
+
+    <!-- 🔹 Seguinos en -->
+    <div class="footer-social">
+      <h4>Seguinos en</h4>
+      <div class="social-icons">
+        <a href="https://www.instagram.com/vesper.arr/" target="_blank" aria-label="Instagram">
+          <i class="fa-brands fa-instagram"></i>
+        </a>
+        <a href="https://www.tiktok.com/@vesper.arr" target="_blank" aria-label="TikTok">
+          <i class="fa-brands fa-tiktok"></i>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</footer>
+
+  <!-- Carrito de compras -->
+  <div class="cart-modal" id="cart-modal" aria-hidden="true">
+    <div class="cart-modal__overlay" role="presentation"></div>
+    <aside class="cart-modal__panel" role="dialog" aria-labelledby="cartModalTitle">
+      <header class="cart-modal__header">
+        <div>
+          <h2 id="cartModalTitle">Tu carrito</h2>
+          <p class="cart-modal__subtitle">Revisa tus productos antes de continuar</p>
+        </div>
+        <button class="cart-modal__close" type="button" aria-label="Cerrar carrito">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </header>
+      <div class="cart-modal__body">
+        <div class="cart-empty-state" id="cart-empty-state">
+          <span class="material-symbols-outlined cart-empty-state__icon" aria-hidden="true">shopping_bag</span>
+          <h3>Tu carrito está vacío</h3>
+          <p>Agrega algunos productos para comenzar tu compra</p>
+          <button type="button" class="btn btn--primary cart-empty-state__cta">Seguir Comprando</button>
+        </div>
+        <div class="cart-items" id="cart-items" aria-live="polite"></div>
+        <section class="shipping-section" id="shipping-section" aria-labelledby="shippingTitle">
+          <h3 id="shippingTitle">Medios de envío</h3>
+          <form class="shipping-form" id="shipping-form">
+            <label class="visually-hidden" for="shipping-zip">Código postal</label>
+            <input type="text" id="shipping-zip" name="shippingZip" placeholder="Tu código postal" inputmode="numeric" autocomplete="postal-code">
+            <button type="submit">CALCULAR</button>
+          </form>
+          <p class="shipping-result" id="shipping-result" aria-live="polite"></p>
+        </section>
+      </div>
+      <footer class="summary-section" id="summary-section">
+        <div class="summary-line">
+          <span id="summary-count">0 productos</span>
+          <span id="summary-subtotal">$0</span>
+        </div>
+        <div class="summary-line summary-line--total">
+          <div class="summary-total__label">
+            <span>Total</span>
+            <small id="summary-shipping-note">Envío a calcular</small>
+          </div>
+          <span id="summary-total">$0</span>
+        </div>
+        <div class="summary-actions">
+          <button type="button" class="btn btn--primary summary-actions__primary">Iniciar compra</button>
+          <button type="button" class="btn summary-actions__secondary">Ver más productos</button>
+        </div>
+      </footer>
+    </aside>
+  </div>
+
+  <div class="cart-toast-layer" aria-live="polite" aria-atomic="true"></div>
+
+  <div id="profile-modal" class="profile-modal" aria-hidden="true">
+    <div class="profile-modal__overlay" data-profile-close></div>
+    <div class="profile-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title" tabindex="-1">
+      <button type="button" class="profile-modal__close" data-profile-close aria-label="Cerrar">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="profile-modal__header">
+        <h2 id="profile-modal-title">Mi Perfil</h2>
+        <p class="profile-modal__subtitle">Gestioná tus datos personales</p>
+      </header>
+      <div class="profile-modal__body">
+        <div id="profile-loading" class="profile-modal__loading" aria-live="polite">Cargando tus datos...</div>
+        <form id="profile-form" class="profile-modal__form" novalidate>
+          <div class="profile-modal__field-group">
+            <label for="profile-username">Username</label>
+            <input type="text" id="profile-username" name="username" data-static="true" disabled>
+          </div>
+          <div class="profile-modal__field-grid">
+            <div class="profile-modal__field-group">
+              <label for="profile-first-name">Nombre</label>
+              <input type="text" id="profile-first-name" name="firstName" autocomplete="given-name" required>
+            </div>
+            <div class="profile-modal__field-group">
+              <label for="profile-last-name">Apellido</label>
+              <input type="text" id="profile-last-name" name="lastName" autocomplete="family-name" required>
+            </div>
+          </div>
+          <div class="profile-modal__field-group">
+            <label for="profile-email">Email</label>
+            <input type="email" id="profile-email" name="email" data-static="true" disabled>
+          </div>
+          <div class="profile-modal__field-grid">
+            <div class="profile-modal__field-group">
+              <label for="profile-dni">DNI</label>
+              <input type="text" id="profile-dni" name="dni" inputmode="numeric" autocomplete="off" required>
+            </div>
+            <div class="profile-modal__field-group">
+              <label for="profile-phone">Teléfono</label>
+              <input type="tel" id="profile-phone" name="phone" autocomplete="tel" required>
+            </div>
+          </div>
+        </form>
+        <p id="profile-feedback" class="profile-modal__feedback" role="alert" hidden></p>
+      </div>
+      <footer class="profile-modal__footer">
+        <button type="submit" form="profile-form" class="btn btn--primary" id="profile-submit">Actualizar Datos</button>
+        <button type="button" class="btn btn--secondary" id="profile-logout">Cerrar sesión</button>
+      </footer>
+    </div>
+  </div>
+
+  <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="javaScript/config.js"></script>
+  <script defer src="javaScript/api.js"></script>
+  <script defer src="javaScript/auth0-config.js"></script>
+  <script defer src="javaScript/main.js"></script>
+</body>
+</html>

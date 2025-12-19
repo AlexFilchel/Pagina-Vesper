@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vesper - Tienda Online de Fragancias y Tecnología</title>
+  <meta name="description" content="Vesper: perfumes y tecnología premium. Envíos gratis + cuotas sin interés. Tu tienda online de confianza.">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Open Graph -->
+  <meta property="og:title" content="Vesper - Tienda Online">
+  <meta property="og:description" content="Perfumes y tecnología premium con envíos gratis en compras superiores a $50.000.">
+  <meta property="og:image" content="/img/og-image.jpg">
+  <meta property="og:type" content="website">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link rel="icon" href="img/vesper_logo_sin_fondo.png" type="image/x-icon">
+
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!--Funcionalidades-->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.querySelector('.site-header__search');
+      if (!form) return;
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const termino = form.search.value.trim();
+        if (!termino) return;
+
+        const url = new URL(window.location.origin + '/Frontend/productos.html');
+        url.searchParams.set('maxPrice', '600000');
+        url.searchParams.set('q', termino);
+
+        window.location.href = url.href;
+      });
+    });
+  </script>
+
+
+</head>
+<body>
+
+  <!-- Banner superior -->
+ <aside class="top-banner" aria-label="Promociones vigentes">
+  <div class="banner-content">
+    <p>
+      💳 6 cuotas sin interés a partir de $30.000 &nbsp;&nbsp;&nbsp; 
+      🚚 Envío gratis en compras superiores a $50.000 &nbsp;&nbsp;&nbsp; 
+      💰 20% OFF pagando por transferencia
+    </p>
+  </div>
+</aside>
+
+<!-- Header -->
+<header class="site-header" role="banner">
+  <div class="container site-header__top">
+    <button class="menu-toggle" aria-label="Abrir menú">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <a href="index.html" class="site-header__logo" aria-label="Vesper - Página de inicio">
+      <img src="img/vesper_logo_sin_fondo.png"Logo Vesper" class="img-fluid logo">
+    </a>
+1
+    <form class="site-header__search" role="search" aria-label="Buscador de productos">
+      <label class="visually-hidden" for="search-input">Buscar en Vesper</label>
+      <input type="search" id="search-input" name="search" placeholder="Buscá por productos, marcas y categorías" aria-label="Buscar perfumes y marcas">
+      <button type="submit" aria-label="Buscar">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+    </form>
+
+    <div class="site-header__actions">
+      <!-- Botón de búsqueda en mobile -->
+      <button class="search-toggle" aria-label="Abrir buscador">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+
+      <!-- Acción Mi cuenta -->
+      <div class="site-header__action site-header__action--account">
+        <button class="site-header__action-btn" type="button" id="account-button" aria-haspopup="false" aria-expanded="false">
+          <span class="site-header__action-icon">
+            <span class="material-symbols-outlined">person_outline</span>
+          </span>
+          <span class="site-header__action-label">Mi cuenta</span>
+        </button>
+      </div>
+
+
+      <a href="#" class="site-header__action" id="link-carrito" aria-haspopup="dialog">
+  <span class="site-header__action-icon">
+    <span class="material-symbols-outlined">shopping_cart</span>
+    <span class="cart-count-badge" id="cart-count" aria-live="polite">0</span>
+  </span>
+  <span class="site-header__action-label"></span>
+</a>
+    </div>
+  </div>
+</header>
+
+
+<!-- Navegación principal -->
+<nav class="site-header__bottom" aria-label="Categorías principales">
+  <div class="container">
+    <ul class="main-nav">
+
+      <!-- Perfumes -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Perfumes <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-perfumes" class="main-nav__dropdown" role="menu">
+          <ul class="main-nav__list">
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="FEMENINO">Femeninos</a></li>
+          </ul>
+        </div>
+      </li>
+
+      <!-- Decants -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Decants <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-decants" class="main-nav__dropdown" role="menu">
+          <ul class="main-nav__list">
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="FEMENINO">Femeninos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-tag="combo">Combos</a></li>
+          </ul>
+        </div>
+      </li>
+
+      <!-- Marcas -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Marcas <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-marcas" class="main-nav__dropdown main-nav__dropdown--columns" role="menu">
+          <div class="main-nav__column">
+            <h4 class="main-nav__column-title">Perfumes</h4>
+            <ul class="main-nav__list" data-brand-list="perfumes" aria-label="Marcas de perfumes"></ul>
+          </div>
+        </div>
+      </li>
+
+      <!-- Preguntas Frecuentes -->
+      <li class="main-nav__item main-nav__item--has-dropdown">
+        <a href="javascript:void(0)" class="main-nav__link">
+          Preguntas Frecuentes <span class="main-nav__icon" aria-hidden="true">▾</span>
+        </a>
+        <div id="submenu-faq" class="main-nav__dropdown" role="menu">
+          <ul class="main-nav__list">
+            <li><a href="#faq-envio" role="menuitem">¿Cuánto tarda el envío?</a></li>
+            <li><a href="#faq-decant" role="menuitem">¿Qué es un decant?</a></li>
+            <li><a href="#faq-pago" role="menuitem">¿Puedo pagar contra entrega?</a></li>
+          </ul>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+</nav>
+
+
+<!-- Buscador flotante para mobile -->
+<div class="mobile-search-overlay" aria-hidden="true">
+  <form class="mobile-search-form" role="search" aria-label="Buscador de productos">
+    <label class="visually-hidden" for="mobile-search-input">Buscar en Vesper</label>
+    <input type="search" id="mobile-search-input" name="mobile-search" placeholder="Buscá por productos, marcas y categorías" autocomplete="off">
+    <button type="submit" aria-label="Buscar">
+      <span class="material-symbols-outlined" aria-hidden="true">search</span>
+    </button>
+  </form>
+</div>
+
+<!-- Menú lateral oculto -->
+<aside class="mobile-menu" id="mobileMenu">
+  <button class="menu-close" aria-label="Cerrar menú">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+  <nav class="mobile-nav">
+      <ul>
+        <li><a href="#">Perfumes</a></li>
+        <li><a href="#">Decants</a></li>
+        <li><a href="#">Marcas</a></li>
+        <li><a href="#">Preguntas frecuentes</a></li>
+      </ul>
+    </nav>
+</aside>
+
+
+  <!-- Contenido principal -->
+  <main>
+
+    <!-- Hero / Carrusel -->
+<section class="hero">
+  <div class="carousel-item active">
+    <img src="img/perfume_carrusel_1.avif" alt="Perfumes 1">
+    <div class="carousel-caption">
+      <h2>Perfumes Exclusivos</h2>
+      <p>Encontra perfumes que en otros lados no hay.</p>
+    </div>
+  </div>
+<div class="carousel-item">
+    <img src="img/perfume_carrusel_2.avif" alt="Perfume2 2">
+    <div class="carousel-caption">
+      <h2>Decants Vesper</h2>
+      <p>Fragancias originales en tamaño práctico, con el estilo y la calidad de siempre.</p>
+    </div>
+  </div>
+
+  <!-- 🔹 Indicadores -->
+  <div class="carousel-indicators">
+    <span class="active" data-slide="0"></span>
+    <span data-slide="1"></span>
+  </div>
+</section>
+
+    <!-- Beneficios -->
+    <section class="benefits">
+      <div class="container">
+        <article class="benefit">
+          <h3>6 CUOTAS SIN INTERES</h3>
+          <p>En compras superiores a $30.000</p>
+        </article>
+        <article class="benefit">
+          <h3>ENVIOS A TODO EL PAIS</h3>
+          <p>Gratis en compras superiores a $50.000</p>
+        </article>
+        <article class="benefit">
+          <h3>100% ORIGINALES</h3>
+          <p>Garantía de autenticidad en todos nuestros productos</p>
+        </article>
+        <article class="benefit">
+          <h3>DESCUENTOS HASTA 30%</h3>
+          <p>En efectivo y transferencia bancaria</p>
+        </article>
+      </div>
+      <div class="benefits__scroll-indicator" aria-hidden="true">
+        <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+      </div>
+    </section>
+
+    <!-- Categorías -->
+<section class="categories">
+  <div class="container">
+    <div class="category-grid">
+      
+      <a href="productos.html" class="category-card">
+        <div class="category-content">
+          <h3>Perfumes</h3>
+          <p>Descubre nuestra colección exclusiva de perfumes de lujo</p>
+        </div>
+      </a>
+<a href="productos.html" class="category-card">
+        <div class="category-content">
+          <h2>Decants</h2>
+          <p>Prueba tus fragancias favoritas en tamaños accesibles y exclusivos.</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+    <!-- Productos Destacados -->
+    <section class="featured-products" aria-labelledby="featured-products-title">
+      <div class="container">
+        <div class="featured-products__header">
+          <h2 id="featured-products-title" class="section-title">Productos destacados</h2>
+          <p class="featured-products__subtitle">Elegimos los lanzamientos más buscados para que disfrutes hasta 15% OFF pagando por transferencia.</p>
+        </div>
+        <div id="featured-products-grid" class="featured-products__grid" aria-live="polite" aria-busy="false"></div>
+        <div class="featured-products__footer">
+          <a class="btn btn--primary" href="productos.html">Ver todos los productos</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="main-footer" role="contentinfo">
+  <div class="container footer-inner">
+    
+    <!-- 🔹 Categorías -->
+    <div class="footer-links footer-categories">
+      <h4>Categorías</h4>
+      <ul>
+        <li><a href="productos.html?categoria=perfumes">Perfumes</a></li>
+        <li><a href="productos.html?categoria=decants">Decants</a></li>
+      </ul>
+    </div>
+
+    <!-- 🔹 Enlaces útiles -->
+    <div class="footer-links">
+      <h4>Enlaces útiles</h4>
+      <ul>
+        <li><a href="#faq-envio">Preguntas Frecuentes</a></li>
+        <li><a href="#faq-pago">Métodos de Pago</a></li>
+        <li><a href="#faq-decant">Sobre Decants</a></li>
+      </ul>
+    </div>
+
+    <!-- 🔹 Contacto -->
+    <div class="footer-contact">
+      <h4>Contacto</h4>
+      <address>
+        📧 <a href="mailto:info@vesper.com">info@vesper.com</a><br>
+        📞 <a href="tel:+541112345678">+54 11 1234-5678</a><br>
+        📍 Mendoza, Argentina
+      </address>
+    </div>
+
+    <!-- 🔹 Seguinos en -->
+    <div class="footer-social">
+      <h4>Seguinos en</h4>
+      <div class="social-icons">
+        <a href="https://www.instagram.com/vesper.arr/" target="_blank" aria-label="Instagram">
+          <i class="fa-brands fa-instagram"></i>
+        </a>
+        <a href="https://www.tiktok.com/@vesper.arr" target="_blank" aria-label="TikTok">
+          <i class="fa-brands fa-tiktok"></i>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</footer>
+  
+
+<!-- Carrito de compras -->
+<div class="cart-modal" id="cart-modal" aria-hidden="true">
+  <div class="cart-modal__overlay" role="presentation"></div>
+  <aside class="cart-modal__panel" role="dialog" aria-labelledby="cartModalTitle">
+    <header class="cart-modal__header">
+      <div>
+        <h2 id="cartModalTitle">Tu carrito</h2>
+        <p class="cart-modal__subtitle">Revisa tus productos antes de continuar</p>
+      </div>
+      <button class="cart-modal__close" type="button" aria-label="Cerrar carrito">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </header>
+    <div class="cart-modal__body">
+      <div class="cart-empty-state" id="cart-empty-state">
+        <span class="material-symbols-outlined cart-empty-state__icon" aria-hidden="true">shopping_bag</span>
+        <h3>Tu carrito está vacío</h3>
+        <p>Agrega algunos productos para comenzar tu compra</p>
+        <button type="button" class="btn btn--primary cart-empty-state__cta">Seguir Comprando</button>
+      </div>
+      <div class="cart-items" id="cart-items" aria-live="polite"></div>
+      <section class="shipping-section" id="shipping-section" aria-labelledby="shippingTitle">
+        <h3 id="shippingTitle">Medios de envío</h3>
+        <form class="shipping-form" id="shipping-form">
+          <label class="visually-hidden" for="shipping-zip">Código postal</label>
+          <input type="text" id="shipping-zip" name="shippingZip" placeholder="Tu código postal" inputmode="numeric" autocomplete="postal-code">
+          <button type="submit">CALCULAR</button>
+        </form>
+        <p class="shipping-result" id="shipping-result" aria-live="polite"></p>
+      </section>
+    </div>
+    <footer class="summary-section" id="summary-section">
+      <div class="summary-line">
+        <span id="summary-count">0 productos</span>
+        <span id="summary-subtotal">$0</span>
+      </div>
+      <div class="summary-line summary-line--total">
+        <div class="summary-total__label">
+          <span>Total</span>
+          <small id="summary-shipping-note">Envío a calcular</small>
+        </div>
+        <span id="summary-total">$0</span>
+      </div>
+      <div class="summary-actions">
+        <button type="button" class="btn btn--primary summary-actions__primary">Iniciar compra</button>
+        <button type="button" class="btn summary-actions__secondary">Ver más productos</button>
+      </div>
+    </footer>
+  </aside>
+</div>
+
+<div class="cart-toast-layer" aria-live="polite" aria-atomic="true"></div>
+  
+  <div id="profile-modal" class="profile-modal" aria-hidden="true">
+    <div class="profile-modal__overlay" data-profile-close></div>
+    <div class="profile-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title" tabindex="-1">
+      <button type="button" class="profile-modal__close" data-profile-close aria-label="Cerrar">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="profile-modal__header">
+        <h2 id="profile-modal-title">Mi Perfil</h2>
+        <p class="profile-modal__subtitle">Gestioná tus datos personales</p>
+      </header>
+      <div class="profile-modal__body">
+        <div id="profile-loading" class="profile-modal__loading" aria-live="polite">Cargando tus datos...</div>
+        <form id="profile-form" class="profile-modal__form" novalidate>
+          <div class="profile-modal__field-group">
+            <label for="profile-username">Username</label>
+            <input type="text" id="profile-username" name="username" data-static="true" disabled>
+          </div>
+          <div class="profile-modal__field-grid">
+            <div class="profile-modal__field-group">
+              <label for="profile-first-name">Nombre</label>
+              <input type="text" id="profile-first-name" name="firstName" autocomplete="given-name" required>
+            </div>
+            <div class="profile-modal__field-group">
+              <label for="profile-last-name">Apellido</label>
+              <input type="text" id="profile-last-name" name="lastName" autocomplete="family-name" required>
+            </div>
+          </div>
+          <div class="profile-modal__field-group">
+            <label for="profile-email">Email</label>
+            <input type="email" id="profile-email" name="email" data-static="true" disabled>
+          </div>
+          <div class="profile-modal__field-grid">
+            <div class="profile-modal__field-group">
+              <label for="profile-dni">DNI</label>
+              <input type="text" id="profile-dni" name="dni" inputmode="numeric" autocomplete="off" required>
+            </div>
+            <div class="profile-modal__field-group">
+              <label for="profile-phone">Teléfono</label>
+              <input type="tel" id="profile-phone" name="phone" autocomplete="tel" required>
+            </div>
+          </div>
+        </form>
+        <p id="profile-feedback" class="profile-modal__feedback" role="alert" hidden></p>
+      </div>
+      <footer class="profile-modal__footer">
+        <button type="submit" form="profile-form" class="btn btn--primary" id="profile-submit">Actualizar Datos</button>
+        <button type="button" class="btn btn--secondary" id="profile-logout">Cerrar sesión</button>
+      </footer>
+    </div>
+  </div>
+
+  <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="javaScript/config.js"></script>
+  <script defer src="javaScript/api.js"></script>
+  <script defer src="javaScript/auth0-config.js"></script>
+  <script defer src="javaScript/main.js"></script>
+</body>
+</html>

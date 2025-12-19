@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración - Vesper</title>
+  <meta name="description" content="Panel de administración de Vesper para gestionar productos y promociones.">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link rel="icon" href="img/vesper_logo_sin_fondo.png" type="image/x-icon">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <aside class="top-banner" aria-label="Promociones vigentes">
+    <div class="banner-content">
+      <p>
+        💳 6 cuotas sin interés a partir de $30.000 &nbsp;&nbsp;&nbsp;
+        🚚 Envío gratis en compras superiores a $50.000 &nbsp;&nbsp;&nbsp;
+        💰 20% OFF pagando por transferencia
+      </p>
+    </div>
+  </aside>
+
+  <header class="site-header" role="banner">
+    <div class="container site-header__top">
+      <button class="menu-toggle" aria-label="Abrir menú">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <a href="index.html" class="site-header__logo" aria-label="Vesper - Página de inicio">
+        <img src="img/vesper_logo_sin_fondo.png"Logo Vesper" class="img-fluid logo">
+      </a>
+
+      <form class="site-header__search" role="search" aria-label="Buscador de productos">
+        <label class="visually-hidden" for="search-input">Buscar en Vesper</label>
+        <input type="search" id="search-input" name="search" placeholder="Buscá por productos, marcas y categorías" aria-label="Buscar perfumes y marcas">
+        <button type="submit" aria-label="Buscar">
+          <span class="material-symbols-outlined">search</span>
+        </button>
+      </form>
+
+      <div class="site-header__actions">
+        <button class="search-toggle" aria-label="Abrir buscador">
+          <span class="material-symbols-outlined">search</span>
+        </button>
+
+        <div class="site-header__action site-header__action--account">
+          <button class="site-header__action-btn" type="button" id="account-button" aria-haspopup="false" aria-expanded="false">
+            <span class="site-header__action-icon">
+              <span class="material-symbols-outlined">person_outline</span>
+            </span>
+            <span class="site-header__action-label">Mi cuenta</span>
+          </button>
+        </div>
+
+        <a href="#" class="site-header__action" id="link-carrito" aria-haspopup="dialog">
+          <span class="site-header__action-icon">
+            <span class="material-symbols-outlined">shopping_cart</span>
+            <span class="cart-count-badge" id="cart-count" aria-live="polite">0</span>
+          </span>
+          <span class="site-header__action-label"></span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <nav class="site-header__bottom" aria-label="Categorías principales">
+    <div class="container">
+      <ul class="main-nav">
+        <li class="main-nav__item main-nav__item--has-dropdown">
+          <a href="javascript:void(0)" class="main-nav__link">
+            Perfumes <span class="main-nav__icon" aria-hidden="true">▾</span>
+          </a>
+          <div id="submenu-perfumes" class="main-nav__dropdown" role="menu">
+            <ul class="main-nav__list">
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="perfume" data-filter-genero="FEMENINO">Femeninos</a></li>
+            </ul>
+          </div>
+        </li>
+
+        <li class="main-nav__item main-nav__item--has-dropdown">
+          <a href="javascript:void(0)" class="main-nav__link">
+            Decants <span class="main-nav__icon" aria-hidden="true">▾</span>
+          </a>
+          <div id="submenu-decants" class="main-nav__dropdown" role="menu">
+            <ul class="main-nav__list">
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="MASCULINO">Masculinos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-genero="FEMENINO">Femeninos</a></li>
+            <li><a href="productos.html" role="menuitem" class="menu-filter-link" data-filter-type="decant" data-filter-tag="combo">Combos</a></li>
+            </ul>
+          </div>
+        </li>
+
+        <li class="main-nav__item main-nav__item--has-dropdown">
+          <a href="javascript:void(0)" class="main-nav__link">
+            Marcas <span class="main-nav__icon" aria-hidden="true">▾</span>
+          </a>
+          <div id="submenu-marcas" class="main-nav__dropdown main-nav__dropdown--columns" role="menu">
+            <div class="main-nav__column">
+              <h4 class="main-nav__column-title">Perfumes</h4>
+              <ul class="main-nav__list" data-brand-list="perfumes" aria-label="Marcas de perfumes"></ul>
+            </div>
+          </div>
+        </li>
+
+        <li class="main-nav__item main-nav__item--has-dropdown">
+          <a href="javascript:void(0)" class="main-nav__link">
+            Preguntas Frecuentes <span class="main-nav__icon" aria-hidden="true">▾</span>
+          </a>
+          <div id="submenu-faq" class="main-nav__dropdown" role="menu">
+            <ul class="main-nav__list">
+              <li><a href="#faq-envio" role="menuitem">¿Cuánto tarda el envío?</a></li>
+              <li><a href="#faq-decant" role="menuitem">¿Qué es un decant?</a></li>
+              <li><a href="#faq-pago" role="menuitem">¿Puedo pagar contra entrega?</a></li>
+            </ul>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="mobile-search-overlay" aria-hidden="true">
+    <form class="mobile-search-form" role="search" aria-label="Buscador de productos">
+      <label class="visually-hidden" for="mobile-search-input">Buscar en Vesper</label>
+      <input type="search" id="mobile-search-input" name="mobile-search" placeholder="Buscá por productos, marcas y categorías" autocomplete="off">
+      <button type="submit" aria-label="Buscar">
+        <span class="material-symbols-outlined" aria-hidden="true">search</span>
+      </button>
+    </form>
+  </div>
+
+  <aside class="mobile-menu" id="mobileMenu">
+    <button class="menu-close" aria-label="Cerrar menú">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <nav class="mobile-nav">
+      <ul>
+        <li><a href="#">Perfumes</a></li>
+        <li><a href="#">Decants</a></li>
+        <li><a href="#">Marcas</a></li>
+        <li><a href="#">Preguntas frecuentes</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="container">
+      <section class="admin-panel" aria-labelledby="adminTitle">
+        <header class="admin-panel__header">
+          <h1 id="adminTitle">Panel de Administración</h1>
+          <p>Gestioná tus productos, promociones y configuraciones desde un solo lugar.</p>
+        </header>
+
+        <div class="accordion" id="adminAccordion">
+          <article class="accordion-item">
+            <button class="accordion-header" type="button" aria-expanded="false">
+              <span class="accordion-title">Agregar Producto</span>
+              <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
+            </button>
+            <div class="accordion-content" hidden>
+              <form id="addProductForm" class="admin-form" novalidate>
+                <div class="form-row">
+                  <div class="form-field">
+                    <label for="productType">Tipo de Producto</label>
+                    <select id="productType" name="productType" required>
+                      <option value="" disabled selected>Seleccioná una opción</option>
+                      <option value="perfume">Perfume</option>
+                      <option value="decant">Decant</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="product-fields" data-product-group="fragrance" hidden>
+                  <div class="form-row two-columns">
+                    <div class="form-field">
+                      <label for="productName">Nombre</label>
+                      <input type="text" id="productName" name="name" required>
+                    </div>
+                    <div class="form-field">
+                      <label for="productBrand">Marca</label>
+                      <input type="text" id="productBrand" name="brand" required>
+                    </div>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="productDescription">Descripción</label>
+                    <textarea id="productDescription" name="description" rows="3" required></textarea>
+                  </div>
+
+                  <div class="form-row three-columns">
+                    <div class="form-field">
+                      <label for="productVolume">Volumen (ml)</label>
+                      <input type="number" id="productVolume" name="volume" min="1" step="0.5" required>
+                    </div>
+                    <div class="form-field">
+                      <label for="productGender">Género</label>
+                      <select id="productGender" name="gender" required>
+                        <option value="" disabled selected>Seleccioná</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Femenino">Femenino</option>
+                        <option value="Unisex">Unisex</option>
+                      </select>
+                    </div>
+                    <div class="form-field">
+                      <label for="productStock">Stock</label>
+                      <input type="number" id="productStock" name="stock" min="0" required>
+                    </div>
+                  </div>
+
+                  <div class="form-row two-columns">
+                    <div class="form-field">
+                      <label for="productNotes">Notas principales</label>
+                      <input type="text" id="productNotes" name="notes" required>
+                    </div>
+                    <div class="form-field">
+                      <label for="productFamily">Familia olfativa</label>
+                      <input type="text" id="productFamily" name="family" required>
+                    </div>
+                  </div>
+
+                  <fieldset class="form-fieldset">
+                    <legend>Pirámide olfativa</legend>
+                    <div class="form-row three-columns">
+                      <div class="form-field">
+                        <label for="piramideSalida">Salida</label>
+                        <input type="text" id="piramideSalida" name="piramideSalida" required>
+                      </div>
+                      <div class="form-field">
+                        <label for="piramideCorazon">Corazón</label>
+                        <input type="text" id="piramideCorazon" name="piramideCorazon" required>
+                      </div>
+                      <div class="form-field">
+                        <label for="piramideFondo">Fondo</label>
+                        <input type="text" id="piramideFondo" name="piramideFondo" required>
+                      </div>
+                    </div>
+                  </fieldset>
+
+                  <div class="form-row two-columns">
+                    <div class="form-field">
+                      <label for="productInspired">Inspirado en</label>
+                      <input type="text" id="productInspired" name="inspired">
+                    </div>
+                    <div class="form-field">
+                      <label for="productPrice">Precio ($)</label>
+                      <input type="number" id="productPrice" name="price" min="0.01" step="0.01" required>
+                    </div>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="productImages">Imágenes del producto</label>
+                    <input type="file" id="productImages" name="images" accept="image/*" multiple>
+                    <small>Seleccioná entre 1 y 5 imágenes.</small>
+                  </div>
+                </div>
+<div class="form-actions">
+                  <button type="submit" class="btn btn--primary">Agregar Producto</button>
+                  <button type="reset" class="btn btn--ghost">Limpiar</button>
+                </div>
+              </form>
+            </div>
+          </article>
+
+          <article class="accordion-item">
+            <button class="accordion-header" type="button" aria-expanded="false">
+              <span class="accordion-title">Gestionar Productos Existentes</span>
+              <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
+            </button>
+            <div class="accordion-content" hidden>
+              <div class="table-wrapper">
+                <table class="admin-table" aria-label="Listado de productos">
+                  <thead>
+                    <tr>
+                      <th scope="col">Nombre</th>
+                      <th scope="col">Marca</th>
+                      <th scope="col">Tipo</th>
+                      <th scope="col">Precio</th>
+                      <th scope="col">Stock</th>
+                      <th scope="col" class="column-actions">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="productsTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </article>
+
+          <article class="accordion-item">
+            <button class="accordion-header" type="button" aria-expanded="false">
+              <span class="accordion-title">Agregar Promoción</span>
+              <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
+            </button>
+            <div class="accordion-content" hidden>
+              <form id="addPromotionForm" class="admin-form" novalidate>
+                <div class="form-field">
+                  <label for="promotionProduct">Producto asociado</label>
+                  <select id="promotionProduct" name="promotionProduct" required data-searchable>
+                    <option value="" disabled selected>Seleccioná un producto</option>
+                  </select>
+                </div>
+
+                <div class="form-field">
+                  <label for="promotionDescription">Descripción de la promoción</label>
+                  <textarea id="promotionDescription" name="promotionDescription" rows="3" required></textarea>
+                </div>
+
+                <div class="form-row three-columns">
+                  <div class="form-field">
+                    <label for="promotionDiscount">Descuento (%)</label>
+                    <input type="number" id="promotionDiscount" name="promotionDiscount" min="0" max="100" required>
+                  </div>
+                  <div class="form-field">
+                    <label for="promotionStart">Fecha de inicio</label>
+                    <input type="date" id="promotionStart" name="promotionStart" required>
+                  </div>
+                  <div class="form-field">
+                    <label for="promotionEnd">Fecha de fin</label>
+                    <input type="date" id="promotionEnd" name="promotionEnd" required>
+                  </div>
+                </div>
+
+                <div class="form-field form-field--checkbox">
+                  <input type="checkbox" id="promotionActive" name="promotionActive" checked>
+                  <label for="promotionActive">Promoción Activa</label>
+                </div>
+
+                <div class="form-actions">
+                  <button type="submit" class="btn btn--primary">Agregar Promoción</button>
+                </div>
+              </form>
+            </div>
+          </article>
+
+          <article class="accordion-item">
+            <button class="accordion-header" type="button" aria-expanded="false">
+              <span class="accordion-title">Gestionar Promociones Existentes</span>
+              <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
+            </button>
+            <div class="accordion-content" hidden>
+              <div class="table-wrapper">
+                <table class="admin-table" aria-label="Listado de promociones">
+                  <thead>
+                    <tr>
+                      <th scope="col">Producto</th>
+                      <th scope="col">Descripción</th>
+                      <th scope="col">Descuento</th>
+                      <th scope="col">Fecha Inicio</th>
+                      <th scope="col">Fecha Fin</th>
+                      <th scope="col">Estado</th>
+                      <th scope="col" class="column-actions">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="promotionsTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </article>
+
+          <article class="accordion-item">
+            <button class="accordion-header" type="button" aria-expanded="false">
+              <span class="accordion-title">Gestionar productos más vendidos</span>
+              <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
+            </button>
+            <div class="accordion-content" hidden>
+              <section class="featured-admin" aria-labelledby="featured-admin-title">
+                <header class="featured-admin__header">
+                  <div>
+                    <h3 id="featured-admin-title">Productos destacados</h3>
+                    <p>Seleccioná hasta ocho productos para la portada de la tienda. Evitá duplicados y mantené la selección siempre actualizada.</p>
+                  </div>
+                  <p id="featuredCounter" class="featured-admin__counter" aria-live="polite">0/8 destacados</p>
+                </header>
+
+                <div class="featured-admin__controls">
+                  <div class="form-field">
+                    <label for="featuredProductSelect">Agregar producto</label>
+                    <div class="featured-admin__control-group">
+                      <select id="featuredProductSelect" name="featuredProductSelect">
+                        <option value="" disabled selected>Seleccioná un producto disponible</option>
+                      </select>
+                      <button type="button" class="btn btn--primary" id="addFeaturedButton">Agregar</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="table-wrapper">
+                  <table class="admin-table" aria-describedby="featured-admin-title">
+                    <thead>
+                      <tr>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Marca</th>
+                        <th scope="col">Precio</th>
+                        <th scope="col">Tipo</th>
+                        <th scope="col">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody id="featuredProductsBody"></tbody>
+                  </table>
+                </div>
+
+                <p class="featured-admin__helper">Podés reorganizar los productos desde el backend en una actualización futura. Por ahora se muestran en el orden en que fueron agregados.</p>
+              </section>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="main-footer" role="contentinfo">
+    <div class="container footer-inner">
+      <div class="footer-links footer-categories">
+        <h4>Categorías</h4>
+        <ul>
+          <li><a href="productos.html?categoria=perfumes">Perfumes</a></li>
+          <li><a href="productos.html?categoria=decants">Decants</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links">
+        <h4>Enlaces útiles</h4>
+        <ul>
+          <li><a href="#faq-envio">Preguntas Frecuentes</a></li>
+          <li><a href="#faq-pago">Métodos de Pago</a></li>
+          <li><a href="#faq-decant">Sobre Decants</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-contact">
+        <h4>Contacto</h4>
+        <address>
+          📧 <a href="mailto:info@vesper.com">info@vesper.com</a><br>
+          📞 <a href="tel:+541112345678">+54 11 1234-5678</a><br>
+          📍 Mendoza, Argentina
+        </address>
+      </div>
+
+      <div class="footer-social">
+        <h4>Seguinos en</h4>
+        <div class="social-icons">
+          <a href="https://www.instagram.com/vesper.arr/" target="_blank" aria-label="Instagram">
+            <i class="fa-brands fa-instagram"></i>
+          </a>
+          <a href="https://www.tiktok.com/@vesper.arr" target="_blank" aria-label="TikTok">
+            <i class="fa-brands fa-tiktok"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="cart-modal" id="cart-modal" aria-hidden="true">
+    <div class="cart-modal__overlay" role="presentation"></div>
+    <aside class="cart-modal__panel" role="dialog" aria-labelledby="cartModalTitle">
+      <header class="cart-modal__header">
+        <div>
+          <h2 id="cartModalTitle">Tu carrito</h2>
+          <p class="cart-modal__subtitle">Revisa tus productos antes de continuar</p>
+        </div>
+        <button class="cart-modal__close" type="button" aria-label="Cerrar carrito">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </header>
+      <div class="cart-modal__body">
+        <div class="cart-empty-state" id="cart-empty-state">
+          <span class="material-symbols-outlined cart-empty-state__icon" aria-hidden="true">shopping_bag</span>
+          <h3>Tu carrito está vacío</h3>
+          <p>Agrega algunos productos para comenzar tu compra</p>
+          <button type="button" class="btn btn--primary cart-empty-state__cta">Seguir Comprando</button>
+        </div>
+        <div class="cart-items" id="cart-items" aria-live="polite"></div>
+        <section class="shipping-section" id="shipping-section" aria-labelledby="shippingTitle">
+          <h3 id="shippingTitle">Medios de envío</h3>
+          <form class="shipping-form" id="shipping-form">
+            <label class="visually-hidden" for="shipping-zip">Código postal</label>
+            <input type="text" id="shipping-zip" name="shippingZip" placeholder="Tu código postal" inputmode="numeric" autocomplete="postal-code">
+            <button type="submit">CALCULAR</button>
+          </form>
+          <p class="shipping-result" id="shipping-result" aria-live="polite"></p>
+        </section>
+      </div>
+      <footer class="summary-section" id="summary-section">
+        <div class="summary-line">
+          <span id="summary-count">0 productos</span>
+          <span id="summary-subtotal">$0</span>
+        </div>
+        <div class="summary-line summary-line--total">
+          <div class="summary-total__label">
+            <span>Total</span>
+            <small id="summary-shipping-note">Envío a calcular</small>
+          </div>
+          <span id="summary-total">$0</span>
+        </div>
+        <div class="summary-actions">
+          <button type="button" class="btn btn--primary summary-actions__primary">Iniciar compra</button>
+          <button type="button" class="btn summary-actions__secondary">Ver más productos</button>
+        </div>
+      </footer>
+    </aside>
+  </div>
+
+  <div class="cart-toast-layer" aria-live="polite" aria-atomic="true"></div>
+
+  <div class="admin-modal" id="productModal" aria-hidden="true">
+    <div class="admin-modal__overlay" data-close-modal></div>
+    <div class="admin-modal__content" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
+      <button class="admin-modal__close" type="button" data-close-modal aria-label="Cerrar">&times;</button>
+      <h2 id="productModalTitle">Modificar Producto</h2>
+      <form id="editProductForm" class="admin-form" novalidate>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="editProductType">Tipo de Producto</label>
+            <select id="editProductType" name="productType" required>
+              <option value="perfume">Perfume</option>
+              <option value="decant">Decant</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="product-fields" data-product-group="fragrance" hidden>
+          <div class="form-row two-columns">
+            <div class="form-field">
+              <label for="editProductName">Nombre</label>
+              <input type="text" id="editProductName" name="name" required>
+            </div>
+            <div class="form-field">
+              <label for="editProductBrand">Marca</label>
+              <input type="text" id="editProductBrand" name="brand" required>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="editProductDescription">Descripción</label>
+            <textarea id="editProductDescription" name="description" rows="3" required></textarea>
+          </div>
+
+          <div class="form-row three-columns">
+            <div class="form-field">
+              <label for="editProductVolume">Volumen (ml)</label>
+              <input type="number" id="editProductVolume" name="volume" min="1" step="0.5" required>
+            </div>
+            <div class="form-field">
+              <label for="editProductGender">Género</label>
+              <select id="editProductGender" name="gender" required>
+                <option value="Masculino">Masculino</option>
+                <option value="Femenino">Femenino</option>
+                <option value="Unisex">Unisex</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="editProductStock">Stock</label>
+              <input type="number" id="editProductStock" name="stock" min="0" required>
+            </div>
+          </div>
+
+          <div class="form-row two-columns">
+            <div class="form-field">
+              <label for="editProductNotes">Notas principales</label>
+              <input type="text" id="editProductNotes" name="notes" required>
+            </div>
+            <div class="form-field">
+              <label for="editProductFamily">Familia olfativa</label>
+              <input type="text" id="editProductFamily" name="family" required>
+            </div>
+          </div>
+
+          <fieldset class="form-fieldset">
+            <legend>Pirámide olfativa</legend>
+            <div class="form-row three-columns">
+              <div class="form-field">
+                <label for="editPiramideSalida">Salida</label>
+                <input type="text" id="editPiramideSalida" name="piramideSalida" required>
+              </div>
+              <div class="form-field">
+                <label for="editPiramideCorazon">Corazón</label>
+                <input type="text" id="editPiramideCorazon" name="piramideCorazon" required>
+              </div>
+              <div class="form-field">
+                <label for="editPiramideFondo">Fondo</label>
+                <input type="text" id="editPiramideFondo" name="piramideFondo" required>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="form-row two-columns">
+            <div class="form-field">
+              <label for="editProductInspired">Inspirado en</label>
+              <input type="text" id="editProductInspired" name="inspired">
+            </div>
+            <div class="form-field">
+              <label for="editProductPrice">Precio ($)</label>
+              <input type="number" id="editProductPrice" name="price" min="0.01" step="0.01" required>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="admin-modal" id="promotionModal" aria-hidden="true">
+    <div class="admin-modal__overlay" data-close-modal></div>
+    <div class="admin-modal__content" role="dialog" aria-modal="true" aria-labelledby="promotionModalTitle">
+      <button class="admin-modal__close" type="button" data-close-modal aria-label="Cerrar">&times;</button>
+      <h2 id="promotionModalTitle">Modificar Promoción</h2>
+      <form id="editPromotionForm" class="admin-form" novalidate>
+        <div class="form-field">
+          <label for="editPromotionProduct">Producto asociado</label>
+          <select id="editPromotionProduct" name="promotionProduct" required data-searchable>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="editPromotionDescription">Descripción de la promoción</label>
+          <textarea id="editPromotionDescription" name="promotionDescription" rows="3" required></textarea>
+        </div>
+
+        <div class="form-row three-columns">
+          <div class="form-field">
+            <label for="editPromotionDiscount">Descuento (%)</label>
+            <input type="number" id="editPromotionDiscount" name="promotionDiscount" min="0" max="100" required>
+          </div>
+          <div class="form-field">
+            <label for="editPromotionStart">Fecha de inicio</label>
+            <input type="date" id="editPromotionStart" name="promotionStart" required>
+          </div>
+          <div class="form-field">
+            <label for="editPromotionEnd">Fecha de fin</label>
+            <input type="date" id="editPromotionEnd" name="promotionEnd" required>
+          </div>
+        </div>
+
+        <div class="form-field form-field--checkbox">
+          <input type="checkbox" id="editPromotionActive" name="promotionActive">
+          <label for="editPromotionActive">Promoción Activa</label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="profile-modal" class="profile-modal" aria-hidden="true">
+    <div class="profile-modal__overlay" data-profile-close></div>
+    <div class="profile-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title" tabindex="-1">
+      <button type="button" class="profile-modal__close" data-profile-close aria-label="Cerrar">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="profile-modal__header">
+        <h2 id="profile-modal-title">Mi Perfil</h2>
+        <p class="profile-modal__subtitle">Gestioná tus datos personales</p>
+      </header>
+      <div class="profile-modal__body">
+        <div id="profile-loading" class="profile-modal__loading" aria-live="polite">Cargando tus datos...</div>
+        <form id="profile-form" class="profile-modal__form" novalidate>
+          <div class="profile-modal__field-group">
+            <label for="profile-username">Username</label>
+            <input type="text" id="profile-username" name="username" data-static="true" disabled>
+          </div>
+          <div class="profile-modal__field-grid">
+            <div class="profile-modal__field-group">
+              <label for="profile-first-name">Nombre</label>
+              <input type="text" id="profile-first-name" name="firstName" autocomplete="given-name" required>
+            </div>
+            <div class="profile-modal__field-group">
+              <label for="profile-last-name">Apellido</label>
+              <input type="text" id="profile-last-name" name="lastName" autocomplete="family-name" required>
+            </div>
+          </div>
+          <div class="profile-modal__field-group">
+            <label for="profile-email">Email</label>
+            <input type="email" id="profile-email" name="email" data-static="true" disabled>
+          </div>
+          <div class="profile-modal__field-grid">
+            <div class="profile-modal__field-group">
+              <label for="profile-dni">DNI</label>
+              <input type="text" id="profile-dni" name="dni" inputmode="numeric" autocomplete="off" required>
+            </div>
+            <div class="profile-modal__field-group">
+              <label for="profile-phone">Teléfono</label>
+              <input type="tel" id="profile-phone" name="phone" autocomplete="tel" required>
+            </div>
+          </div>
+        </form>
+        <p id="profile-feedback" class="profile-modal__feedback" role="alert" hidden></p>
+      </div>
+      <footer class="profile-modal__footer">
+        <button type="submit" form="profile-form" class="btn btn--primary" id="profile-submit">Actualizar Datos</button>
+        <button type="button" class="btn btn--secondary" id="profile-logout">Cerrar sesión</button>
+      </footer>
+    </div>
+  </div>
+
+  <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="javaScript/config.js"></script>
+  <script defer src="javaScript/api.js"></script>
+  <script defer src="javaScript/auth0-config.js"></script>
+  <script defer src="javaScript/main.js"></script>
+  <script defer src="javaScript/admin.js"></script>
+</body>
+</html>
