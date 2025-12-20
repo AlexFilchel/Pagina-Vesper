@@ -198,7 +198,7 @@
     if (authClient && typeof authClient.loginWithRedirect === 'function') {
       authClient.loginWithRedirect({
         authorizationParams: {
-          redirect_uri: window.location.href,
+          redirect_uri: window.location.origin,
         },
       });
     } else {

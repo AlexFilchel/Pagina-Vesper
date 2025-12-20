@@ -546,10 +546,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const client = window.auth0Client;
       if (client && typeof client.logout === "function") {
         client.logout({
-          logoutParams: { returnTo: window.location.origin + "/Frontend/index.html" }
+          logoutParams: { returnTo: window.location.origin }
         });
       } else {
-        window.location.href = window.location.origin + "/Frontend/index.html";
+        window.location.href = window.location.origin;
       }
     });
   }

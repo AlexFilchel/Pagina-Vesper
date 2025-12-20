@@ -2,7 +2,7 @@
   'use strict';
 
   let auth0Client = null;
-  const REDIRECT_URI = window.location.origin + window.location.pathname;
+  const REDIRECT_URI = window.location.origin;
   const USER_ID_STORAGE_KEY = 'vesper.usuarioId';
   const USER_READY_EVENT = 'vesper:user-ready';
 
