@@ -33,6 +33,29 @@ let featuredProducts = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   setupAccordions();
+
+  // ============================
+  // 🔒 SECURITY GUARD
+  // ============================
+  try {
+    const isAuth = await checkAdminAuth();
+    if (!isAuth) {
+      return;
+    }
+
+    // Reveal UI
+    const guardStyle = document.getElementById('admin-auth-guard');
+    if (guardStyle) guardStyle.remove();
+    document.body.style.opacity = '1';
+    document.body.style.visibility = 'visible';
+    document.body.style.pointerEvents = 'auto';
+
+  } catch (error) {
+    console.error('Security check failed:', error);
+    window.location.href = 'index.html';
+    return;
+  }
+
   addProductHelpers = setupProductForm(dom.addProductForm);
   editProductHelpers = setupProductForm(dom.editProductForm);
   setupPromotionForm(dom.addPromotionForm);
@@ -66,6 +89,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!Number.isFinite(destacadoId)) return;
     removeFeaturedProduct(destacadoId);
   });
+
+
+  async function checkAdminAuth() {
+    // 1. Wait for Auth0 Client
+    const client = await waitForGlobalAuth0();
+    if (!client) return false;
+
+    // 2. Check Authentication
+    const isAuthenticated = await client.isAuthenticated();
+    if (!isAuthenticated) {
+      console.warn('User not authenticated. Redirecting...');
+      await client.loginWithRedirect({
+        authorizationParams: {
+          redirect_uri: window.location.origin
+        }
+      });
+      return false;
+    }
+
+    // 3. Optional: Check Admin Role (Requires backend support or Token Claims)
+    // For now, we assume any authenticated user who can access /admin/* endpoints is an admin.
+    // If the backend returns 403 on API key calls, the UI handles it gracefully.
+    // Ideally, check: const user = await client.getUser(); if (user.role !== 'admin') ...
+
+    return true;
+  }
+
+  async function waitForGlobalAuth0(timeoutMs = 10000) {
+    if (window.auth0Client) return window.auth0Client;
+
+    return new Promise((resolve) => {
+      const start = Date.now();
+      const interval = setInterval(() => {
+        if (window.auth0Client) {
+          clearInterval(interval);
+          resolve(window.auth0Client);
+        } else if (Date.now() - start > timeoutMs) {
+          clearInterval(interval);
+          resolve(null);
+        }
+      }, 100);
+    });
+  }
+
+  async function ensureApiClient() {
+    if (window.apiClient) return window.apiClient;
+
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+      const interval = setInterval(() => {
+        if (window.apiClient) {
+          clearInterval(interval);
+          resolve(window.apiClient);
+        } else if (Date.now() - start > 10000) {
+          clearInterval(interval);
+          reject(new Error('API Client initialized timeout'));
+        }
+      }, 100);
+    });
+  }
 
   // ============================
   // 📦 CREAR PRODUCTO
@@ -282,7 +365,7 @@ function setupProductForm(form) {
 
   return {
     getFlavors: () => [],
-    setFlavors: () => {},
+    setFlavors: () => { },
     reset: () => {
       form.reset();
       handleProductTypeChange();
