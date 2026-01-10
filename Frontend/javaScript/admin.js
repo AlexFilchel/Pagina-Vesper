@@ -3,9 +3,14 @@ const currencyFormatter = new Intl.NumberFormat('es-AR', {
   currency: 'ARS',
   maximumFractionDigits: 0
 });
+const dateFormatter = new Intl.DateTimeFormat('es-AR', {
+  dateStyle: 'medium',
+  timeStyle: 'short'
+});
 
 let products = [];
 const promotions = [];
+let sales = [];
 let apiClient = null;
 
 const dom = {
@@ -24,7 +29,8 @@ const dom = {
   featuredTableBody: document.getElementById('featuredProductsBody'),
   featuredSelect: document.getElementById('featuredProductSelect'),
   addFeaturedButton: document.getElementById('addFeaturedButton'),
-  featuredCounter: document.getElementById('featuredCounter')
+  featuredCounter: document.getElementById('featuredCounter'),
+  salesTableBody: document.getElementById('salesTableBody')
 };
 
 let addProductHelpers;
@@ -71,11 +77,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     await ensureApiClient();
     await loadProductsFromApi();
     await loadFeaturedProducts();
+    await loadSalesFromApi();
   } catch (error) {
     console.error('Error inicializando la API del administrador:', error);
     showToast('No se pudieron cargar los productos del catálogo.');
     renderProductsTable();
     renderFeaturedProducts('No se pudo obtener la lista de destacados.');
+    renderSalesTable('No se pudo obtener el listado de ventas.');
   }
 
   renderPromotionsTable();
@@ -88,6 +96,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const destacadoId = Number.parseInt(target.dataset.featuredId, 10);
     if (!Number.isFinite(destacadoId)) return;
     removeFeaturedProduct(destacadoId);
+  });
+
+  dom.salesTableBody?.addEventListener('change', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLSelectElement)) return;
+    if (!target.classList.contains('order-status-select')) return;
+    handleSaleStatusChange(target);
   });
 
 
@@ -128,23 +143,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (Date.now() - start > timeoutMs) {
           clearInterval(interval);
           resolve(null);
-        }
-      }, 100);
-    });
-  }
-
-  async function ensureApiClient() {
-    if (window.apiClient) return window.apiClient;
-
-    return new Promise((resolve, reject) => {
-      const start = Date.now();
-      const interval = setInterval(() => {
-        if (window.apiClient) {
-          clearInterval(interval);
-          resolve(window.apiClient);
-        } else if (Date.now() - start > 10000) {
-          clearInterval(interval);
-          reject(new Error('API Client initialized timeout'));
         }
       }, 100);
     });
@@ -304,6 +302,228 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+
+async function ensureApiClient() {
+  if (window.apiClient) return window.apiClient;
+
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    const interval = setInterval(() => {
+      if (window.apiClient) {
+        clearInterval(interval);
+        resolve(window.apiClient);
+      } else if (Date.now() - start > 10000) {
+        clearInterval(interval);
+        reject(new Error('API Client initialized timeout'));
+      }
+    }, 100);
+  });
+}
+
+async function loadSalesFromApi() {
+  if (!dom.salesTableBody) return;
+  try {
+    const client = await ensureApiClient();
+    if (!client) throw new Error('Cliente de API no disponible.');
+    const data = await client.request('/admin/ventas', { authenticated: true });
+    sales = Array.isArray(data) ? data : [];
+    renderSalesTable();
+  } catch (error) {
+    console.error('Error al obtener ventas:', error);
+    sales = [];
+    renderSalesTable('No se pudieron cargar las ventas.');
+  }
+}
+
+function renderSalesTable(message) {
+  if (!dom.salesTableBody) return;
+  dom.salesTableBody.innerHTML = '';
+
+  if (message) {
+    dom.salesTableBody.append(createEmptySalesRow(message));
+    return;
+  }
+
+  if (!sales.length) {
+    dom.salesTableBody.append(createEmptySalesRow('Todavía no hay ventas registradas.'));
+    return;
+  }
+
+  sales.forEach((venta) => {
+    const row = document.createElement('tr');
+
+    const idCell = document.createElement('td');
+    idCell.textContent = venta.id ?? '-';
+
+    const dateCell = document.createElement('td');
+    dateCell.textContent = formatSaleDate(venta.fecha);
+
+    const productsCell = document.createElement('td');
+    productsCell.append(createProductsList(venta.detalles));
+
+    const totalCell = document.createElement('td');
+    totalCell.textContent = typeof venta.total === 'number'
+      ? currencyFormatter.format(venta.total)
+      : '-';
+
+    const statusCell = document.createElement('td');
+    const statusSelect = createStatusSelect(venta);
+    statusCell.append(statusSelect);
+
+    const customerCell = document.createElement('td');
+    customerCell.append(createCustomerList(venta));
+
+    row.append(idCell, dateCell, productsCell, totalCell, statusCell, customerCell);
+    dom.salesTableBody.append(row);
+  });
+}
+
+function createEmptySalesRow(message) {
+  const row = document.createElement('tr');
+  const cell = document.createElement('td');
+  cell.colSpan = 6;
+  cell.innerHTML = `
+    <div class="empty-state">
+      <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+      <p>${message}</p>
+    </div>
+  `;
+  row.append(cell);
+  return row;
+}
+
+function formatSaleDate(rawDate) {
+  if (!rawDate) return '-';
+  const parsed = new Date(rawDate);
+  if (Number.isNaN(parsed.getTime())) {
+    return String(rawDate);
+  }
+  return dateFormatter.format(parsed);
+}
+
+function createProductsList(detalles) {
+  const list = document.createElement('ul');
+  list.className = 'sales-products';
+  if (!Array.isArray(detalles) || detalles.length === 0) {
+    const item = document.createElement('li');
+    item.textContent = 'Sin detalle de productos.';
+    list.append(item);
+    return list;
+  }
+
+  detalles.forEach((detalle) => {
+    const item = document.createElement('li');
+    const quantity = detalle.cantidad ? `x${detalle.cantidad}` : '';
+    const subtotal = typeof detalle.subtotal === 'number'
+      ? ` · ${currencyFormatter.format(detalle.subtotal)}`
+      : '';
+    item.textContent = `${detalle.nombreProducto ?? 'Producto'} ${quantity}${subtotal}`.trim();
+    list.append(item);
+  });
+  return list;
+}
+
+function createCustomerList(venta) {
+  const list = document.createElement('ul');
+  list.className = 'sales-customer';
+
+  const customerName = [venta.nombreCliente, venta.apellidoCliente]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  const email = venta.usuarioEmail || venta.emailCliente || venta.email || '-';
+  const address = venta.direccionCliente || venta.direccion || venta.address || '-';
+  const phone = venta.telefonoCliente || venta.telefono || venta.phone || '-';
+
+  list.append(
+    createCustomerItem('Nombre', customerName || 'No informado'),
+    createCustomerItem('Correo', email),
+    createCustomerItem('Dirección', address),
+    createCustomerItem('Teléfono', phone)
+  );
+
+  return list;
+}
+
+function createCustomerItem(label, value) {
+  const item = document.createElement('li');
+  const strong = document.createElement('strong');
+  strong.textContent = `${label}: `;
+  const span = document.createElement('span');
+  span.textContent = value;
+  item.append(strong, span);
+  return item;
+}
+
+function createStatusSelect(venta) {
+  const select = document.createElement('select');
+  select.className = 'order-status-select';
+  const normalizedStatus = normalizeSaleStatus(venta.estado);
+  select.dataset.saleId = venta.id ?? '';
+  select.dataset.currentStatus = normalizedStatus;
+
+  [
+    { value: 'PENDIENTE', label: 'Pendiente' },
+    { value: 'ENVIADO', label: 'Enviado' },
+    { value: 'RECIBIDO', label: 'Recibido' }
+  ].forEach((optionData) => {
+    const option = document.createElement('option');
+    option.value = optionData.value;
+    option.textContent = optionData.label;
+    select.append(option);
+  });
+
+  select.value = normalizedStatus;
+  applyStatusSelectStyle(select, normalizedStatus);
+  return select;
+}
+
+function normalizeSaleStatus(rawStatus) {
+  const status = String(rawStatus || '').toUpperCase();
+  if (status === 'ENVIADO') return 'ENVIADO';
+  if (status === 'RECIBIDO' || status === 'COMPLETADA') return 'RECIBIDO';
+  return 'PENDIENTE';
+}
+
+function applyStatusSelectStyle(select, status) {
+  select.classList.remove('is-pending', 'is-shipped', 'is-received');
+  if (status === 'ENVIADO') {
+    select.classList.add('is-shipped');
+  } else if (status === 'RECIBIDO') {
+    select.classList.add('is-received');
+  } else {
+    select.classList.add('is-pending');
+  }
+}
+
+async function handleSaleStatusChange(select) {
+  const saleId = Number.parseInt(select.dataset.saleId, 10);
+  if (!Number.isFinite(saleId)) return;
+  const previousStatus = select.dataset.currentStatus || 'PENDIENTE';
+  const newStatus = select.value;
+  applyStatusSelectStyle(select, newStatus);
+
+  try {
+    const client = await ensureApiClient();
+    if (!client) throw new Error('Cliente de API no disponible.');
+    await client.request(`/admin/ventas/${saleId}/estado`, {
+      method: 'PUT',
+      body: { estado: newStatus },
+      authenticated: true
+    });
+    select.dataset.currentStatus = newStatus;
+    const sale = sales.find((item) => Number(item.id) === saleId);
+    if (sale) {
+      sale.estado = newStatus;
+    }
+    showToast('Estado de la venta actualizado.');
+  } catch (error) {
+    console.error('Error al actualizar el estado de la venta:', error);
+    showToast('No se pudo actualizar el estado de la venta.');
+    select.value = previousStatus;
+    applyStatusSelectStyle(select, previousStatus);
+  }
+}
 
 
 function setupAccordions() {
