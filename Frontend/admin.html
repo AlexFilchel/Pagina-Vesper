@@ -74,6 +74,15 @@
     </div>
   </header>
 
+  <div class="admin-cta-bar" aria-label="Acceso rápido al panel de administrador">
+    <div class="container">
+      <a class="btn btn--primary admin-cta-button" href="admin.html">
+        <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
+        Panel de Administrador
+      </a>
+    </div>
+  </div>
+
   <nav class="site-header__bottom" aria-label="Categorías principales">
     <div class="container">
       <ul class="main-nav">
@@ -362,6 +371,30 @@
                     </tr>
                   </thead>
                   <tbody id="promotionsTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </article>
+
+          <article class="accordion-item">
+            <button class="accordion-header" type="button" aria-expanded="false">
+              <span class="accordion-title">Administrar ventas</span>
+              <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
+            </button>
+            <div class="accordion-content" hidden>
+              <div class="table-wrapper">
+                <table class="admin-table admin-table--sales" aria-label="Listado de ventas">
+                  <thead>
+                    <tr>
+                      <th scope="col">ID</th>
+                      <th scope="col">Fecha</th>
+                      <th scope="col">Productos comprados</th>
+                      <th scope="col">Total</th>
+                      <th scope="col">Estado</th>
+                      <th scope="col">Datos del cliente</th>
+                    </tr>
+                  </thead>
+                  <tbody id="salesTableBody"></tbody>
                 </table>
               </div>
             </div>

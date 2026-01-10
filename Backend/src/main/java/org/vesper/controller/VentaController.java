@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.vesper.dto.VentaRequest;
 import org.vesper.dto.VentaResponse;
+import org.vesper.dto.VentaEstadoRequest;
 import org.vesper.service.VentaService;
 
 import java.util.List;
@@ -81,5 +82,19 @@ public class VentaController {
     @GetMapping("/admin/ventas/{id}")
     public ResponseEntity<VentaResponse> obtenerVentaAdmin(@PathVariable Long id) {
         return ResponseEntity.ok(ventaService.obtenerPorId(id));
+    }
+
+    /**
+     * Actualiza el estado de una venta (solo administradores).
+     *
+     * @param id      ID de la venta.
+     * @param request Datos del nuevo estado.
+     * @return Venta actualizada.
+     */
+    @PutMapping("/admin/ventas/{id}/estado")
+    public ResponseEntity<VentaResponse> actualizarEstadoVenta(
+            @PathVariable Long id,
+            @Valid @RequestBody VentaEstadoRequest request) {
+        return ResponseEntity.ok(ventaService.actualizarEstado(id, request.getEstado()));
     }
 }

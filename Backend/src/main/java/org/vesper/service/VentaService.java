@@ -18,6 +18,7 @@ import org.vesper.entity.Venta;
 import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.exception.UnauthorizedException;
+import org.vesper.exception.VesperException;
 import org.vesper.repo.PerfumeRepository;
 import org.vesper.repo.VapeRepository;
 import org.vesper.repo.VentaRepository;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -195,6 +197,18 @@ public class VentaService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public VentaResponse actualizarEstado(Long id, String estado) {
+        Venta venta = ventaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada"));
+
+        EstadoVenta estadoVenta = parseEstadoVenta(estado);
+        venta.setEstado(estadoVenta.toString());
+
+        Venta actualizada = ventaRepository.save(venta);
+        return toResponse(actualizada);
+    }
+
     // =========================================================
     // 🔧 Métodos auxiliares
     // =========================================================
@@ -205,6 +219,17 @@ public class VentaService {
                 .orElseGet(() -> vapeRepository.findById(productoId)
                         .<Producto>map(v -> v)
                         .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + productoId)));
+    }
+
+    private EstadoVenta parseEstadoVenta(String estado) {
+        if (!StringUtils.hasText(estado)) {
+            throw new VesperException("El estado de la venta es obligatorio");
+        }
+        try {
+            return EstadoVenta.valueOf(estado.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new VesperException("Estado de venta inválido");
+        }
     }
 
     private VentaResponse toResponse(Venta venta) {
