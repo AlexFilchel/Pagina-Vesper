@@ -73,8 +73,6 @@ public interface PerfumeRepository extends JpaRepository<Perfume, Long> {
             @Param("precioMax") Double precioMax,
             @Param("marca") String marca
     );
-    );
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Perfume p WHERE p.id = :id")
     Optional<Perfume> findByIdForUpdate(@Param("id") Long id);

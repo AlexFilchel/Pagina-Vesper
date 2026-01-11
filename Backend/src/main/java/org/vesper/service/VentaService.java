@@ -11,23 +11,17 @@ import org.vesper.dto.VentaRequest;
 import org.vesper.dto.VentaResponse;
 import org.vesper.entity.DetalleVenta;
 import org.vesper.entity.Perfume;
-import org.vesper.entity.Producto;
-import org.vesper.entity.Vape;
-import org.vesper.entity.VapeSabor;
 import org.vesper.entity.Venta;
+import org.vesper.entity.Venta.EstadoVenta;
 import org.vesper.exception.AlreadyExistsException;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.exception.UnauthorizedException;
 import org.vesper.repo.PerfumeRepository;
-import org.vesper.repo.VapeRepository;
 import org.vesper.repo.VentaRepository;
-import org.vesper.entity.Venta.EstadoVenta;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,7 +30,6 @@ public class VentaService {
 
     private final VentaRepository ventaRepository;
     private final PerfumeRepository perfumeRepository;
-    private final VapeRepository vapeRepository;
 
     @Transactional
     public VentaResponse registrarVenta(VentaRequest request, Jwt jwt) {
@@ -46,61 +39,39 @@ public class VentaService {
         Venta venta = Venta.builder()
                 .usuarioAuth0Id(usuarioAuth0Id)
                 .usuarioEmail(usuarioEmail)
-                .estado(EstadoVenta.COMPLETADA.toString()) // O el estado final que corresponda
+                .estado(EstadoVenta.COMPLETADA.toString())
                 .build();
 
         List<DetalleVenta> detalles = new ArrayList<>();
         double total = 0.0;
 
         for (DetalleVentaRequest detalleRequest : request.getDetalles()) {
-            // Buscar el producto en ambos repositorios con BLOQUEO PESIMISTA
-            Producto producto = perfumeRepository.findByIdForUpdate(detalleRequest.getProductoId())
-                    .<Producto>map(p -> p) // Cast Optional<Perfume> to Optional<Producto>
-                    .orElseGet(() -> vapeRepository.findByIdForUpdate(detalleRequest.getProductoId())
-                            .<Producto>map(v -> v) // Cast Optional<Vape> to Optional<Producto>
-                            .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + detalleRequest.getProductoId())));
+            // Buscar con BLOQUEO PESIMISTA
+            Perfume perfume = perfumeRepository.findByIdForUpdate(detalleRequest.getProductoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Perfume no encontrado con id: " + detalleRequest.getProductoId()));
 
             Integer cantidadSolicitada = detalleRequest.getCantidad();
-            if (producto instanceof Vape) {
-                Vape vape = (Vape) producto;
-                int stockDisponible = Optional.ofNullable(vape.getVapeSabores())
-                        .orElse(Collections.emptySet())
-                        .stream()
-                        .map(VapeSabor::getStock)
-                        .filter(Objects::nonNull)
-                        .mapToInt(Integer::intValue)
-                        .sum();
 
-                if (stockDisponible < cantidadSolicitada) {
-                    throw new AlreadyExistsException("Stock insuficiente para el producto: " + producto.getNombre());
-                }
-
-                reducirStockVape(vape, cantidadSolicitada);
-                producto.setStock(stockDisponible - cantidadSolicitada);
-            } else {
-                if (producto.getStock() == null || producto.getStock() < cantidadSolicitada) {
-                    throw new AlreadyExistsException("Stock insuficiente para el producto: " + producto.getNombre());
-                }
-
-                producto.setStock(producto.getStock() - cantidadSolicitada);
+            if (perfume.getStock() == null || perfume.getStock() < cantidadSolicitada) {
+                throw new AlreadyExistsException("Stock insuficiente para el perfume: " + perfume.getNombre());
             }
 
-            Double precioUnitario = producto.getPrecio();
+            // Descontar stock
+            perfume.setStock(perfume.getStock() - cantidadSolicitada);
+            // No es necesario llamar a save() explícitamente si estamos en una transacción,
+            // pero se puede hacer por claridad o si no hay dirty checking activado (en JPA estándar sí lo hay).
+            // perfumerepository.save(perfume); 
+
+            Double precioUnitario = perfume.getPrecio();
             double subtotal = precioUnitario * cantidadSolicitada;
 
-            DetalleVenta.DetalleVentaBuilder detalleBuilder = DetalleVenta.builder()
+            DetalleVenta detalleVenta = DetalleVenta.builder()
                     .cantidad(cantidadSolicitada)
                     .precioUnitario(precioUnitario)
-                    .subtotal(subtotal);
-
-            if (producto instanceof Perfume) {
-                detalleBuilder.perfume((Perfume) producto);
-            } else if (producto instanceof Vape) {
-                detalleBuilder.vape((Vape) producto);
-            }
-
-            DetalleVenta detalleVenta = detalleBuilder.build();
-            detalleVenta.setVenta(venta);
+                    .subtotal(subtotal)
+                    .perfume(perfume)
+                    .venta(venta)
+                    .build();
 
             detalles.add(detalleVenta);
             total += subtotal;
@@ -115,8 +86,8 @@ public class VentaService {
 
     /**
      * Crea una entidad Venta con estado PENDIENTE.
-     * Esta es la primera etapa del proceso de compra, antes de ir al proveedor de pago.
-     * No descuenta stock, ya que la venta no está confirmada.
+     * Esta es la primera etapa del proceso de compra.
+     * No descuenta stock.
      */
     @Transactional
     public Venta crearVentaPendiente(VentaRequest request, Jwt jwt) {
@@ -133,31 +104,26 @@ public class VentaService {
         double total = 0.0;
 
         for (DetalleVentaRequest detalleRequest : request.getDetalles()) {
-            Producto producto = findProductoById(detalleRequest.getProductoId());
+            Perfume perfume = perfumeRepository.findById(detalleRequest.getProductoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Perfume no encontrado con id: " + detalleRequest.getProductoId()));
 
-            // ❗ Nueva validación: verificar stock antes de crear la venta pendiente.
-            if (producto.getStock() == null || producto.getStock() < detalleRequest.getCantidad()) {
-                throw new AlreadyExistsException("Stock insuficiente para el producto: " + producto.getNombre());
+            // Verificar si hay stock suficiente (aunque no se descuente aún)
+            if (perfume.getStock() == null || perfume.getStock() < detalleRequest.getCantidad()) {
+                throw new AlreadyExistsException("Stock insuficiente para el perfume: " + perfume.getNombre());
             }
 
-            // Nota: El stock se descuenta solo cuando el pago es aprobado.
             Integer cantidad = detalleRequest.getCantidad();
-            Double precioUnitario = producto.getPrecio();
+            Double precioUnitario = perfume.getPrecio();
             double subtotal = precioUnitario * cantidad;
 
-            DetalleVenta.DetalleVentaBuilder detalleBuilder = DetalleVenta.builder()
+            DetalleVenta detalleVenta = DetalleVenta.builder()
                     .cantidad(cantidad)
                     .precioUnitario(precioUnitario)
-                    .subtotal(subtotal);
+                    .subtotal(subtotal)
+                    .perfume(perfume)
+                    .venta(venta)
+                    .build();
 
-            if (producto instanceof Perfume) {
-                detalleBuilder.perfume((Perfume) producto);
-            } else if (producto instanceof Vape) {
-                detalleBuilder.vape((Vape) producto);
-            }
-
-            DetalleVenta detalleVenta = detalleBuilder.build();
-            detalleVenta.setVenta(venta);
             detalles.add(detalleVenta);
             total += subtotal;
         }
@@ -199,14 +165,6 @@ public class VentaService {
     // 🔧 Métodos auxiliares
     // =========================================================
 
-    private Producto findProductoById(Long productoId) {
-        return perfumeRepository.findById(productoId)
-                .<Producto>map(p -> p)
-                .orElseGet(() -> vapeRepository.findById(productoId)
-                        .<Producto>map(v -> v)
-                        .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + productoId)));
-    }
-
     private VentaResponse toResponse(Venta venta) {
         List<DetalleVentaResponse> detalles = venta.getDetalles() == null
                 ? Collections.emptyList()
@@ -225,8 +183,11 @@ public class VentaService {
     }
 
     private DetalleVentaResponse toDetalleResponse(DetalleVenta detalle) {
+        // Asumiendo que el nombre del producto viene del perfume
+        String nombreProducto = (detalle.getPerfume() != null) ? detalle.getPerfume().getNombre() : "Desconocido";
+
         return DetalleVentaResponse.builder()
-                .nombreProducto(detalle.getNombreProducto())
+                .nombreProducto(nombreProducto)
                 .cantidad(detalle.getCantidad())
                 .precio(detalle.getPrecioUnitario())
                 .subtotal(detalle.getSubtotal())
@@ -242,26 +203,5 @@ public class VentaService {
             throw new UnauthorizedException("Usuario no autorizado");
         }
         return value;
-    }
-
-    private void reducirStockVape(Vape vape, int cantidad) {
-        int restante = cantidad;
-        for (VapeSabor vapeSabor : Optional.ofNullable(vape.getVapeSabores())
-                .orElse(Collections.emptySet())) {
-            if (restante <= 0) {
-                break;
-            }
-            int disponible = Optional.ofNullable(vapeSabor.getStock()).orElse(0);
-            if (disponible <= 0) {
-                continue;
-            }
-            int aDescontar = Math.min(disponible, restante);
-            vapeSabor.setStock(disponible - aDescontar);
-            restante -= aDescontar;
-        }
-
-        if (restante > 0) {
-            throw new AlreadyExistsException("Stock insuficiente para el producto: " + vape.getNombre());
-        }
     }
 }
