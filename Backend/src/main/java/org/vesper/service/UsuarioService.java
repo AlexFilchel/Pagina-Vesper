@@ -2,16 +2,18 @@ package org.vesper.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.vesper.entity.Usuario;
 import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.repo.UsuarioRepository;
 
-import jakarta.transaction.Transactional;
+
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;

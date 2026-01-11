@@ -2,6 +2,7 @@ package org.vesper.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.vesper.dto.ImagenResponse;
@@ -18,13 +19,20 @@ import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.repo.SaborRepository;
 import org.vesper.repo.VapeRepository;
 
-import jakarta.transaction.Transactional;
+// import jakarta.transaction.Transactional; 
+// Removida importación manual de jakarta para usar springframework si es preferible, o mantener consistencia.
+// En este caso, para no romper código existente que usa jakarta.transaction.Transactional, mantendremos ambos 
+// o unificaremos. Spring recomienda org.springframework.transaction.annotation.Transactional para readOnly.
+// Tu código usa jakarta.transaction.Transactional en métodos. 
+// La anotación de clase readOnly solo funciona con la de Spring.
+// Voy a usar la de Spring para la clase.
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class VapeService {
 
     private final VapeRepository vapeRepository;

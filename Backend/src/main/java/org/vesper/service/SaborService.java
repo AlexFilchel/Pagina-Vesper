@@ -2,12 +2,14 @@ package org.vesper.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.vesper.dto.SaborRequest;
 import org.vesper.dto.SaborResponse;
 import org.vesper.entity.Sabor;
 import org.vesper.repo.SaborRepository;
 
-import jakarta.transaction.Transactional;
+import org.vesper.repo.SaborRepository;
+
 
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class SaborService {
 
     private final SaborRepository saborRepository;

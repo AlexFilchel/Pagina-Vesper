@@ -2,6 +2,7 @@ package org.vesper.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.vesper.dto.ImagenResponse;
 import org.vesper.dto.PerfumeRequest;
@@ -13,7 +14,7 @@ import org.vesper.exception.ResourceNotFoundException;
 
 import org.vesper.repo.PerfumeRepository;
 
-import jakarta.transaction.Transactional;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PerfumeService {
 
     private final PerfumeRepository perfumeRepository;
