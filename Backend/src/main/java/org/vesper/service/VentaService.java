@@ -53,10 +53,10 @@ public class VentaService {
         double total = 0.0;
 
         for (DetalleVentaRequest detalleRequest : request.getDetalles()) {
-            // Buscar el producto en ambos repositorios
-            Producto producto = perfumeRepository.findById(detalleRequest.getProductoId())
+            // Buscar el producto en ambos repositorios con BLOQUEO PESIMISTA
+            Producto producto = perfumeRepository.findByIdForUpdate(detalleRequest.getProductoId())
                     .<Producto>map(p -> p) // Cast Optional<Perfume> to Optional<Producto>
-                    .orElseGet(() -> vapeRepository.findById(detalleRequest.getProductoId())
+                    .orElseGet(() -> vapeRepository.findByIdForUpdate(detalleRequest.getProductoId())
                             .<Producto>map(v -> v) // Cast Optional<Vape> to Optional<Producto>
                             .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + detalleRequest.getProductoId())));
 

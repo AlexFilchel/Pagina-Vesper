@@ -10,12 +10,14 @@ import org.vesper.exception.ResourceNotFoundException;
 import org.vesper.exception.UnauthorizedException;
 import org.vesper.repo.DomicilioRepository;
 import org.vesper.repo.UsuarioRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class DomicilioService {
 
     private final DomicilioRepository domicilioRepository;

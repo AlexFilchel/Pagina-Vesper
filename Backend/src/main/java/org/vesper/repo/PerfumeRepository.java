@@ -5,7 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Lock;
 import org.vesper.entity.Perfume;
+
+import jakarta.persistence.LockModeType;
 
 import java.util.List;
 import java.util.Optional;
@@ -70,4 +73,9 @@ public interface PerfumeRepository extends JpaRepository<Perfume, Long> {
             @Param("precioMax") Double precioMax,
             @Param("marca") String marca
     );
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Perfume p WHERE p.id = :id")
+    Optional<Perfume> findByIdForUpdate(@Param("id") Long id);
 }

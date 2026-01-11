@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.vesper.entity.Vape;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 
 import java.util.List;
 import java.util.Optional;
@@ -58,4 +60,9 @@ public interface VapeRepository extends JpaRepository<Vape, Long>{
      */
     @EntityGraph(attributePaths = {"imagenes", "vapeSabores", "vapeSabores.sabor"})
     List<Vape> findByPrecioBetween(Double precioMin, Double precioMax);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = {"vapeSabores", "vapeSabores.sabor"})
+    @Query("SELECT v FROM Vape v WHERE v.id = :id")
+    Optional<Vape> findByIdForUpdate(@Param("id") Long id);
 }
