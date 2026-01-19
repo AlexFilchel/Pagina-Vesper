@@ -31,7 +31,26 @@ let addProductHelpers;
 let editProductHelpers;
 let featuredProducts = [];
 
+
+function populateProductOptions() {
+  const options = products.map(p => {
+    const option = document.createElement('option');
+    option.value = p.id;
+    option.textContent = `${p.brand} - ${p.name} ($${currencyFormatter.format(p.price).replace(/\s/g, '')})`;
+    return option;
+  });
+
+  [dom.promotionProductSelect, dom.editPromotionProductSelect].forEach(select => {
+    if (!select) return;
+    const defaultOption = select.querySelector('option[disabled]');
+    select.innerHTML = '';
+    if (defaultOption) select.appendChild(defaultOption);
+    options.forEach(opt => select.appendChild(opt.cloneNode(true)));
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+
   setupAccordions();
 
   // ============================
@@ -508,22 +527,7 @@ function showToast(message) {
    HELPER FUNCTIONS (Added to fix ReferenceErrors)
    ========================================================================== */
 
-function populateProductOptions() {
-  const options = products.map(p => {
-    const option = document.createElement('option');
-    option.value = p.id;
-    option.textContent = `${p.brand} - ${p.name} ($${currencyFormatter.format(p.price).replace(/\s/g, '')})`;
-    return option;
-  });
 
-  [dom.promotionProductSelect, dom.editPromotionProductSelect].forEach(select => {
-    if (!select) return;
-    const defaultOption = select.querySelector('option[disabled]');
-    select.innerHTML = '';
-    if (defaultOption) select.appendChild(defaultOption);
-    options.forEach(opt => select.appendChild(opt.cloneNode(true)));
-  });
-}
 
 async function loadProductsFromApi() {
   try {
