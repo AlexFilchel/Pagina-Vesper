@@ -503,3 +503,329 @@ function showToast(message) {
   `;
   document.head.appendChild(style);
 })();
+
+/* ==========================================================================
+   HELPER FUNCTIONS (Added to fix ReferenceErrors)
+   ========================================================================== */
+
+function populateProductOptions() {
+  const options = products.map(p => {
+    const option = document.createElement('option');
+    option.value = p.id;
+    option.textContent = `${p.brand} - ${p.name} ($${currencyFormatter.format(p.price).replace(/\s/g, '')})`;
+    return option;
+  });
+
+  [dom.promotionProductSelect, dom.editPromotionProductSelect].forEach(select => {
+    if (!select) return;
+    const defaultOption = select.querySelector('option[disabled]');
+    select.innerHTML = '';
+    if (defaultOption) select.appendChild(defaultOption);
+    options.forEach(opt => select.appendChild(opt.cloneNode(true)));
+  });
+}
+
+async function loadProductsFromApi() {
+  try {
+    const client = await ensureApiClient();
+    if (!client) return;
+
+    // Intenta cargar desde endpoint público si el de admin no retorna todo, 
+    // pero idealmente deberíamos tener un endpoint de admin.
+    // Usamos el que sugiere el contexto:
+    const data = await client.request('/public/perfumes');
+    const rawProducts = Array.isArray(data) ? data : [];
+
+    products = rawProducts.map(p => mapPerfumeResponse(p));
+
+    renderProductsTable();
+    populateProductOptions();
+    // Actualizar select de destacados también si es necesario
+    renderFeaturedProducts();
+  } catch (error) {
+    console.error('Error loading products:', error);
+    showToast('Error cargando productos.');
+  }
+}
+
+async function loadFeaturedProducts() {
+  try {
+    const client = await ensureApiClient();
+    if (!client) return;
+    const data = await client.fetchFeaturedAdmin();
+    featuredProducts = Array.isArray(data) ? data : [];
+    renderFeaturedProducts();
+  } catch (error) {
+    console.error('Error loading featured:', error);
+  }
+}
+
+function renderProductsTable() {
+  if (!dom.productsTableBody) return;
+  dom.productsTableBody.innerHTML = products.map(p => `
+        <tr>
+            <td>${p.name}</td>
+            <td>${p.brand}</td>
+            <td>${p.type === 'decant' ? 'Decant' : 'Perfume'}</td>
+            <td>${currencyFormatter.format(p.price)}</td>
+            <td>${p.stock}</td>
+            <td class="column-actions">
+                <button type="button" class="btn-icon" onclick="handleEditProductRequest('${p.id}')" title="Editar">✏️</button>
+                <button type="button" class="btn-icon" onclick="handleDeleteProductRequest('${p.id}')" title="Eliminar">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Global handlers needed for onclick attributes in innerHTML
+window.handleEditProductRequest = (id) => {
+  const product = products.find(p => String(p.id) === String(id));
+  if (product) openEditModal(product);
+};
+
+window.handleDeleteProductRequest = async (id) => {
+  if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+  try {
+    const client = await ensureApiClient();
+    if (client && client.deletePerfume) {
+      await client.deletePerfume(id);
+    } else {
+      // Fallback generic request if deletePerfume not exposed directly
+      await client.request(`/admin/perfumes/${id}`, { method: 'DELETE', authenticated: true });
+    }
+
+    products = products.filter(p => String(p.id) !== String(id));
+    renderProductsTable();
+    populateProductOptions();
+    showToast('Producto eliminado.');
+  } catch (err) {
+    console.error(err);
+    showToast('Error al eliminar.');
+  }
+};
+
+function openEditModal(product) {
+  if (!product) return;
+  const form = dom.editProductForm;
+  form.dataset.productId = product.id;
+  form.dataset.productType = product.type;
+
+  // Populate simple fields
+  const setVal = (name, val) => {
+    const input = form.querySelector(`[name="${name}"]`);
+    if (input) input.value = val;
+  };
+
+  setVal('productType', product.type);
+
+  // Trigger change manually to show/hide fields
+  const typeSelect = form.querySelector('[name="productType"]');
+  if (typeSelect) typeSelect.dispatchEvent(new Event('change'));
+
+  setVal('name', product.name);
+  setVal('brand', product.brand);
+  setVal('description', product.description);
+  setVal('volume', product.volume);
+  setVal('gender', product.gender);
+  setVal('stock', product.stock);
+  setVal('notes', product.notes);
+  setVal('family', product.family);
+  setVal('price', product.price);
+  setVal('inspired', product.inspired || '');
+
+  if (product.piramide) {
+    setVal('piramideSalida', product.piramide.salida || '');
+    setVal('piramideCorazon', product.piramide.corazon || '');
+    setVal('piramideFondo', product.piramide.fondo || '');
+  }
+
+  openModal(dom.productModal);
+}
+
+function renderFeaturedProducts(errorMessage) {
+  if (!dom.featuredTableBody) return;
+  if (errorMessage) {
+    dom.featuredTableBody.innerHTML = `<tr><td colspan="5">${errorMessage}</td></tr>`;
+    return;
+  }
+
+  dom.featuredTableBody.innerHTML = featuredProducts.map(p => `
+        <tr>
+            <td>${p.nombre || p.name}</td>
+            <td>${p.marca || p.brand}</td>
+            <td>${currencyFormatter.format(p.precio || p.price || 0)}</td>
+            <td>${p.decant ? 'Decant' : 'Perfume'}</td>
+            <td>
+                <button type="button" class="btn-remove btn-icon" data-featured-id="${p.id}">❌</button>
+            </td>
+        </tr>
+    `).join('');
+
+  if (dom.featuredCounter) {
+    dom.featuredCounter.textContent = `${featuredProducts.length}/8 destacados`;
+  }
+
+  // Update select options
+  const select = dom.featuredSelect;
+  if (select) {
+    const currentIds = new Set(featuredProducts.map(fp => String(fp.id)));
+    const available = products.filter(p => !currentIds.has(String(p.id)));
+
+    const defaultOption = select.querySelector('option[disabled]');
+    select.innerHTML = '';
+    if (defaultOption) select.appendChild(defaultOption);
+
+    available.forEach(p => {
+      const option = document.createElement('option');
+      option.value = p.id;
+      option.textContent = `${p.brand} - ${p.name}`;
+      select.appendChild(option);
+    });
+  }
+}
+
+async function handleAddFeaturedProduct() {
+  const select = dom.featuredSelect;
+  const productId = select.value;
+  if (!productId) return;
+
+  try {
+    const client = await ensureApiClient();
+    await client.addFeaturedProduct(productId);
+    await loadFeaturedProducts();
+    showToast('Producto destacado agregado.');
+  } catch (error) {
+    console.error(error);
+    showToast('No se pudo destacar el producto.');
+  }
+}
+
+async function removeFeaturedProduct(id) {
+  try {
+    const client = await ensureApiClient();
+    await client.removeFeaturedProduct(id);
+    await loadFeaturedProducts();
+    showToast('Producto destacado removido.');
+  } catch (error) {
+    console.error(error);
+    showToast('No se pudo quitar de destacados.');
+  }
+}
+
+function renderPromotionsTable() {
+  if (!dom.promotionsTableBody) return;
+  dom.promotionsTableBody.innerHTML = promotions.map(p => {
+    // Find product name if possible
+    const prod = products.find(prod => String(prod.id) === String(p.productId));
+    const prodName = prod ? `${prod.brand} - ${prod.name}` : `ID: ${p.productId}`;
+
+    return `
+        <tr>
+             <td>${prodName}</td>
+             <td>${p.description}</td>
+             <td>${p.discount}%</td>
+             <td>${p.start}</td>
+             <td>${p.end}</td>
+             <td>${p.active ? 'Activo' : 'Inactivo'}</td>
+             <td class="column-actions">
+                <button class="btn-icon" disabled title="No implementado">✏️</button>
+                <button class="btn-icon" disabled title="No implementado">🗑️</button>
+             </td>
+        </tr>
+    `}).join('');
+}
+
+function handleFileSelection(event, form) {
+  // Placeholder
+}
+
+function validateProductForm(form) {
+  return form.checkValidity();
+}
+
+function collectProductData(form) {
+  const formData = new FormData(form);
+  const fileInput = form.querySelector('input[type="file"]');
+
+  return {
+    productType: formData.get('productType'),
+    name: formData.get('name'),
+    brand: formData.get('brand'),
+    description: formData.get('description'),
+    volume: formData.get('volume'),
+    gender: formData.get('gender'),
+    stock: formData.get('stock'),
+    notes: formData.get('notes'),
+    family: formData.get('family'),
+    piramideSalida: formData.get('piramideSalida'),
+    piramideCorazon: formData.get('piramideCorazon'),
+    piramideFondo: formData.get('piramideFondo'),
+    inspired: formData.get('inspired'),
+    price: formData.get('price'),
+    images: fileInput ? fileInput.files : null
+  };
+}
+
+function toPerfumeRequest(data) {
+  return {
+    nombre: data.name,
+    marca: data.brand,
+    descripcion: data.description,
+    precio: parseFloat(data.price),
+    stock: parseInt(data.stock),
+    ml: parseFloat(data.volume),
+    genero: data.gender,
+    notas: data.notes,
+    familia: data.family,
+    piramideSalida: data.piramideSalida,
+    piramideCorazon: data.piramideCorazon,
+    piramideFondo: data.piramideFondo,
+    inspiracion: data.inspired,
+    decant: data.productType === 'decant'
+  };
+}
+
+function mapPerfumeResponse(apiProduct, localOverride = {}) {
+  return {
+    id: apiProduct.id,
+    name: apiProduct.nombre,
+    brand: apiProduct.marca,
+    description: apiProduct.descripcion,
+    price: Number(apiProduct.precio),
+    stock: Number(apiProduct.stock),
+    type: apiProduct.decant ? 'decant' : 'perfume',
+    volume: apiProduct.ml,
+    gender: apiProduct.genero,
+    notes: apiProduct.notas,
+    family: apiProduct.familia,
+    piramide: {
+      salida: apiProduct.piramideSalida,
+      corazon: apiProduct.piramideCorazon,
+      fondo: apiProduct.piramideFondo
+    },
+    images: apiProduct.imagenes || [],
+    inspired: apiProduct.inspiracion,
+    ...localOverride
+  };
+}
+
+function upsertProduct(product) {
+  const index = products.findIndex(p => String(p.id) === String(product.id));
+  if (index >= 0) {
+    products[index] = product;
+  } else {
+    products.push(product);
+  }
+}
+
+function collectPromotionData(form) {
+  const formData = new FormData(form);
+  return {
+    productId: formData.get('promotionProduct'),
+    description: formData.get('promotionDescription'),
+    discount: formData.get('promotionDiscount'),
+    start: formData.get('promotionStart'),
+    end: formData.get('promotionEnd'),
+    active: formData.get('promotionActive') === 'on'
+  };
+}
