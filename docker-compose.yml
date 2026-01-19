@@ -3,15 +3,12 @@ services:
     container_name: vesper_app
     build: .
     ports:
-      - "80:8080" # Mapea puerto 80 (Host/VPS) a 8080 (Contenedor)
+      - "80:8080"
     env_file:
       - .env
-    # environment:
-      # Las variables se cargan directamente desde .env con env_file
-      # Esto evita problemas si docker compose no las resuelve antes
-
-        db:
-          condition: service_healthy # <--- Esto evita el error "Connection Refused"
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - vesper-net
 
@@ -37,10 +34,8 @@ services:
       - vesper-net
 
 volumes:
-  # Volumen para persistencia de datos MySQL
   db_data:
 
 networks:
-  # Red para comunicación interna entre contenedores
   vesper-net:
     driver: bridge
