@@ -8,8 +8,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-.vscode/tasks.json
-.vscode/launch.json
+.vscode
 
 ### STS ###
 .apt_generated
@@ -40,11 +39,10 @@ out/
 /.nb-gradle/
 
 ### VS Code ###
-.vscode/
 
 ### H2 Database ###
 # Ignore all content in the data directory
 data/*
 # but re-include the .gitkeep file so the directory is tracked
 !data/.gitkeep
-.vscode/tasks.json
+
