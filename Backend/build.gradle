@@ -57,8 +57,6 @@ dependencies {
     // ===============================
     // Bases de datos
     // ===============================
-    // H2
-    implementation 'com.h2database:h2' // para compilación y runtime
 
     // MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
@@ -70,13 +68,6 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test' // JUnit, Mockito
     testImplementation 'org.springframework.security:spring-security-test' // Test de endpoints seguros
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher' // Ejecutar tests con JUnit Platform
-
-    // ===============================
-    // JWT
-    // ===============================
-    implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // Interfaces y clases base para JWT
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5' // Implementación real de JWT
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // Serialización/deserialización de claims con Jackson
 
     // ===============================
     // Correo electrónico
