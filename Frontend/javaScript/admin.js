@@ -127,10 +127,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       return false;
     }
 
-    // 3. Optional: Check Admin Role (Requires backend support or Token Claims)
-    // For now, we assume any authenticated user who can access /admin/* endpoints is an admin.
-    // If the backend returns 403 on API key calls, the UI handles it gracefully.
-    // Ideally, check: const user = await client.getUser(); if (user.role !== 'admin') ...
+    // 3. Check Admin Role
+    const user = await client.getUser();
+    const roles = user['https://vesper.com/roles'];
+
+    if (!Array.isArray(roles) || !roles.includes('ADMIN')) {
+      console.warn('User is authenticated but not an admin. Redirecting to home...');
+      window.location.href = 'index.html';
+      return false;
+    }
 
     return true;
   }

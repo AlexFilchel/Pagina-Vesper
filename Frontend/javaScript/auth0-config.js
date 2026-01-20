@@ -85,6 +85,15 @@
       // 🔹 Obtener datos del usuario autenticado
       const user = await auth0Client.getUser();
 
+      // 🔹 Verificar rol de admin y mostrar botón
+      const roles = user['https://vesper.com/roles'];
+      if (Array.isArray(roles) && roles.includes('ADMIN')) {
+        const adminBtn = document.getElementById('link-admin');
+        if (adminBtn) {
+          adminBtn.style.display = 'inline-flex';
+        }
+      }
+
       // 🟢 Registrar automáticamente en la base de datos
       await registerUserIfNeeded(user);
 
