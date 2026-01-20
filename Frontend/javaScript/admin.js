@@ -130,8 +130,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 3. Check Admin Role
     const user = await client.getUser();
     const roles = user['https://vesper.com/roles'];
+    const isAdmin = Array.isArray(roles) && roles.some(r => r.toUpperCase() === 'ADMIN');
 
-    if (!Array.isArray(roles) || !roles.includes('ADMIN')) {
+    if (!isAdmin) {
       console.warn('User is authenticated but not an admin. Redirecting to home...');
       window.location.href = 'index.html';
       return false;

@@ -85,12 +85,21 @@
       // 🔹 Obtener datos del usuario autenticado
       const user = await auth0Client.getUser();
 
-      // 🔹 Verificar rol de admin y mostrar botón
+      // 🔹 Verificar rol de admin y mostrar botón (Case Insensitive)
       const roles = user['https://vesper.com/roles'];
-      if (Array.isArray(roles) && roles.includes('ADMIN')) {
+
+      console.log("🔍 DEBUG - Usuario completo:", user);
+      console.log("🔍 DEBUG - Roles recibidos:", roles);
+
+      const isAdmin = Array.isArray(roles) && roles.some(r => r.toUpperCase() === 'ADMIN');
+      console.log("🔍 DEBUG - Es Admin?", isAdmin);
+
+      if (isAdmin) {
         const adminBtn = document.getElementById('link-admin');
         if (adminBtn) {
           adminBtn.style.display = 'inline-flex';
+          // Ajustar espaciado si hay 3 botones
+          adminBtn.parentNode.classList.add('has-admin-btn');
         }
       }
 

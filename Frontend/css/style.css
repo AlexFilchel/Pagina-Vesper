@@ -149,6 +149,11 @@ body.modal-open {
   gap: 35px;
 }
 
+/* Reducir espacio cuando se muestran 3 botones (Admin) */
+.site-header__actions.has-admin-btn {
+  gap: 10px;
+}
+
 .site-header__action--account {
   display: inline-flex;
   align-items: center;
