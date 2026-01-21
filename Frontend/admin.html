@@ -155,267 +155,19 @@
   </aside>
 
   <main class="admin-main">
-    <div class="container">
-      <section class="admin-panel" aria-labelledby="adminTitle">
-        <header class="admin-panel__header">
-          <h1 id="adminTitle">Panel de Administración</h1>
-          <p>Gestioná tus productos, promociones y configuraciones desde un solo lugar.</p>
-        </header>
+    <aside class="admin-sidebar" aria-label="Navegación de administración">
+      <div class="admin-sidebar__header">
+        <h2>Admin Panel</h2>
+      </div>
+      <ul id="admin-menu-list" class="admin-sidebar__nav">
+        <!-- Renderizado por javaScript/admin-ui.js -->
+        <li><span style="color: #475569; padding: 1rem;">Cargando menú...</span></li>
+      </ul>
+    </aside>
 
-        <div class="accordion" id="adminAccordion">
-          <article class="accordion-item">
-            <button class="accordion-header" type="button" aria-expanded="false">
-              <span class="accordion-title">Agregar Producto</span>
-              <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
-            </button>
-            <div class="accordion-content" hidden>
-              <form id="addProductForm" class="admin-form" novalidate>
-                <div class="form-row">
-                  <div class="form-field">
-                    <label for="productType">Tipo de Producto</label>
-                    <select id="productType" name="productType" required>
-                      <option value="" disabled selected>Seleccioná una opción</option>
-                      <option value="perfume">Perfume</option>
-                      <option value="decant">Decant</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="product-fields" data-product-group="fragrance" hidden>
-                  <div class="form-row two-columns">
-                    <div class="form-field">
-                      <label for="productName">Nombre</label>
-                      <input type="text" id="productName" name="name" required>
-                    </div>
-                    <div class="form-field">
-                      <label for="productBrand">Marca</label>
-                      <input type="text" id="productBrand" name="brand" required>
-                    </div>
-                  </div>
-
-                  <div class="form-field">
-                    <label for="productDescription">Descripción</label>
-                    <textarea id="productDescription" name="description" rows="3" required></textarea>
-                  </div>
-
-                  <div class="form-row three-columns">
-                    <div class="form-field">
-                      <label for="productVolume">Volumen (ml)</label>
-                      <input type="number" id="productVolume" name="volume" min="1" step="0.5" required>
-                    </div>
-                    <div class="form-field">
-                      <label for="productGender">Género</label>
-                      <select id="productGender" name="gender" required>
-                        <option value="" disabled selected>Seleccioná</option>
-                        <option value="Masculino">Masculino</option>
-                        <option value="Femenino">Femenino</option>
-                        <option value="Unisex">Unisex</option>
-                      </select>
-                    </div>
-                    <div class="form-field">
-                      <label for="productStock">Stock</label>
-                      <input type="number" id="productStock" name="stock" min="0" required>
-                    </div>
-                  </div>
-
-                  <div class="form-row two-columns">
-                    <div class="form-field">
-                      <label for="productNotes">Notas principales</label>
-                      <input type="text" id="productNotes" name="notes" required>
-                    </div>
-                    <div class="form-field">
-                      <label for="productFamily">Familia olfativa</label>
-                      <input type="text" id="productFamily" name="family" required>
-                    </div>
-                  </div>
-
-                  <fieldset class="form-fieldset">
-                    <legend>Pirámide olfativa</legend>
-                    <div class="form-row three-columns">
-                      <div class="form-field">
-                        <label for="piramideSalida">Salida</label>
-                        <input type="text" id="piramideSalida" name="piramideSalida" required>
-                      </div>
-                      <div class="form-field">
-                        <label for="piramideCorazon">Corazón</label>
-                        <input type="text" id="piramideCorazon" name="piramideCorazon" required>
-                      </div>
-                      <div class="form-field">
-                        <label for="piramideFondo">Fondo</label>
-                        <input type="text" id="piramideFondo" name="piramideFondo" required>
-                      </div>
-                    </div>
-                  </fieldset>
-
-                  <div class="form-row two-columns">
-                    <div class="form-field">
-                      <label for="productInspired">Inspirado en</label>
-                      <input type="text" id="productInspired" name="inspired">
-                    </div>
-                    <div class="form-field">
-                      <label for="productPrice">Precio ($)</label>
-                      <input type="number" id="productPrice" name="price" min="0.01" step="0.01" required>
-                    </div>
-                  </div>
-
-                  <div class="form-field">
-                    <label for="productImages">Imágenes del producto</label>
-                    <input type="file" id="productImages" name="images" accept="image/*" multiple>
-                    <small>Seleccioná entre 1 y 5 imágenes.</small>
-                  </div>
-                </div>
-<div class="form-actions">
-                  <button type="submit" class="btn btn--primary">Agregar Producto</button>
-                  <button type="reset" class="btn btn--ghost">Limpiar</button>
-                </div>
-              </form>
-            </div>
-          </article>
-
-          <article class="accordion-item">
-            <button class="accordion-header" type="button" aria-expanded="false">
-              <span class="accordion-title">Gestionar Productos Existentes</span>
-              <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
-            </button>
-            <div class="accordion-content" hidden>
-              <div class="table-wrapper">
-                <table class="admin-table" aria-label="Listado de productos">
-                  <thead>
-                    <tr>
-                      <th scope="col">Nombre</th>
-                      <th scope="col">Marca</th>
-                      <th scope="col">Tipo</th>
-                      <th scope="col">Precio</th>
-                      <th scope="col">Stock</th>
-                      <th scope="col" class="column-actions">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody id="productsTableBody"></tbody>
-                </table>
-              </div>
-            </div>
-          </article>
-
-          <article class="accordion-item">
-            <button class="accordion-header" type="button" aria-expanded="false">
-              <span class="accordion-title">Agregar Promoción</span>
-              <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
-            </button>
-            <div class="accordion-content" hidden>
-              <form id="addPromotionForm" class="admin-form" novalidate>
-                <div class="form-field">
-                  <label for="promotionProduct">Producto asociado</label>
-                  <select id="promotionProduct" name="promotionProduct" required data-searchable>
-                    <option value="" disabled selected>Seleccioná un producto</option>
-                  </select>
-                </div>
-
-                <div class="form-field">
-                  <label for="promotionDescription">Descripción de la promoción</label>
-                  <textarea id="promotionDescription" name="promotionDescription" rows="3" required></textarea>
-                </div>
-
-                <div class="form-row three-columns">
-                  <div class="form-field">
-                    <label for="promotionDiscount">Descuento (%)</label>
-                    <input type="number" id="promotionDiscount" name="promotionDiscount" min="0" max="100" required>
-                  </div>
-                  <div class="form-field">
-                    <label for="promotionStart">Fecha de inicio</label>
-                    <input type="date" id="promotionStart" name="promotionStart" required>
-                  </div>
-                  <div class="form-field">
-                    <label for="promotionEnd">Fecha de fin</label>
-                    <input type="date" id="promotionEnd" name="promotionEnd" required>
-                  </div>
-                </div>
-
-                <div class="form-field form-field--checkbox">
-                  <input type="checkbox" id="promotionActive" name="promotionActive" checked>
-                  <label for="promotionActive">Promoción Activa</label>
-                </div>
-
-                <div class="form-actions">
-                  <button type="submit" class="btn btn--primary">Agregar Promoción</button>
-                </div>
-              </form>
-            </div>
-          </article>
-
-          <article class="accordion-item">
-            <button class="accordion-header" type="button" aria-expanded="false">
-              <span class="accordion-title">Gestionar Promociones Existentes</span>
-              <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
-            </button>
-            <div class="accordion-content" hidden>
-              <div class="table-wrapper">
-                <table class="admin-table" aria-label="Listado de promociones">
-                  <thead>
-                    <tr>
-                      <th scope="col">Producto</th>
-                      <th scope="col">Descripción</th>
-                      <th scope="col">Descuento</th>
-                      <th scope="col">Fecha Inicio</th>
-                      <th scope="col">Fecha Fin</th>
-                      <th scope="col">Estado</th>
-                      <th scope="col" class="column-actions">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody id="promotionsTableBody"></tbody>
-                </table>
-              </div>
-            </div>
-          </article>
-
-          <article class="accordion-item">
-            <button class="accordion-header" type="button" aria-expanded="false">
-              <span class="accordion-title">Gestionar productos más vendidos</span>
-              <span class="material-symbols-outlined accordion-icon" aria-hidden="true">expand_more</span>
-            </button>
-            <div class="accordion-content" hidden>
-              <section class="featured-admin" aria-labelledby="featured-admin-title">
-                <header class="featured-admin__header">
-                  <div>
-                    <h3 id="featured-admin-title">Productos destacados</h3>
-                    <p>Seleccioná hasta ocho productos para la portada de la tienda. Evitá duplicados y mantené la selección siempre actualizada.</p>
-                  </div>
-                  <p id="featuredCounter" class="featured-admin__counter" aria-live="polite">0/8 destacados</p>
-                </header>
-
-                <div class="featured-admin__controls">
-                  <div class="form-field">
-                    <label for="featuredProductSelect">Agregar producto</label>
-                    <div class="featured-admin__control-group">
-                      <select id="featuredProductSelect" name="featuredProductSelect">
-                        <option value="" disabled selected>Seleccioná un producto disponible</option>
-                      </select>
-                      <button type="button" class="btn btn--primary" id="addFeaturedButton">Agregar</button>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="table-wrapper">
-                  <table class="admin-table" aria-describedby="featured-admin-title">
-                    <thead>
-                      <tr>
-                        <th scope="col">Nombre</th>
-                        <th scope="col">Marca</th>
-                        <th scope="col">Precio</th>
-                        <th scope="col">Tipo</th>
-                        <th scope="col">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody id="featuredProductsBody"></tbody>
-                  </table>
-                </div>
-
-                <p class="featured-admin__helper">Podés reorganizar los productos desde el backend en una actualización futura. Por ahora se muestran en el orden en que fueron agregados.</p>
-              </section>
-            </div>
-          </article>
-        </div>
-      </section>
-    </div>
+    <section id="admin-content-area" class="admin-content">
+      <!-- Renderizado dinámicamente -->
+    </section>
   </main>
 
   <footer class="main-footer" role="contentinfo">
@@ -714,5 +466,137 @@
   <script defer src="javaScript/auth0-config.js"></script>
   <script defer src="javaScript/main.js"></script>
   <script defer src="javaScript/admin.js"></script>
+  <script defer src="javaScript/admin-ui.js"></script>
 </body>
 </html>
+
+<!-- Product Modal -->
+<div id="product-modal" class="modal-overlay hidden" aria-hidden="true">
+  <div class="modal-container" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-header">
+      <h3 id="modal-title">Nuevo Producto</h3>
+      <button type="button" class="modal-close" onclick="closeProductModal()">&times;</button>
+    </div>
+    
+    <form id="product-form" class="modal-form" onsubmit="handleProductSubmit(event)">
+      <div class="modal-body-scroll">
+          <input type="hidden" id="p-id" name="id">
+
+          <!-- Información General -->
+          <div class="form-section">
+            <h4 class="form-section-title">Información General</h4>
+            <div class="form-group-row">
+              <div class="form-group">
+                <label for="p-name">Nombre Producto</label>
+                <input type="text" id="p-name" name="nombre" placeholder="Ej: Sauvage Elixir" required>
+              </div>
+              <div class="form-group">
+                <label for="p-fragrance">Nombre Fragancia</label>
+                <input type="text" id="p-fragrance" name="fragancia" placeholder="Ej: Sauvage" required>
+              </div>
+            </div>
+            <div class="form-group-row">
+                <div class="form-group">
+                  <label for="p-brand">Marca</label>
+                  <input type="text" id="p-brand" name="marca" placeholder="Ej: Dior" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Imagen del Producto</label>
+                  <div class="custom-file-upload">
+                      <input type="file" id="p-image" name="imagen" accept="image/*" class="hidden-file-input">
+                      <label for="p-image" class="file-upload-btn">
+                          <span class="material-symbols-outlined">cloud_upload</span>
+                          Seleccionar imagen...
+                      </label>
+                      <span id="file-name-display" class="file-name-text"></span>
+                  </div>
+                </div>
+            </div>
+             <div class="form-group">
+                <label for="p-description">Descripción</label>
+                <textarea id="p-description" name="descripcion" rows="2" placeholder="Descripción breve..."></textarea>
+              </div>
+          </div>
+
+          <!-- Detalles de Venta -->
+           <div class="form-section">
+            <h4 class="form-section-title">Detalles de Venta</h4>
+            <div class="form-group-row">
+                <div class="form-group">
+                  <label for="p-type">Tipo</label>
+                  <select id="p-type" name="tipo" required>
+                    <option value="Perfume">Perfume</option>
+                    <option value="Decant">Decant</option>
+                  </select>
+                </div>
+                 <div class="form-group">
+                  <label for="p-price">Precio ($)</label>
+                  <input type="number" id="p-price" name="precio" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                  <label for="p-stock">Stock</label>
+                  <input type="number" id="p-stock" name="stock" min="0" required>
+                </div>
+            </div>
+          </div>
+
+          <!-- Características Olfativas -->
+          <div class="form-section">
+            <h4 class="form-section-title">Características Olfativas</h4>
+            <div class="form-group-row">
+                <div class="form-group">
+                   <label for="p-gender">Género</label>
+                   <select id="p-gender" name="genero">
+                     <option value="Masculino">Masculino</option>
+                     <option value="Femenino">Femenino</option>
+                     <option value="Unisex">Unisex</option>
+                   </select>
+                </div>
+                 <div class="form-group">
+                   <label for="p-volume">Volumen (Texto)</label>
+                   <input type="text" id="p-volume" name="volumen" placeholder="Ej: 100ml">
+                 </div>
+                  <div class="form-group">
+                   <label for="p-ml">Mililitros (Num)</label>
+                   <input type="number" id="p-ml" name="ml" step="0.1" placeholder="100.0">
+                 </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="p-notes">Notas Principales</label>
+              <input type="text" id="p-notes" name="notasPrincipales" placeholder="Ej: Lavanda, Madera, Especias">
+            </div>
+
+            <div class="form-group">
+                <label for="p-inspired">Inspiración</label>
+                <input type="text" id="p-inspired" name="inspiracion" placeholder="Ej: Inspirado en...">
+            </div>
+          </div>
+
+           <!-- Pirámide Olfativa -->
+           <div class="form-section">
+            <h4 class="form-section-title">Pirámide Olfativa</h4>
+             <div class="form-group-row">
+                <div class="form-group">
+                   <label for="p-top">Salida</label>
+                   <input type="text" id="p-top" name="salida" placeholder="Notas de salida">
+                </div>
+                <div class="form-group">
+                   <label for="p-heart">Corazón</label>
+                   <input type="text" id="p-heart" name="corazon" placeholder="Notas de corazón">
+                </div>
+                <div class="form-group">
+                   <label for="p-base">Fondo</label>
+                   <input type="text" id="p-base" name="fondo" placeholder="Notas de fondo">
+                </div>
+             </div>
+           </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn--secondary" onclick="closeProductModal()">Cancelar</button>
+        <button type="submit" class="btn btn--primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -504,3 +504,522 @@
   border-color: rgba(0, 74, 173, 0.6);
   box-shadow: 0 0 0 3px rgba(0, 74, 173, 0.12);
 }
+
+/* --- Modern Dashboard Layout (Redesign) --- */
+.admin-main {
+    display: flex;
+    padding: 0;
+    min-height: calc(100vh - 140px);
+    background: #f1f5f9;
+    align-items: stretch;
+}
+
+.admin-sidebar {
+    width: 250px;
+    background-color: #ffffff;
+    border-right: 1px solid #e2e8f0;
+    color: #1e293b;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1.5rem;
+    flex-shrink: 0;
+}
+
+.admin-sidebar__header {
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
+}
+
+.admin-sidebar__header h2 {
+    color: #004aad;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+}
+
+.admin-sidebar__nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.admin-sidebar__link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    color: #64748b;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.admin-sidebar__link:hover {
+    background-color: rgba(0, 74, 173, 0.08);
+    color: #004aad;
+}
+
+.admin-sidebar__link.active {
+    background-color: #004aad;
+    color: #ffffff;
+    box-shadow: 0 4px 12px -2px rgba(0, 74, 173, 0.3);
+}
+
+.admin-sidebar__icon {
+    font-size: 1.25rem;
+}
+
+.admin-content {
+    flex: 1;
+    padding: 2.5rem;
+    overflow-y: auto;
+    width: 100%;
+}
+
+/* Dashboard Cards */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.stat-card__icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.stat-card__icon-box .material-symbols-outlined { font-size: 24px; }
+.stat-card__icon-box.blue { background: #eff6ff; color: #2563eb; }
+.stat-card__icon-box.orange { background: #fff7ed; color: #ea580c; }
+.stat-card__icon-box.green { background: #f0fdf4; color: #16a34a; }
+.stat-card__icon-box.purple { background: #faf5ff; color: #9333ea; }
+
+
+.stat-card__value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-card__title {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.stat-card__change {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 20px;
+}
+.stat-card__change.positive { background: #ecfdf5; color: #059669; }
+.stat-card__change.negative { background: #fef2f2; color: #dc2626; }
+
+/* Views */
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 2.5rem;
+}
+
+.view-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 0.5rem 0;
+}
+
+.view-subtitle {
+    color: #64748b;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.empty-state-view {
+    text-align: center;
+    padding: 6rem 2rem;
+    background: white;
+    border-radius: 1.5rem;
+    border: 2px dashed #e2e8f0;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+}
+
+.table-container {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* --- Product View Refinements --- */
+
+/* View Actions & Toolbar */
+.view-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    color: #94a3b8;
+    font-size: 1.25rem;
+    pointer-events: none;
+}
+
+.search-input {
+    padding: 10px 10px 10px 42px; /* Espacio para el icono */
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.2s ease;
+    width: 280px;
+    background-color: #ffffff;
+    color: #1e293b;
+}
+
+.search-input:focus {
+    border-color: #004aad;
+    box-shadow: 0 0 0 3px rgba(0, 74, 173, 0.1);
+}
+
+.search-input::placeholder {
+    color: #94a3b8;
+}
+
+/* Stock Quick Edit Cell */
+.stock-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-icon-small {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    width: 28px;
+    height: 28px;
+}
+
+.btn-icon-small .material-symbols-outlined {
+    font-size: 1.1rem;
+}
+
+.btn-icon-small:hover {
+    background-color: #f1f5f9;
+    color: #004aad;
+}
+
+/* Base Icon Button (for Table Actions) */
+.btn-icon {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: #64748b;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.btn-icon .material-symbols-outlined {
+    font-size: 1.25rem;
+}
+
+.btn-icon:hover {
+    background-color: #f1f5f9;
+    color: #004aad;
+}
+
+/* Danger variant for delete */
+.btn-icon--danger:hover {
+    background-color: #fef2f2;
+    color: #ef4444;
+}
+
+/* --- Product Modal (Overlay & Animations) --- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-container {
+    background: #ffffff;
+    width: min(600px, 90vw);
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: scale(0.95);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-overlay.active .modal-container {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    font-size: 1.75rem;
+    line-height: 1;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #ef4444;
+}
+
+.modal-form {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #475569;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.75rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: #1e293b;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #004aad;
+    box-shadow: 0 0 0 3px rgba(0, 74, 173, 0.1);
+}
+
+.modal-footer {
+    padding: 1.5rem 2rem;
+    background-color: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.btn--secondary {
+    background: transparent;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    font-weight: 500;
+}
+
+.btn--secondary:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- Scrollable Modal Form --- */
+.modal-body-scroll {
+    padding: 2rem;
+    overflow-y: auto;
+    max-height: calc(90vh - 140px); /* Adjust based on header/footer height */
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.modal-form {
+    padding: 0; /* Remove padding from form as it's now in the scroll container */
+}
+
+/* Fieldset for grouping */
+.form-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.25rem;
+    background-color: #f8fafc;
+}
+
+.form-section-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 0.5rem;
+}
+
+/* --- File Input Styling --- */
+.file-input {
+    padding: 0.5rem !important; /* Override standard input padding */
+    background-color: #f8fafc;
+    cursor: pointer;
+}
+
+.file-input::file-selector-button {
+    margin-right: 1rem;
+    background-color: #004aad;
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.file-input::file-selector-button:hover {
+    background-color: #003380;
+}
+
+/* --- Custom File Upload Styling --- */
+.hidden-file-input {
+    display: none;
+}
+
+.file-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background-color: #eff6ff; /* Fondo azul muy claro para diferenciar */
+    border: 2px dashed #004aad; /* Borde punteado estilo dropzone */
+    color: #004aad;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.file-upload-btn:hover {
+    background-color: #dbeafe;
+    transform: translateY(-1px);
+}
+
+.file-name-text {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #64748b;
+    text-align: center;
+    font-style: italic;
+    min-height: 1.25rem;
+}

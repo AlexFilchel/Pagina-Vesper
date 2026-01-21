@@ -9,7 +9,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 .vscode
-
+docker-compose.override.yml
 ### STS ###
 .apt_generated
 .classpath
